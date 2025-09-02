@@ -1,0 +1,76 @@
+plugins {
+    //[추가] 기본 셋팅 플러그인 적용 - kang / 2025-09-02
+    id 'java'
+    id 'org.springframework.boot' version '3.3.3'
+    id 'io.spring.dependency-management' version '1.1.6'
+
+}
+
+/* 
+ * TODO <그룹  미지정 - kang>
+ *  - 현재 group은 임시값(com.example)
+ *  - 서비스명 확정 시 조직 네임스페이스 규칙에 맞게 변경 필요
+ *  - 예: com.kangcorp, io.merong 등
+ */
+group = 'com.eample'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+// (선택) compileOnly에도 애너테이션 프로세서가 적용되도록 확장 -kang
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+// ------------------------------------------------------------
+// 리포지토리 
+// - 라이브러리 의존성을 가져올 원격 저장소
+// ------------------------------------------------------------
+repositories {
+    mavenCentral()
+    // (필요 시) 사내 Nexus/Artifactory 추가 가능
+    // maven { url = uri("https://your.nexus/repository/maven-public") }
+}
+
+
+// ------------------------------------------------------------
+// 의존성
+// - 스프링 부트 3.3.x는 Jakarta EE 10 기반 (jakarta.* 패키지)
+// - 가급적 starter 의존성 사용 (자동 설정/로깅/검증 등 편의 제공)
+// ------------------------------------------------------------
+dependencies {
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    // implementation 'org.springframework.boot:spring-boot-starter-security'   // Spring Security(기본 보안/필터 체인)
+    //JPA 사용 관련 의존성
+    // implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    // runtimeOnly 'org.postgresql:postgresql'
+}
+
+// ------------------------------------------------------------
+// Spring Boot 패키징 설정
+// ------------------------------------------------------------
+
+// (선택) 애플리케이션 엔트리포인트를 명시적으로 지정하고 싶다면(자동 감지 안될 때)
+// springBoot {
+//     mainClass = 'com.example.app.Application'
+// }
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// ------------------------------------------------------------
+// (선택) 프로필/환경 분기
+// - application-{profile}.properties 를 사용하고, 실행 시 -Dspring.profiles.active=dev 식으로 지정
+// - Gradle 태스크에 시스템 프로퍼티를 넘기고 싶다면 아래처럼 설정 가능
+// ------------------------------------------------------------
+// tasks.named('bootRun') {
+//     systemProperty "spring.profiles.active", System.getProperty("spring.profiles.active", "local")
+// }
