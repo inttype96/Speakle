@@ -1,9 +1,4 @@
 package com.speakle.sevencode;
-/*
- * TODO <그룹, 서비스명 미지정 - kang>
- * 추후 실제 도메인 네임스페이스 규칙에 맞게 패키지 변경 필요
- * - 예: com.mycompany.userservice, com.acme.order 등
- */
 
 /*  ------------------------------------------------------------
  * Spring Boot 애플리케이션의 진입점 (entry point)
