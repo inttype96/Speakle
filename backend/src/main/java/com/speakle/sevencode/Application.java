@@ -1,4 +1,4 @@
-package com.example.app;
+package com.speakle.sevencode;
 /*
  * TODO <그룹, 서비스명 미지정 - kang>
  * 추후 실제 도메인 네임스페이스 규칙에 맞게 패키지 변경 필요
