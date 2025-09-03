@@ -1,4 +1,4 @@
-package com.example.app.projecttest.controller;
+package com.speakle.sevencode.projecttest.controller;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

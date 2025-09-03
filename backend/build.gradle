@@ -6,13 +6,7 @@ plugins {
 
 }
 
-/* 
- * TODO <그룹  미지정 - kang>
- *  - 현재 group은 임시값(com.example)
- *  - 서비스명 확정 시 조직 네임스페이스 규칙에 맞게 변경 필요
- *  - 예: com.kangcorp, io.merong 등
- */
-group = 'com.eample'
+group = 'com.speakle'
 version = '0.0.1-SNAPSHOT'
 
 java {
@@ -59,7 +53,7 @@ dependencies {
 
 // (선택) 애플리케이션 엔트리포인트를 명시적으로 지정하고 싶다면(자동 감지 안될 때)
 // springBoot {
-//     mainClass = 'com.example.app.Application'
+//     mainClass = 'com.speakle.sevencode.Application'
 // }
 
 tasks.named('test') {
