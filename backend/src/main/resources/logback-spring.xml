@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  파일 역할: 로그 구성(비즈/스프링 완전 분리, 활성 로그도 날짜 포함)
+  특이사항:
+    - MDC 필드: corrId, clientIp, clientAgent, loginId, loginName
+    - ENV: OS 환경변수 ENV 없으면 local
+  변경 이력: 2025-09-04 JH
+-->
+<configuration scan="true" scanPeriod="30 seconds">
+
+  <!-- 공통 속성 -->
+  <springProperty scope="context" name="APP" source="spring.application.name" defaultValue="backend"/>
+  <property name="ENV" value="${ENV:-local}"/>
+  <property name="LOG_PATH" value="logs"/>
+
+  <!-- 콘솔(로컬 가독성) -->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+      <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+      <charset>UTF-8</charset>
+    </encoder>
+  </appender>
+
+  <!-- 비즈니스 로그(App 전용) : 활성 파일도 날짜 포함 -->
+  <appender name="APP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <append>true</append>
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+      <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSS} %level [%thread] %logger{36} - %msg [app=${APP}, env=${ENV}, corrId=%X{corrId}, ip=%X{clientIp}, agent=%X{clientAgent}, uid=%X{loginId}, uname=%X{loginName}]%n</pattern>
+      <charset>UTF-8</charset>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- 활성 로그도 즉시 날짜 포함 파일로 생성 -->
+      <fileNamePattern>${LOG_PATH}/app-%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>14</maxHistory>
+      <totalSizeCap>5GB</totalSizeCap>
+      <cleanHistoryOnStart>true</cleanHistoryOnStart>
+    </rollingPolicy>
+  </appender>
+
+  <!-- 스프링/프레임워크 로그(Spring 전용) : 활성 파일도 날짜 포함 -->
+  <appender name="SPRING_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <append>true</append>
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+      <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSS} %level [%thread] %logger{36} - %msg [app=${APP}, env=${ENV}, corrId=%X{corrId}]%n</pattern>
+      <charset>UTF-8</charset>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_PATH}/spring-%d{yyyy-MM-dd}.log</fileNamePattern>
+      <maxHistory>7</maxHistory>
+      <totalSizeCap>2GB</totalSizeCap>
+      <cleanHistoryOnStart>true</cleanHistoryOnStart>
+    </rollingPolicy>
+  </appender>
+
+  <!-- 애플리케이션 전용 로거: App 파일/콘솔로만, 루트 전파 차단 -->
+  <logger name="com.speakle.sevencode" level="INFO" additivity="false">
+    <appender-ref ref="APP_FILE"/>
+    <appender-ref ref="CONSOLE"/>
+  </logger>
+
+  <!-- 프레임워크 전용 로거: Spring 파일로만, 루트 전파 차단 -->
+  <logger name="org.springframework" level="INFO" additivity="false">
+    <appender-ref ref="SPRING_FILE"/>
+  </logger>
+  <logger name="org.hibernate" level="WARN" additivity="false">
+    <appender-ref ref="SPRING_FILE"/>
+  </logger>
+
+  <!-- 루트: 기타 외부 라이브러리 최소 노이즈만. 프로필별로 콘솔 노출 제어 -->
+  <springProfile name="local,dev">
+    <root level="WARN">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+  </springProfile>
+
+  <springProfile name="prod">
+    <root level="WARN"/>
+  </springProfile>
+
+</configuration>
