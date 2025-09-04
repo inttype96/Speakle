@@ -5,6 +5,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * 빌드/실행 테스트용 초간단 엔드포인트
  * - /projecttest        : text/plain 헬스 체크
@@ -12,16 +15,19 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 public class ProjectTestController {
+	private static final Logger log = LoggerFactory.getLogger(ProjectTestController.class);
 
 	// 가장 단순한 핑 엔드포인트
 	@GetMapping(value = "/projecttest", produces = MediaType.TEXT_PLAIN_VALUE)
 	public String ping() {
+		log.info("projecttest called");
 		return "projecttest is up";
 	}
 
 	// 템플릿 엔진 없이 간단 HTML 문자열 반환
 	@GetMapping(value = "/projecttest/page", produces = MediaType.TEXT_HTML_VALUE)
 	public ResponseEntity<String> page() {
+		log.info("projecttest/page called");
 		String html = """
 			<!doctype html>
 			<html lang="ko">
