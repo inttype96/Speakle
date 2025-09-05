@@ -3,6 +3,9 @@
 *.log
 *.ctxt
 
+### Env ###
+.env
+
 ### Gradle ###
 .gradle/
 build/
