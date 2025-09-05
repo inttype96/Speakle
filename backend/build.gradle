@@ -15,7 +15,7 @@ def loadDotenv() {
         def v = s.substring(idx + 1).trim()
         // 양끝 따옴표 제거
         if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
-            v = v.substring(1, v.length()-1)
+            v = v.substring(1, v.length() - 1)
         }
         map[k] = v
     }
@@ -27,7 +27,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.3.3'
     id 'io.spring.dependency-management' version '1.1.6'
-} 
+}
 
 group = 'com.speakle'
 version = '0.0.1-SNAPSHOT'
