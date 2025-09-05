@@ -1,10 +1,33 @@
+import java.nio.file.Files
+import java.nio.file.Paths
+
+// .env 로더 (키=값, # 주석, 양쪽 따옴표 제거)
+def loadDotenv() {
+    def map = [:]
+    def f = file('.env')
+    if (!f.exists()) return map
+    f.eachLine { line ->
+        def s = line.trim()
+        if (!s || s.startsWith('#')) return
+        def idx = s.indexOf('=')
+        if (idx <= 0) return
+        def k = s.substring(0, idx).trim()
+        def v = s.substring(idx + 1).trim()
+        // 양끝 따옴표 제거
+        if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+            v = v.substring(1, v.length()-1)
+        }
+        map[k] = v
+    }
+    return map
+}
+
 plugins {
     //[추가] 기본 셋팅 플러그인 적용 - kang / 2025-09-02
     id 'java'
     id 'org.springframework.boot' version '3.3.3'
     id 'io.spring.dependency-management' version '1.1.6'
-
-}
+} 
 
 group = 'com.speakle'
 version = '0.0.1-SNAPSHOT'
@@ -39,12 +62,24 @@ repositories {
 // - 가급적 starter 의존성 사용 (자동 설정/로깅/검증 등 편의 제공)
 // ------------------------------------------------------------
 dependencies {
+    // === Spring Boot 기본 ===     kang
+    implementation 'org.springframework.boot:spring-boot-starter-web'          // Web, REST API
+    implementation 'org.springframework.boot:spring-boot-starter-security'     // Spring Security
 
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    // implementation 'org.springframework.boot:spring-boot-starter-security'   // Spring Security(기본 보안/필터 체인)
-    //JPA 사용 관련 의존성
-    // implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    // runtimeOnly 'org.postgresql:postgresql'
+    // === DB & JPA ===     kang
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'org.postgresql:postgresql:42.7.4'   // PostgreSQL 15 대응 최신 드라이버
+
+    // === JWT ===     kang
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'  // Jackson serializer
+
+
+    // === Lombok ===     kang
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
 }
 
 // ------------------------------------------------------------
@@ -60,11 +95,10 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-// ------------------------------------------------------------
-// (선택) 프로필/환경 분기
-// - application-{profile}.properties 를 사용하고, 실행 시 -Dspring.profiles.active=dev 식으로 지정
-// - Gradle 태스크에 시스템 프로퍼티를 넘기고 싶다면 아래처럼 설정 가능
-// ------------------------------------------------------------
-// tasks.named('bootRun') {
-//     systemProperty "spring.profiles.active", System.getProperty("spring.profiles.active", "local")
-// }
+// bootRun에 .env + OS 환경변수 주입
+tasks.named('bootRun') {
+    // 시스템 프로퍼티도 애플리케이션에 전달 (gradle -D... 사용 시)
+    systemProperties System.properties
+    // 환경변수 주입: OS env 위에 .env 값으로 덮어쓰기
+    environment System.getenv() + loadDotenv()
+}
