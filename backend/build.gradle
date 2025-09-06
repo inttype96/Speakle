@@ -69,6 +69,7 @@ dependencies {
     // === DB & JPA ===     kang
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     runtimeOnly 'org.postgresql:postgresql:42.7.4'   // PostgreSQL 15 대응 최신 드라이버
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
 
     // === JWT ===     kang
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
