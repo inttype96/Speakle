@@ -53,7 +53,7 @@
   </appender>
 
   <!-- 애플리케이션 전용 로거: App 파일/콘솔로만, 루트 전파 차단 -->
-  <logger name="com.speakle.sevencode" level="INFO" additivity="false">
+  <logger name="com.sevencode.speakle" level="INFO" additivity="false">
     <appender-ref ref="APP_FILE"/>
     <appender-ref ref="CONSOLE"/>
   </logger>
