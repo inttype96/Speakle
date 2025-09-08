@@ -1,77 +1,131 @@
-/**
- * 파일 역할: 요청 상관 필드(MDC) 주입 필터 (corrId, clientIp, clientAgent, loginId, loginName)
- * 특이사항:
- *  - Proxy 환경(X-Forwarded-For) 고려: 첫 번째 IP 사용
- *  - 응답 헤더에도 X-Correlation-ID 반영(액세스로그/클라이언트와 일치)
- * 변경 이력: 2025-09-04 JH 최초
- */
 package com.sevencode.speakle.config.logging;
 
-import jakarta.servlet.*;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.MDC;
-// import org.springframework.security.core.Authentication;
-// import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
-public class CorrelationFilter implements Filter {
+public class CorrelationFilter extends OncePerRequestFilter {
+
+	// 헤더명 상수
+	private static final String HDR_CORRELATION_ID = "X-Correlation-ID";
+	private static final String HDR_CORRELATION_ID_ALT = "X-Correlation-Id";
+	private static final String HDR_FORWARDED = "Forwarded";
+	private static final String HDR_XFF = "X-Forwarded-For";
+	private static final String HDR_X_REAL_IP = "X-Real-IP";
+	private static final String HDR_USER_AGENT = "User-Agent";
+
+	// MDC 키 상수
+	private static final String MDC_CORR_ID = "corrId";
+	private static final String MDC_CLIENT_IP = "clientIp";
+	private static final String MDC_UA = "clientAgent";
+
+	// 상관 ID 최대 길이(헤더 인젝션/오버헤드 방지)
+	private static final int MAX_CORR_ID_LEN = 128;
 
 	@Override
-	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
-		throws IOException, ServletException {
+	protected void doFilterInternal(HttpServletRequest request,
+		HttpServletResponse response,
+		FilterChain chain)
+		throws ServletException, IOException {
 
-		HttpServletRequest request = (HttpServletRequest)req;
-		HttpServletResponse response = (HttpServletResponse)res;
-
-		// 1) corrId: 헤더 우선, 없으면 생성
-		final String corrId = Optional.ofNullable(request.getHeader("X-Correlation-ID"))
-			.filter(s -> !s.isBlank())
-			.orElse(UUID.randomUUID().toString());
-
-		// 2) clientIp: XFF 첫 항목 → 없으면 remoteAddr
-		final String xff = request.getHeader("X-Forwarded-For");
-		final String clientIp = (xff != null && !xff.isBlank())
-			? xff.split(",")[0].trim()
-			: request.getRemoteAddr();
-
-		// 3) clientAgent: UA 원문
-		final String clientAgent = Optional.ofNullable(request.getHeader("User-Agent"))
-			.orElse("UNKNOWN");
-
-		// 4) 로그인 사용자 (환경에 맞게 principal 파싱)
-		String loginId = "SYSTEM";
-		String loginName = "시스템";
-
-		/* TODO [kang]: 유저 모델 나오면 작성 */
-		// Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		// if (auth != null && auth.isAuthenticated() && auth.getPrincipal() != null) {
-		//     try {
-		//         Object p = auth.getPrincipal();
-		//         // TODO: 실제 Principal 타입으로 교체
-		//         // loginId = ((CoreAuthAdmin)p).getId();
-		//         // loginName = ((CoreAuthAdmin)p).getName();
-		//     } catch (Exception ignore) { /* 익명/시스템일 수 있음 */ }
-		// }
+		final String corrId = resolveCorrelationId(request);
+		final String clientIp = resolveClientIp(request);
+		final String clientAgent = Optional.ofNullable(request.getHeader(HDR_USER_AGENT)).orElse("UNKNOWN");
 
 		// MDC 주입
-		MDC.put("corrId", corrId);
-		MDC.put("clientIp", clientIp);
-		MDC.put("clientAgent", clientAgent);
-		MDC.put("loginId", loginId);
-		MDC.put("loginName", loginName);
+		MDC.put(MDC_CORR_ID, corrId);
+		MDC.put(MDC_CLIENT_IP, clientIp);
+		MDC.put(MDC_UA, clientAgent);
 
-		// 응답 헤더에도 반영(액세스 로그·클라이언트 추적 일치)
-		response.setHeader("X-Correlation-ID", corrId);
+		// 응답 헤더에도 corrId 노출(클라/게이트웨이 추적 일치)
+		response.setHeader(HDR_CORRELATION_ID, corrId);
 
 		try {
-			chain.doFilter(req, res);
+			chain.doFilter(request, response);
 		} finally {
-			MDC.clear(); // 요청 종료 시 정리
+			MDC.remove(MDC_CORR_ID);
+			MDC.remove(MDC_CLIENT_IP);
+			MDC.remove(MDC_UA);
 		}
+	}
+
+	private String resolveCorrelationId(HttpServletRequest req) {
+		String raw = firstNonBlank(
+			req.getHeader(HDR_CORRELATION_ID),
+			req.getHeader(HDR_CORRELATION_ID_ALT)
+		);
+		String normalized = normalizeCorrId(raw);
+		return (normalized != null ? normalized : UUID.randomUUID().toString());
+	}
+
+	private String resolveClientIp(HttpServletRequest req) {
+		String fwd = req.getHeader(HDR_FORWARDED);
+		if (isNotBlank(fwd)) {
+			// RFC 7239: for=1.2.3.4;proto=https;by=…
+			String ip = parseForwardedFor(fwd);
+			if (isNotBlank(ip))
+				return ip;
+		}
+		String xff = req.getHeader(HDR_XFF);
+		if (isNotBlank(xff)) {
+			String first = xff.split(",")[0].trim();
+			if (isNotBlank(first))
+				return first;
+		}
+		String xReal = req.getHeader(HDR_X_REAL_IP);
+		if (isNotBlank(xReal))
+			return xReal.trim();
+
+		return req.getRemoteAddr();
+	}
+
+	// ----- 내부 유틸 -----
+
+	private static String firstNonBlank(String a, String b) {
+		if (isNotBlank(a))
+			return a;
+		if (isNotBlank(b))
+			return b;
+		return null;
+	}
+
+	private static boolean isNotBlank(String s) {
+		return s != null && !s.isBlank();
+	}
+
+	private static String normalizeCorrId(String raw) {
+		if (!isNotBlank(raw))
+			return null;
+		String cleaned = raw.replace("\r", "").replace("\n", "").trim();
+		if (cleaned.isEmpty())
+			return null;
+		if (cleaned.length() > MAX_CORR_ID_LEN) {
+			cleaned = cleaned.substring(0, MAX_CORR_ID_LEN);
+		}
+		return cleaned;
+	}
+
+	private static String parseForwardedFor(String forwarded) {
+		try {
+			for (String part : forwarded.split(";")) {
+				String[] kv = part.trim().split("=", 2);
+				if (kv.length == 2 && "for".equalsIgnoreCase(kv[0].trim())) {
+					String v = kv[1].trim();
+					// 따옴표/대괄호 제거
+					v = v.replaceAll("^[\\[\\\"]+|[\\]\\\"]+$", "");
+					return v;
+				}
+			}
+		} catch (Exception ignored) {
+		}
+		return null;
 	}
 }
