@@ -1,9 +1,14 @@
+/**
+ * 리프레시 토큰 저장 서비스-작성자:kang
+ * 주요 기능 컨트롤러에서 유추 가능
+ * */
 package com.sevencode.speakle.auth.service;
 
 import com.sevencode.speakle.auth.entity.RefreshTokenEntity;
 import com.sevencode.speakle.auth.repository.RefreshTokenRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +18,7 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional
 public class RefreshTokenServiceImpl implements RefreshTokenService {
