@@ -11,6 +11,16 @@ services:
       - /home/ubuntu/webserver/devops/letsencrypt:/etc/letsencrypt
     networks:
       - proxy
+  frontend:
+    depends_on:
+      - npm
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    networks:
+      - proxy
 
 networks:
   proxy:
