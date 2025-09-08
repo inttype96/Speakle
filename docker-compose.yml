@@ -1,6 +1,7 @@
 services:
   npm:
     image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx-proxy-manager
     restart: unless-stopped
     ports:
       - '80:80'
@@ -11,12 +12,40 @@ services:
       - /home/ubuntu/webserver/devops/letsencrypt:/etc/letsencrypt
     networks:
       - proxy
+
   frontend:
+    container_name: frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
       - '3000:3000'
+    networks:
+      - proxy
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - '9090:9090'
+    restart: unless-stopped
+    volumes:
+      - ./infrastructure/prometheus:/etc/prometheus
+      - ./infrastructure/prom_data:/prometheus
+    networks:
+      - proxy
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - '13000:3000'
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PW}
+    volumes:
+      - ./grafana:/etc/grafana/provisioning/datasources
     networks:
       - proxy
 

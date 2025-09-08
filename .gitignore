@@ -1,8 +1,7 @@
-# infrastructure
-/infrastructure/
-
 # Created by https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,visualstudiocode
+
+/infrastructure/prom_data/
 
 # **environment**
 .env
