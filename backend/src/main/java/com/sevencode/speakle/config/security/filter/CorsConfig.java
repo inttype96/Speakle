@@ -1,3 +1,8 @@
+/*
+ * cors 설정-작성자:kang
+ * 여기도 securityconfig에서 설정 가능하나
+ * 실별을 위해 따로 설정
+ */
 package com.sevencode.speakle.config.security.filter;
 
 import org.springframework.context.annotation.Bean;

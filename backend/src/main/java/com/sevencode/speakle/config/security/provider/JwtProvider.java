@@ -1,3 +1,6 @@
+/**
+ * jwt 발급-작성자:kang
+ */
 package com.sevencode.speakle.config.security.provider;
 
 import io.jsonwebtoken.*;

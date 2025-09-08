@@ -1,3 +1,7 @@
+/*
+ * 상관 필터-작성자:kang
+ * 요청 전단에 요청정보 식별
+ */
 package com.sevencode.speakle.config.logging;
 
 import jakarta.servlet.FilterChain;

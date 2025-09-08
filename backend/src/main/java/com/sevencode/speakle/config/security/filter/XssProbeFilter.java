@@ -1,3 +1,8 @@
+/*
+ * XssProbeFilter - 작성자:kang
+ * 요청 파라미터 값에 대해 단순 XSS 패턴(<script, javascript:, onerror, onload) 탐지 후 로그 경고.
+ * JSON/Multipart 바디는 검사하지 않으며, 운영 환경에서는 allowlist 기반 검증과 병행 필요.
+ */
 package com.sevencode.speakle.config.security.filter;
 
 import jakarta.servlet.FilterChain;

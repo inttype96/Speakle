@@ -1,3 +1,17 @@
+/*
+ * GlobalExceptionHandler-작성자:kang
+ *
+ * ✦ 역할
+ *   - @RestControllerAdvice 기반 전역 예외 처리기
+ *   - 애플리케이션 전반에서 발생하는 예외를 ApiErrorResponse 포맷(JSON)으로 변환
+ *
+ * ✦ 처리 범위
+ *   - 400: 잘못된 요청 (DTO 검증 실패, JSON 파싱 오류, 잘못된 파라미터 등)
+ *   - 404: 존재하지 않는 사용자 / 잘못된 경로 요청
+ *   - 405/415: 지원하지 않는 HTTP 메서드 / Content-Type
+ *   - 409: 이메일·닉네임 중복
+ *   - 500: 그 외 처리되지 않은 모든 예외
+ */
 package com.sevencode.speakle.config.web;
 
 import com.sevencode.speakle.member.exception.DomainValidationException;
