@@ -18,8 +18,10 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 
 import java.time.OffsetDateTime;
@@ -106,6 +108,13 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ApiErrorResponse> handleDomainValidation(DomainValidationException ex) {
 		log.warn("Domain validation: {} - {}", ex.getClass().getSimpleName(), ex.getMessage());
 		return build(HttpStatus.BAD_REQUEST, ex.getCode(), ex.getMessage());
+	}
+
+	// ── 404: 유요하지 않은 경로 요청 ────────────────────────────────────────
+	@ExceptionHandler(NoHandlerFoundException.class)
+	public ResponseEntity<ApiErrorResponse> handleNoHandler(NoHandlerFoundException ex, HttpServletRequest req) {
+		log.warn("No handler found: {} {}", ex.getHttpMethod(), ex.getRequestURL());
+		return build(HttpStatus.NOT_FOUND, "NOT_FOUND", "요청하신 경로를 찾을 수 없습니다.");
 	}
 
 	// ── 500: 그 외 모든 예외 ────────────────────────────────────────────────
