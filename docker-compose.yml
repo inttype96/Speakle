@@ -7,8 +7,8 @@ services:
       - '8181:81'
       - '443:443'
     volumes:
-      - ./infrastructure/data:/data
-      - ./infrastructure/letsencrypt:/etc/letsencrypt
+      - /home/ubuntu/webserver/devops/data:/data
+      - /home/ubuntu/webserver/devops/letsencrypt:/etc/letsencrypt
     networks:
       - proxy
 
