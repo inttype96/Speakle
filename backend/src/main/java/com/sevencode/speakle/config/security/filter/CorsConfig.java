@@ -9,19 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 
-/**
- * CorsConfig
- * ------------------------------------------------------
- * 역할: CORS(Cross-Origin Resource Sharing) 정책 설정
- * 브랜치: feature/BE_security_filter
- * 특이사항:
- *   - 허용 Origin → 패턴 기반(*)
- *   - 모든 HTTP Method 허용
- *   - 모든 Header 허용
- *   - Credentials 포함 요청 허용
- * 변경 이력:
- *   - 2025-09-05 kang 최초 작성
- */
 @Configuration
 public class CorsConfig {
 

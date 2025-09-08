@@ -1,38 +1,35 @@
 package com.sevencode.speakle.config.security;
 
-/**
- * SecurityConfig
- * -------------------------
- * 역할:
- *   - 환경별(Security Profile)에 따라 정책 분기
- *     - local : 모든 요청 허용
- *     - dev/prod : 보안 정책 적용 (Stateless, JWT 등)
- *   - Spring Security 전반 설정
- *   - 세션 미사용(Stateless)
- *   - 기본 인증/폼 로그인 비활성화
- *   - (TODO) JWT 필터 / 인증 진입점 / 접근 거부 핸들러 추가 예정
- *
- * 작성자: kang
- */
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import com.sevencode.speakle.config.logging.AuthMdcFilter;
+import com.sevencode.speakle.config.security.filter.JwtAuthenticationFilter;
+import com.sevencode.speakle.config.security.handler.JwtAuthenticationEntryPoint;
+import com.sevencode.speakle.config.security.provider.JwtProvider;
 
 @Configuration
 public class SecurityConfig {
 
-	// application.properties → spring.profiles.active 값
-	@Value("${spring.profiles.active:local}")
+	@Value("${spring.profiles.active}")
 	private String activeProfile;
 
+	@Autowired
+	private AuthMdcFilter authMdcFilter;
+
 	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain filterChain(HttpSecurity http, JwtProvider jwtProvider) throws Exception {
 		if ("local".equals(activeProfile)) {
 			// 로컬 개발환경 → 보안 무시, 모든 요청 허용
 			http.csrf(csrf -> csrf.disable())
@@ -44,26 +41,40 @@ public class SecurityConfig {
 				.httpBasic(b -> b.disable())
 				.formLogin(f -> f.disable())
 				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				// TODO [kang]: 인증 예외 핸들러 등록 (JwtAuthenticationEntryPoint)
-				// .exceptionHandling(e -> e.authenticationEntryPoint(jwtEntryPoint))
+				.exceptionHandling(e -> e
+						// 인증 실패(401) JSON 응답
+						.authenticationEntryPoint(new JwtAuthenticationEntryPoint())
+					// NOTE: 403 권한 분리 미구현으로 생략
+				)
 				.authorizeHttpRequests(auth -> auth
-					.requestMatchers("/api/v1/auth/**").permitAll()
-					.anyRequest().authenticated()
+					// 정적 리소스만 공개 (필요 시 경로 조정)
+					.requestMatchers("/static/**").permitAll()
+					.requestMatchers("/projecttest/**").permitAll()
+
+					// ── 공개/인증 예외 경로
+					.requestMatchers("/oauth/**").permitAll()
+					.requestMatchers(HttpMethod.POST, "/auth/login", "/auth/refresh").permitAll()
+					.requestMatchers(HttpMethod.POST, "/user").permitAll()
+					.requestMatchers(HttpMethod.POST, "/user/temp-password").permitAll()
+					.requestMatchers(HttpMethod.POST, "/user/verify", "/user/verify/send").permitAll()
+
+					// 파일 다운로드는 공개 금지 
+					.requestMatchers("/files/**").authenticated()
+
+					// ── 보호 경로
+					.requestMatchers("/user/**").authenticated()
+
+					// 그 외 필요 시 정책 추가
+					.anyRequest().permitAll()
 				);
-			// TODO [kang]: JWT 필터 추가
-			// .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-			// TODO [kang]: 고위험 경로 전용 XSS 탐지 필터 적용 예정
-			//   - 적용 대상: 댓글/게시글/프로필 입력 엔드포인트
-			//   - 주의: 전역 등록 금지(노이즈/성능 이슈). 특정 RequestMatcher만.
-			//   - 현 시점: 탐지만 수행, 차단은 컨트롤러/Validator에서 처리
-			//
-			//   var xssPaths = new OrRequestMatcher(
-			//       new AntPathRequestMatcher("/api/v1/comments/**"),
-			//       new AntPathRequestMatcher("/api/v1/posts/**"),
-			//       new AntPathRequestMatcher("/api/v1/profile/**")
-			//   );
-			//   http.addFilterBefore(new XssProbeFilter(xssPaths),
-			//       UsernamePasswordAuthenticationFilter.class);
+			http.addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
+			http.addFilterAfter(authMdcFilter, JwtAuthenticationFilter.class);
+			// (선택) 특정 고위험 경로에만 XSS 탐지 필터 적용하고 싶을 때 아래 주석 참고
+			// var xssFilter = new XssProbeFilter(new OrRequestMatcher(
+			//     new AntPathRequestMatcher("/user/profile-image", "POST"),
+			//     new AntPathRequestMatcher("/user", "PATCH")
+			// ));
+			// http.addFilterBefore(xssFilter, UsernamePasswordAuthenticationFilter.class);
 		}
 
 		return http.build();
@@ -72,5 +83,10 @@ public class SecurityConfig {
 	@Bean
 	public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
 		return config.getAuthenticationManager();
+	}
+
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
 	}
 }
