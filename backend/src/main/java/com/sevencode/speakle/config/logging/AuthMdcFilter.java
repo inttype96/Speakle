@@ -1,3 +1,7 @@
+/*
+ * 사용자 식별필터-작성자:kang
+ * JWT 뒷단에서 식별
+ */
 package com.sevencode.speakle.config.logging;
 
 import jakarta.servlet.FilterChain;

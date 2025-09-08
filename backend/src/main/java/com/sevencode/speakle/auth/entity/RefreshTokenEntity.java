@@ -1,3 +1,4 @@
+/** 주석-미작성-작성자:kang*/
 package com.sevencode.speakle.auth.entity;
 
 import jakarta.persistence.*;
@@ -8,17 +9,12 @@ import lombok.Setter;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
-/**
- * refresh_tokens 테이블 매핑 (원문 저장 버전)
- *  id           BIGSERIAL (PK)
- *  user_id      BIGINT
- *  refresh_token TEXT
- *  refresh_exp  TIMESTAMPTZ
- *  created_at   TIMESTAMPTZ
- */
+import lombok.extern.slf4j.Slf4j;
+
 @Getter
 @Setter
 @NoArgsConstructor
+@Slf4j
 @Entity
 @Table(name = "refresh_tokens", indexes = {
 	@Index(name = "idx_rt_user_id", columnList = "user_id"),
@@ -27,15 +23,14 @@ import java.time.ZoneOffset;
 public class RefreshTokenEntity {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY) // BIGSERIAL
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	@Column(name = "user_id", nullable = false)
 	private Long userId;
 
-	@Lob
 	@Column(name = "refresh_token", nullable = false)
-	private String refreshToken;              // 원문 저장(주의)
+	private String refreshToken;
 
 	@Column(name = "refresh_exp", nullable = false)
 	private OffsetDateTime refreshExp;
@@ -54,6 +49,7 @@ public class RefreshTokenEntity {
 		e.setUserId(userId);
 		e.setRefreshToken(token);
 		e.setRefreshExp(exp);
+
 		return e;
 	}
 }

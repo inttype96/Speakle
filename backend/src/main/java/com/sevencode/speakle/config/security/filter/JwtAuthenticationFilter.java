@@ -1,3 +1,6 @@
+/**
+ * jwt 필터-작성자:kang
+ */
 package com.sevencode.speakle.config.security.filter;
 
 import jakarta.servlet.FilterChain;

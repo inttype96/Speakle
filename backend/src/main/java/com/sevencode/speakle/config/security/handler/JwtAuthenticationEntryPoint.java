@@ -1,3 +1,6 @@
+/**
+ * jwt 에러 엔트리-작성자:kang
+ */
 package com.sevencode.speakle.config.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
