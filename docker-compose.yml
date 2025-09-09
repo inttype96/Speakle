@@ -19,7 +19,7 @@ services:
     env_file:
       - .env
     ports:
-      - "8000:8000"
+      - "18000:18000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -33,9 +33,9 @@ services:
     container_name: postgres
     restart: always
     environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
