@@ -20,9 +20,12 @@ services:
       - .env
     ports:
       - "18000:18000"
+    restart: unless_stopped
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - proxy
 
@@ -40,6 +43,12 @@ services:
       - ./backend/postgres_data:/var/lib/postgresql/data
     networks:
       - proxy
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U myuser -d mydb" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   redis:
     image: redis:latest
@@ -51,7 +60,13 @@ services:
       - ./backend/redis_data:/data
     networks:
       - proxy
-      
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   frontend:
     container_name: frontend
     build:
@@ -61,7 +76,6 @@ services:
       - '3000:3000'
     networks:
       - proxy
-
   # prometheus:
   #   image: prom/prometheus
   #   container_name: prometheus
