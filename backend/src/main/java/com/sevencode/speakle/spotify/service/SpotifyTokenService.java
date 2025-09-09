@@ -16,6 +16,7 @@ import com.sevencode.speakle.common.util.CryptoUtil;
 import com.sevencode.speakle.spotify.config.SpotifyProps;
 import com.sevencode.speakle.spotify.entity.SpotifyAccount;
 import com.sevencode.speakle.spotify.exception.SpotifyNotLinkedException;
+import com.sevencode.speakle.spotify.exception.SpotifyTokenException;
 import com.sevencode.speakle.spotify.repository.SpotifyAccountRepository;
 
 import jakarta.transaction.Transactional;
@@ -60,6 +61,9 @@ public class SpotifyTokenService {
 			.contentType(MediaType.APPLICATION_FORM_URLENCODED)
 			.body(BodyInserters.fromFormData(form))
 			.retrieve()
+			.onStatus(status -> status.is4xxClientError() || status.is5xxServerError(), 
+				response -> response.bodyToMono(String.class)
+					.map(body -> new SpotifyTokenException("토큰 갱신 실패: " + response.statusCode())))
 			.bodyToMono(SpotifyTokenResponse.class)
 			.block();
 

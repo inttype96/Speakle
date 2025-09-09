@@ -1,8 +1,11 @@
 package com.sevencode.speakle.spotify.exception;
 
+import lombok.Getter;
+
 /**
  * Spotify API 요청 한도 초과 시 발생하는 예외
  */
+@Getter
 public class SpotifyRateLimitException extends RuntimeException {
 	private final int retryAfterSeconds;
 
@@ -16,7 +19,4 @@ public class SpotifyRateLimitException extends RuntimeException {
 		this.retryAfterSeconds = 60; // 기본값 1분
 	}
 
-	public int getRetryAfterSeconds() {
-		return retryAfterSeconds;
-	}
 }

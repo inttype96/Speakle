@@ -1,8 +1,11 @@
 package com.sevencode.speakle.spotify.exception;
 
+import lombok.Getter;
+
 /**
  * Spotify API 호출 시 발생하는 예외
  */
+@Getter
 public class SpotifyApiException extends SpotifyException {
 
 	private final int statusCode;
@@ -25,14 +28,6 @@ public class SpotifyApiException extends SpotifyException {
 		super(getDefaultMessage(statusCode));
 		this.statusCode = statusCode;
 		this.apiName = "Unknown";
-	}
-
-	public int getStatusCode() {
-		return statusCode;
-	}
-
-	public String getApiName() {
-		return apiName;
 	}
 
 	/**

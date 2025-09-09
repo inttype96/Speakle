@@ -1,8 +1,11 @@
 package com.sevencode.speakle.spotify.exception;
 
+import lombok.Getter;
+
 /**
  * Spotify 계정이 연결되지 않았을 때 발생하는 예외
  */
+@Getter
 public class SpotifyNotLinkedException extends SpotifyException {
 
 	private final String username;
@@ -12,7 +15,4 @@ public class SpotifyNotLinkedException extends SpotifyException {
 		this.username = username;
 	}
 
-	public String getUsername() {
-		return username;
-	}
 }
