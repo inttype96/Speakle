@@ -19,7 +19,7 @@ services:
     env_file:
       - .env
     ports:
-      - "8000:8000"
+      - "18000:18000"
     depends_on:
       - postgres
       - redis
