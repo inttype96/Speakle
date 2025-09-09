@@ -22,6 +22,7 @@ import com.sevencode.speakle.spotify.dto.response.SpotifyLinkStatusResponse;
 import com.sevencode.speakle.spotify.dto.response.SpotifyMe;
 import com.sevencode.speakle.spotify.entity.SpotifyAccount;
 import com.sevencode.speakle.spotify.exception.InvalidStateException;
+import com.sevencode.speakle.spotify.exception.SpotifyTokenException;
 import com.sevencode.speakle.spotify.repository.SpotifyAccountRepository;
 
 import jakarta.transaction.Transactional;
@@ -83,6 +84,9 @@ public class SpotifyService {
 			.contentType(MediaType.APPLICATION_FORM_URLENCODED)
 			.body(BodyInserters.fromFormData(form))
 			.retrieve()
+			.onStatus(status -> status.is4xxClientError() || status.is5xxServerError(), 
+				response -> response.bodyToMono(String.class)
+					.map(body -> new SpotifyTokenException("토큰 발급 실패: " + response.statusCode())))
 			.bodyToMono(SpotifyTokenResponse.class)
 			.block();
 

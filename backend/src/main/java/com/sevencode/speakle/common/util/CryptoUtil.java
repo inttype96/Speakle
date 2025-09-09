@@ -11,6 +11,8 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.sevencode.speakle.common.exception.CryptoException;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -39,6 +41,10 @@ public class CryptoUtil {
 	 * 문자열을 AES-GCM으로 암호화
 	 */
 	public String encrypt(String plaintext) {
+		if (plaintext == null || plaintext.isEmpty()) {
+			throw CryptoException.emptyInput("암호화할 데이터가 비어있습니다.");
+		}
+
 		try {
 			byte[] iv = new byte[GCM_IV_LENGTH];
 			secureRandom.nextBytes(iv);
@@ -56,8 +62,8 @@ public class CryptoUtil {
 
 			return Base64.getEncoder().encodeToString(encryptedWithIv);
 		} catch (Exception e) {
-			log.error("Encryption failed", e);
-			throw new RuntimeException("Encryption failed", e);
+			log.error("데이터 암호화에 실패했습니다. 원인: {}", e.getMessage());
+			throw CryptoException.encryptionFailed("데이터 암호화에 실패했습니다.", e);
 		}
 	}
 
@@ -65,8 +71,16 @@ public class CryptoUtil {
 	 * AES-GCM으로 암호화된 문자열을 복호화
 	 */
 	public String decrypt(String encryptedText) {
+		if (encryptedText == null || encryptedText.isEmpty()) {
+			throw CryptoException.emptyInput("복호화할 데이터가 비어있습니다.");
+		}
+
 		try {
 			byte[] decodedData = Base64.getDecoder().decode(encryptedText);
+
+			if (decodedData.length < GCM_IV_LENGTH) {
+				throw CryptoException.invalidData("암호화된 데이터 형식이 올바르지 않습니다.");
+			}
 
 			// IV와 암호화된 데이터 분리
 			byte[] iv = new byte[GCM_IV_LENGTH];
@@ -81,9 +95,12 @@ public class CryptoUtil {
 
 			byte[] decryptedData = cipher.doFinal(encryptedData);
 			return new String(decryptedData, StandardCharsets.UTF_8);
+		} catch (IllegalArgumentException e) {
+			log.error("잘못된 Base64 형식의 암호화 데이터: {}", e.getMessage());
+			throw CryptoException.invalidData("암호화된 데이터 형식이 올바르지 않습니다.", e);
 		} catch (Exception e) {
-			log.error("Decryption failed", e);
-			throw new RuntimeException("Decryption failed", e);
+			log.error("데이터 복호화에 실패했습니다. 원인: {}", e.getMessage());
+			throw CryptoException.decryptionFailed("데이터 복호화에 실패했습니다.", e);
 		}
 	}
 }
