@@ -19,8 +19,7 @@ services:
     env_file:
       - .env
     ports:
-      - "18000:18000"
-    restart: unless_stopped
+      - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -34,9 +33,9 @@ services:
     container_name: postgres
     restart: always
     environment:
-      POSTGRES_DB: mydb
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -44,7 +43,7 @@ services:
     networks:
       - proxy
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U myuser -d mydb" ]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -61,7 +60,7 @@ services:
     networks:
       - proxy
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -76,6 +75,7 @@ services:
       - '3000:3000'
     networks:
       - proxy
+
   # prometheus:
   #   image: prom/prometheus
   #   container_name: prometheus
