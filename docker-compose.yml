@@ -23,6 +23,8 @@ services:
     depends_on:
       - postgres
       - redis
+    networks:
+      - proxy
 
   postgres:
     image: postgres:15
@@ -36,6 +38,8 @@ services:
       - "5432:5432"
     volumes:
       - ./backend/postgres_data:/var/lib/postgresql/data
+    networks:
+      - proxy
 
   redis:
     image: redis:latest
@@ -45,7 +49,9 @@ services:
       - "6379:6379"
     volumes:
       - ./backend/redis_data:/data
-
+    networks:
+      - proxy
+      
   frontend:
     container_name: frontend
     build:
