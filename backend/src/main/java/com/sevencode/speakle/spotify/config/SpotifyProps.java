@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Component
-@ConfigurationProperties(prefix = "spotify.oauth")
+@ConfigurationProperties(prefix = "spotify")
 @Getter
 @Setter
 public class SpotifyProps {

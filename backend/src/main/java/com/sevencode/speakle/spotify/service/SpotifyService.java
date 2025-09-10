@@ -26,7 +26,9 @@ import com.sevencode.speakle.spotify.exception.SpotifyTokenException;
 import com.sevencode.speakle.spotify.repository.SpotifyAccountRepository;
 
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class SpotifyService {
 	private final SpotifyProps props;
@@ -56,6 +58,11 @@ public class SpotifyService {
 	}
 
 	public String buildAuthorizeRedirect(UserPrincipal auth) {
+		log.info("Spotify OAuth 설정 확인:");
+		log.info("  - Client ID: {}", props.getClientId());
+		log.info("  - Redirect URI: {}", props.getRedirectUri());
+		log.info("  - Scopes: {}", props.getScopes());
+
 		String state = UUID.randomUUID().toString();
 		stateStore.save(state, auth.userId());
 		UriComponentsBuilder b = UriComponentsBuilder
@@ -65,7 +72,11 @@ public class SpotifyService {
 			.queryParam("redirect_uri", props.getRedirectUri())
 			.queryParam("scope", props.getScopes())
 			.queryParam("state", state);
-		return b.toUriString();
+		//return b.toUriString();
+		String finalUrl = b.toUriString();
+		log.info("생성된 Spotify OAuth URL: {}", finalUrl);
+
+		return finalUrl;
 	}
 
 	@Transactional
