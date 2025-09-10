@@ -11,4 +11,14 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // 프록시 설정을 추가합니다.
+  server: {
+    proxy: {
+      // '/api'로 시작하는 요청은 모두 백엔드 서버로 전달합니다.
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true, // 다른 origin으로 요청을 보낼 때 필요합니다.
+      },
+    },
+  },
 })

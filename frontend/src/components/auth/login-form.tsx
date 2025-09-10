@@ -1,4 +1,7 @@
 import { GalleryVerticalEnd } from "lucide-react"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import axios from "axios"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -9,9 +12,40 @@ export function LoginForm({
     className,
     ...props
 }: React.ComponentProps<"div">) {
+    const navigate = useNavigate()
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [error, setError] = useState<string | null>(null)
+    const [isLoading, setIsLoading] = useState(false)
+
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        setIsLoading(true)
+        setError(null)
+
+        try {
+            const response = await axios.post("/api/auth/login", {
+                email,
+                password,
+            })
+
+            // TODO: Handle token from response.data
+            console.log("Login successful:", response.data)
+            navigate("/")
+
+        } catch (err) {
+            setIsLoading(false)
+            if (axios.isAxiosError(err) && err.response) {
+                setError(err.response.data.message || "로그인에 실패했습니다. 이메일 또는 비밀번호를 확인해주세요.")
+            } else {
+                setError("로그인 중 오류가 발생했습니다. 나중에 다시 시도해주세요.")
+            }
+        }
+    }
+
     return (
         <div className={cn("flex flex-col gap-6", className)} {...props}>
-            <form>
+            <form onSubmit={handleSubmit}>
                 <div className="flex flex-col gap-6">
                     <div className="flex flex-col items-center gap-2">
                         <a
@@ -39,6 +73,9 @@ export function LoginForm({
                                 type="email"
                                 placeholder="m@example.com"
                                 required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                disabled={isLoading}
                             />
                         </div>
                         <div className="grid gap-3">
@@ -51,9 +88,17 @@ export function LoginForm({
                                     비밀번호를 잊으셨나요?
                                 </a>
                             </div>
-                            <Input id="password" type="password" required />
-                            <Button type="submit" className="w-full">
-                                로그인
+                            <Input
+                                id="password"
+                                type="password"
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                disabled={isLoading}
+                            />
+                            {error && <p className="text-sm text-destructive">{error}</p>}
+                            <Button type="submit" className="w-full" disabled={isLoading}>
+                                {isLoading ? "로그인 중..." : "로그인"}
                             </Button>
                         </div>
                     </div>

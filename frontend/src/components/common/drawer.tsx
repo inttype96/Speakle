@@ -5,6 +5,7 @@ import { XMarkIcon, LockClosedIcon, StarIcon } from '@heroicons/react/24/outline
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from '@/components/mode-toggle'
 import { SearchForm } from "../common/search-form"
+import { Link } from 'react-router-dom'
 
 export default function Drawer({ open, setOpen }: { open: boolean, setOpen: (open: boolean) => void }) {
   return (
@@ -41,8 +42,10 @@ export default function Drawer({ open, setOpen }: { open: boolean, setOpen: (ope
                 {/* 로그인 상태에 따른 조건문 추가 */}
                 <div className="relative mt-6 flex-1 px-4 sm:px-6">
                   <SearchForm />
-                  <Button variant="outline" size="lg" className="w-full mb-2">
-                    <LockClosedIcon className="h-6 w-6 mr-2" /> 로그인
+                  <Button asChild variant="outline" size="lg" className="w-full mb-2">
+                    <Link to="/login" className="flex items-center justify-center">
+                        <LockClosedIcon className="h-6 w-6 mr-2" /> 로그인
+                    </Link>
                   </Button>
                   <Button variant="outline" size="lg" className="w-full">
                     <StarIcon className="h-6 w-6 mr-2" /> 노래 추천 받기
