@@ -88,11 +88,6 @@ public class LearnServiceImpl implements LearnService {
         }
         if (candidates.isEmpty()) return null;
 
-        System.out.println("candidates.size() : "+candidates.size());
-        for(int i=0;i<candidates.size();i++){
-            System.out.println(candidates.get(i));
-        }
-
         int size = candidates.size();
         String selected;
 
