@@ -1,13 +1,12 @@
-import { useState } from 'react'
 import './App.css'
-
 import { ThemeProvider } from "@/components/theme-provider"
-import IndexPage from '@/pages/common/indexPage'
+import { RouterProvider } from 'react-router-dom'
+import router from './router'
 
 function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-      < IndexPage />
+      <RouterProvider router={router} />
     </ThemeProvider>
   )
 }

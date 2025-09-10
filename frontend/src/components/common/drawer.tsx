@@ -1,9 +1,10 @@
 'use client'
 
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle, TransitionChild } from '@headlessui/react'
-import { XMarkIcon, LockClosedIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, LockClosedIcon, StarIcon } from '@heroicons/react/24/outline'
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from '@/components/mode-toggle'
+import { SearchForm } from "../common/search-form"
 
 export default function Drawer({ open, setOpen }: { open: boolean, setOpen: (open: boolean) => void }) {
   return (
@@ -39,8 +40,12 @@ export default function Drawer({ open, setOpen }: { open: boolean, setOpen: (ope
                 </div>
                 {/* 로그인 상태에 따른 조건문 추가 */}
                 <div className="relative mt-6 flex-1 px-4 sm:px-6">
-                  <Button variant="outline" size="lg" className="w-full">
+                  <SearchForm />
+                  <Button variant="outline" size="lg" className="w-full mb-2">
                     <LockClosedIcon className="h-6 w-6 mr-2" /> 로그인
+                  </Button>
+                  <Button variant="outline" size="lg" className="w-full">
+                    <StarIcon className="h-6 w-6 mr-2" /> 노래 추천 받기
                   </Button>
                   {/* <Button variant="outline" size="lg" className="w-full">
                     <LockClosedIcon className="h-6 w-6 mr-2" /> 로그아웃
