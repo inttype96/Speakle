@@ -3,6 +3,7 @@ package com.sevencode.speakle.spotify.controller;
 import java.io.IOException;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -40,6 +41,9 @@ public class SpotifyController {
 
 	private final SpotifyService spotifyService;
 
+	@Value("${app.frontend.base-url}")
+	private String frontendBaseUrl;
+
 	@Operation(
 		summary = "스포티파이 계정 연결",
 		description = "사용자를 Spotify 권한 동의 화면으로 리다이렉트합니다. 사용자가 권한을 승인하면 callback 엔드포인트로 돌아옵니다."
@@ -75,7 +79,7 @@ public class SpotifyController {
 		@RequestParam String state,
 		HttpServletResponse response) throws IOException {
 		spotifyService.handleCallback(code, state);
-		response.sendRedirect("http://localhost:5173/spotify-dashboard");
+		response.sendRedirect(frontendBaseUrl + "/spotify-dashboard");
 		return ResponseEntity.ok("연결 완료");
 	}
 
