@@ -64,6 +64,7 @@ public class SecurityConfig {
 
 					// ── 보호 경로
 					.requestMatchers("/user/**").authenticated()
+					.requestMatchers("/api/learn/**").authenticated()			// ay
 
 					// 그 외 필요 시 정책 추가
 					.anyRequest().permitAll()
