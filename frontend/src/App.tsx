@@ -2,12 +2,12 @@ import { useState } from 'react'
 import './App.css'
 
 import { ThemeProvider } from "@/components/theme-provider"
-import { ModeToggle } from './components/mode-toggle'
+import IndexPage from '@/pages/common/indexPage'
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <ModeToggle/>
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      < IndexPage />
     </ThemeProvider>
   )
 }
