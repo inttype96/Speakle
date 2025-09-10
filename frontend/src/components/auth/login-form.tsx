@@ -71,10 +71,10 @@ export function LoginForm({
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="m@example.com"
+                                placeholder="email"
                                 required
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                                 disabled={isLoading}
                             />
                         </div>
@@ -93,7 +93,7 @@ export function LoginForm({
                                 type="password"
                                 required
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                                 disabled={isLoading}
                             />
                             {error && <p className="text-sm text-destructive">{error}</p>}
