@@ -2,6 +2,8 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,visualstudiocode
 
 /infrastructure/prom_data/
+/backend/postgres_data/
+/backend/redis_data/
 
 # **environment**
 .env
