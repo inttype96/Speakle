@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import type { QuizGenReq, QuizGenRes, SubmitScoreReq, QuizResultItem } from "@/types/quiz";
 import * as quizService from "@/services/quizService";
 
+import Navbar from "@/components/common/navbar"
+
 const TOTAL_QUESTIONS = 5;
 
 // 대소문자/공백/문장부호 무시 비교
@@ -118,10 +120,13 @@ export default function QuizPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
+    <div className="bg-background text-foreground">
+      <Navbar />
       {/* 상단 네비 */}
       <div className="mb-4 flex items-center gap-2 text-sm text-gray-500">
-        <button className="hover:underline" onClick={() => navigate(-1)}>← 곡으로 돌아가기</button>
+        <button className="hover:underline" onClick={() => navigate(-1)}>
+          ← 곡으로 돌아가기
+        </button>
         <span className="mx-1">/</span>
         <span>빈칸 퀴즈</span>
       </div>
