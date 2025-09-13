@@ -1,14 +1,20 @@
 package com.sevencode.speakle.learn.controller;
 
 import com.sevencode.speakle.config.security.UserPrincipal;
+import com.sevencode.speakle.learn.dto.request.SpeakingEvaluationRequest;
 import com.sevencode.speakle.learn.dto.request.SpeakingQuestionRequest;
 import com.sevencode.speakle.learn.dto.response.ApiResponse;
+import com.sevencode.speakle.learn.dto.response.SpeakingEvaluationResponse;
 import com.sevencode.speakle.learn.dto.response.SpeakingQuestionResponse;
 import com.sevencode.speakle.learn.service.LearnService;
 
+import com.sevencode.speakle.learn.service.SpeakingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class LearnController {
 
     private final LearnService learnService;
+    private final SpeakingService speakingService;
 
     /**
      * 스피킹 평가 문제 생성(조회)
@@ -33,5 +40,38 @@ public class LearnController {
         SpeakingQuestionResponse res = learnService.getSpeakingQuestion(req.getLearnedSongId(), req.getQuestionNumber(), userId);
 
         return ResponseEntity.ok(ApiResponse.success(200, "스피킹 평가 문장을 조회했습니다.", res));
+    }
+
+    @PostMapping(value = "/speaking/result", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<SpeakingEvaluationResponse>> evaluateSpeaking(
+            @Valid @RequestBody SpeakingEvaluationRequest request,
+            @AuthenticationPrincipal UserPrincipal me) {
+
+        try {
+            Long userId = me.userId();
+            SpeakingEvaluationResponse response = speakingService.evaluateSpeaking(userId, request);
+            return ResponseEntity.ok(
+                    ApiResponse.success(200, "스피킹 결과가 저장되었습니다.", response)
+            );
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(
+                    ApiResponse.success(400, "요청 값이 올바르지 않습니다.", null)
+            );
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("인증키")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                        ApiResponse.success(401, e.getMessage(), null)
+                );
+            } else if (e.getMessage().contains("찾을 수 없습니다")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        ApiResponse.success(404, e.getMessage(), null)
+                );
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                        ApiResponse.success(500, e.getMessage(), null)
+                );
+            }
+        }
     }
 }
