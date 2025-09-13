@@ -13,41 +13,94 @@ services:
     networks:
       - proxy
 
+  backend:
+    build: ./backend
+    container_name: backend
+    env_file:
+      - .env
+    # ports:
+    #   - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - proxy
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # ports:
+    #   - "5432:5432"
+    volumes:
+      - ./backend/postgres_data:/var/lib/postgresql/data
+    networks:
+      - proxy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    # ports:
+    #   - "6379:6379"
+    volumes:
+      - ./backend/redis_data:/data
+    networks:
+      - proxy
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   frontend:
     container_name: frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    ports:
-      - '3000:3000'
+    # ports:
+    #   - '3000:3000'
     networks:
       - proxy
 
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    ports:
-      - '9090:9090'
-    restart: unless-stopped
-    volumes:
-      - ./infrastructure/prometheus:/etc/prometheus
-      - ./infrastructure/prom_data:/prometheus
-    networks:
-      - proxy
+  # prometheus:
+  #   image: prom/prometheus
+  #   container_name: prometheus
+  #   ports:
+  #     - '9090:9090'
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ./infrastructure/prometheus.yml:/etc/prometheus/prometheus.yml
+  #     - ./infrastructure/prom_data:/prometheus
+  #   networks:
+  #     - proxy
 
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    ports:
-      - '13000:3000'
-    restart: unless-stopped
-    environment:
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PW}
-    volumes:
-      - ./grafana:/etc/grafana/provisioning/datasources
-    networks:
-      - proxy
+  # grafana:
+  #   image: grafana/grafana
+  #   container_name: grafana
+  #   ports:
+  #     - '13000:3000'
+  #   restart: unless-stopped
+  #   environment:
+  #     - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
+  #     - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PW}
+  #   volumes:
+  #     - ./grafana:/etc/grafana/provisioning/datasources
+  #   networks:
+  #     - proxy
 
 networks:
   proxy:

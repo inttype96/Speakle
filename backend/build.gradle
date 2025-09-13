@@ -22,6 +22,9 @@ def loadDotenv() {
     return map
 }
 
+// ============================================
+// 플러그인 설정
+// ============================================
 plugins {
     //[추가] 기본 셋팅 플러그인 적용 - kang / 2025-09-02
     id 'java'
@@ -29,16 +32,25 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.6'
 }
 
+// ============================================
+// 프로젝트 정보
+// ============================================
 group = 'com.speakle'
 version = '0.0.1-SNAPSHOT'
 
+// ============================================
+// Java 설정
+// ============================================
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
+// ============================================
+// 설정 확장
 // (선택) compileOnly에도 애너테이션 프로세서가 적용되도록 확장 -kang
+// ============================================
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
@@ -62,26 +74,53 @@ repositories {
 // - 가급적 starter 의존성 사용 (자동 설정/로깅/검증 등 편의 제공)
 // ------------------------------------------------------------
 dependencies {
-    // === Spring Boot 기본 ===     kang
+    // === Spring Boot Core ===
     implementation 'org.springframework.boot:spring-boot-starter-web'          // Web, REST API
     implementation 'org.springframework.boot:spring-boot-starter-security'     // Spring Security
-
-    // === DB & JPA ===     kang
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    runtimeOnly 'org.postgresql:postgresql:42.7.4'   // PostgreSQL 15 대응 최신 드라이버
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-    // === JWT ===     kang
+    // === Database & JPA ===
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'org.postgresql:postgresql:42.7.4'   // PostgreSQL 15 대응 최신 드라이버
+
+    // === Redis ===
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // === WebFlux (WebClient) ===
+    implementation 'org.springframework:spring-webflux'
+
+    // === JWT Authentication ===
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'  // Jackson serializer
 
-    // === Lombok ===     kang
+    // === API Documentation ===
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
+    // === Development Tools ===
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-    // === webClient ===    kang
-    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
+    // === Testing ===
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// ============================================
+// 의존성 관리 - 보안 취약점 해결
+// ============================================
+dependencyManagement {
+    imports {
+        mavenBom 'org.testcontainers:testcontainers-bom:1.20.4'
+    }
+    dependencies {
+        // CVE-2025-48924 해결: commons-lang3 최신 안전 버전으로 강제
+        dependency 'org.apache.commons:commons-lang3:3.18.0'
+    }
 }
 
 // ------------------------------------------------------------
@@ -93,11 +132,26 @@ dependencies {
 //     mainClass = 'com.speakle.sevencode.Application'
 // }
 
+// ============================================
+// 테스트 설정
+// ============================================
 tasks.named('test') {
     useJUnitPlatform()
+
+    // 테스트 시 환경변수 주입
+    environment System.getenv() + loadDotenv()
+
+    // 테스트 결과 출력 설정
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
 }
 
+// ============================================
+// 개발 서버 실행 설정
 // bootRun에 .env + OS 환경변수 주입
+// ============================================
 tasks.named('bootRun') {
     // 시스템 프로퍼티도 애플리케이션에 전달 (gradle -D... 사용 시)
     systemProperties System.properties

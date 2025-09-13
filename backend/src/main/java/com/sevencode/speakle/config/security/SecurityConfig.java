@@ -50,14 +50,13 @@ public class SecurityConfig {
 				.authorizeHttpRequests(auth -> auth
 					// 정적 리소스만 공개 (필요 시 경로 조정)
 					.requestMatchers("/static/**").permitAll()
-					.requestMatchers("/projecttest/**").permitAll()
 
 					// ── 공개/인증 예외 경로
-					.requestMatchers("/oauth/**").permitAll()
-					.requestMatchers(HttpMethod.POST, "/auth/login", "/auth/refresh").permitAll()
-					.requestMatchers(HttpMethod.POST, "/user").permitAll()
-					.requestMatchers(HttpMethod.POST, "/user/temp-password").permitAll()
-					.requestMatchers(HttpMethod.POST, "/user/verify", "/user/verify/send").permitAll()
+					.requestMatchers("/api/oauth/**").permitAll()
+					.requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh").permitAll()
+					.requestMatchers(HttpMethod.POST, "/api/user").permitAll()
+					.requestMatchers(HttpMethod.POST, "/api/user/temp-password").permitAll()
+					.requestMatchers(HttpMethod.POST, "/api/user/verify", "/api/user/verify/send").permitAll()
 
 					// 파일 다운로드는 공개 금지 
 					.requestMatchers("/files/**").authenticated()
