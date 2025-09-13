@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class EtriWebClientConfig {
-    @Value("${webclient.timeout.connect:10}")
+    @Value("${webclient.timeout.connection:10}")
     private int connectTimeoutSeconds;
 
     @Value("${webclient.timeout.read:30}")
