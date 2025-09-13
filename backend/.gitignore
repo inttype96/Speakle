@@ -1,0 +1,133 @@
+### Java ###
+*.class
+*.log
+*.ctxt
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+
+### Environment Variables ###
+.env
+.env.*
+!.env.example
+
+### Gradle ###
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### Maven ###
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### IntelliJ IDEA ###
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+.idea_modules/
+
+### Eclipse ###
+.project
+.classpath
+.settings/
+bin/
+.metadata/
+.recommenders/
+
+### VS Code ###
+.vscode/
+*.code-workspace
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### STS (Spring Tool Suite) ###
+.apt_generated
+.factorypath
+.springBeans
+.sts4-cache
+
+### OS ###
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+# Linux
+*~
+
+### Spring Boot ###
+# 로그 디렉토리
+logs/
+*.log.*
+# 임시 톰캣 작업 디렉토리
+work/
+# 캐시, 임시 파일
+tmp/
+temp/
+# Spring Boot DevTools 관련
+.spring-boot-devtools.properties
+
+### Database ###
+# H2 Database files
+*.db
+*.trace.db
+*.lock.db
+
+### Security & Keys ###
+# 인증서 파일
+*.p12
+*.jks
+*.keystore
+# 설정 파일의 백업
+*.orig
+*.bak
+
+### Application Specific ###
+# 업로드된 파일들
+uploads/
+files/
+# 캐시 디렉토리
+cache/
+# 리포트 및 출력 파일
+reports/
+output/
+
+### Documentation ###
+# 자동 생성된 문서
+docs/generated/
+# API 문서 빌드 결과물
+api-docs/
+
+### Test ###
+# 테스트 리포트
+test-results/
+coverage/
+*.gcda
+*.gcno
+
+### Node.js (Frontend 빌드 도구용) ###
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*

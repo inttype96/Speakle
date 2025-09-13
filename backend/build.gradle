@@ -1,0 +1,160 @@
+import java.nio.file.Files
+import java.nio.file.Paths
+
+// .env 로더 (키=값, # 주석, 양쪽 따옴표 제거)
+def loadDotenv() {
+    def map = [:]
+    def f = file('.env')
+    if (!f.exists()) return map
+    f.eachLine { line ->
+        def s = line.trim()
+        if (!s || s.startsWith('#')) return
+        def idx = s.indexOf('=')
+        if (idx <= 0) return
+        def k = s.substring(0, idx).trim()
+        def v = s.substring(idx + 1).trim()
+        // 양끝 따옴표 제거
+        if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+            v = v.substring(1, v.length() - 1)
+        }
+        map[k] = v
+    }
+    return map
+}
+
+// ============================================
+// 플러그인 설정
+// ============================================
+plugins {
+    //[추가] 기본 셋팅 플러그인 적용 - kang / 2025-09-02
+    id 'java'
+    id 'org.springframework.boot' version '3.3.3'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+// ============================================
+// 프로젝트 정보
+// ============================================
+group = 'com.speakle'
+version = '0.0.1-SNAPSHOT'
+
+// ============================================
+// Java 설정
+// ============================================
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+// ============================================
+// 설정 확장
+// (선택) compileOnly에도 애너테이션 프로세서가 적용되도록 확장 -kang
+// ============================================
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+// ------------------------------------------------------------
+// 리포지토리 
+// - 라이브러리 의존성을 가져올 원격 저장소
+// ------------------------------------------------------------
+repositories {
+    mavenCentral()
+    // (필요 시) 사내 Nexus/Artifactory 추가 가능
+    // maven { url = uri("https://your.nexus/repository/maven-public") }
+}
+
+
+// ------------------------------------------------------------
+// 의존성
+// - 스프링 부트 3.3.x는 Jakarta EE 10 기반 (jakarta.* 패키지)
+// - 가급적 starter 의존성 사용 (자동 설정/로깅/검증 등 편의 제공)
+// ------------------------------------------------------------
+dependencies {
+    // === Spring Boot Core ===
+    implementation 'org.springframework.boot:spring-boot-starter-web'          // Web, REST API
+    implementation 'org.springframework.boot:spring-boot-starter-security'     // Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // === Database & JPA ===
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'org.postgresql:postgresql:42.7.4'   // PostgreSQL 15 대응 최신 드라이버
+
+    // === Redis ===
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // === WebFlux (WebClient) ===
+    implementation 'org.springframework:spring-webflux'
+
+    // === JWT Authentication ===
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'  // Jackson serializer
+
+    // === API Documentation ===
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
+    // === Development Tools ===
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // === Testing ===
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// ============================================
+// 의존성 관리 - 보안 취약점 해결
+// ============================================
+dependencyManagement {
+    imports {
+        mavenBom 'org.testcontainers:testcontainers-bom:1.20.4'
+    }
+    dependencies {
+        // CVE-2025-48924 해결: commons-lang3 최신 안전 버전으로 강제
+        dependency 'org.apache.commons:commons-lang3:3.18.0'
+    }
+}
+
+// ------------------------------------------------------------
+// Spring Boot 패키징 설정
+// ------------------------------------------------------------
+
+// (선택) 애플리케이션 엔트리포인트를 명시적으로 지정하고 싶다면(자동 감지 안될 때)
+// springBoot {
+//     mainClass = 'com.speakle.sevencode.Application'
+// }
+
+// ============================================
+// 테스트 설정
+// ============================================
+tasks.named('test') {
+    useJUnitPlatform()
+
+    // 테스트 시 환경변수 주입
+    environment System.getenv() + loadDotenv()
+
+    // 테스트 결과 출력 설정
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+}
+
+// ============================================
+// 개발 서버 실행 설정
+// bootRun에 .env + OS 환경변수 주입
+// ============================================
+tasks.named('bootRun') {
+    // 시스템 프로퍼티도 애플리케이션에 전달 (gradle -D... 사용 시)
+    systemProperties System.properties
+    // 환경변수 주입: OS env 위에 .env 값으로 덮어쓰기
+    environment System.getenv() + loadDotenv()
+}
