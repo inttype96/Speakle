@@ -44,18 +44,19 @@ public class LearnExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
 
-    @ExceptionHandler(NoRecommendationSentenceFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleNoRecommendationSentence(
-            NoRecommendationSentenceFoundException ex, WebRequest request) {
-        log.warn("추천 문장 없음 - 경로: {}", getRequestPath(request));
+    @ExceptionHandler(NoSentenceAvailableException.class)
+    public ResponseEntity<ApiErrorResponse> handleNoSentenceAvailable(
+            NoSentenceAvailableException ex, WebRequest request) {
+        log.warn("문장 조회 불가 - 경로: {}", getRequestPath(request));
 
         ApiErrorResponse errorResponse = createErrorResponse(
-                "NO_RECOMMENDATION_SENTENCE",
-                "해당 학습곡에서 추출할 문장이 없습니다."
+                "NO_SENTENCE_AVAILABLE",
+                "해당 학습 곡에서 추출할 문장이 없습니다."
         );
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneral(
