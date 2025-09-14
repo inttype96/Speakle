@@ -44,7 +44,23 @@ public class SpeakingServiceImpl implements SpeakingService{
             throw new UnauthorizedAccessException("접근할 수 있는 권한이 없습니다.");
         }
 
-        // 2. 해당 학습곡의 문장 개수 확인
+        // 2. 기존에 동일한 learned_song_id와 question_number로 생성된 speaking 문제가 있는지 확인
+        Optional<SpeakingEntity> existingSpeaking = speakingRepository
+                .findByLearnedSongIdAndQuestionNumber(learnedSongId, questionNumber);
+
+        if (existingSpeaking.isPresent()) {
+            // 기존 데이터가 있으면 해당 데이터 반환
+            SpeakingEntity speaking = existingSpeaking.get();
+            return new SpeakingQuestionResponse(
+                    speaking.getSpeakingId(),
+                    speaking.getLearnedSongId(),
+                    speaking.getSongId(),
+                    speaking.getOriginSentence()
+            );
+        }
+
+        // 3. 기존 데이터가 없으면 새로운 speaking 문제 생성
+        // 3-1. 해당 학습곡의 문장 개수 확인
         // TODO : Sentence 테이블에서 learnedSongId인 데이터 개수 계산하기
         // long sentenceCount = sentenceRepository.countByLearnedSongId(learnedSongId);
         // 테스트용 더미 값
@@ -55,7 +71,7 @@ public class SpeakingServiceImpl implements SpeakingService{
             throw new NoSentenceAvailableException("해당 학습 곡에서 추출할 문장이 없습니다.");
         }
 
-        // 3. 문장 조회 (학습한 sentence에서 가져오기)
+        // 3-2. 문장 조회 (학습한 sentence에서 가져오기)
         // TODO : Sentence 테이블에서 Sentence 객체 기져오기
         //  List<SentencesEntity> sentences = sentencesRepository.findByLearnedSongIdOrderBySentencesIdAsc(learnedSongId);
         // 테스트용 더미 값
@@ -84,18 +100,19 @@ public class SpeakingServiceImpl implements SpeakingService{
         String coreSentence =  sentences.get(index);
         //
 
-        // 4. Speaking 엔티티 생성
+        // 3-3. Speaking 엔티티 생성
         SpeakingEntity speaking = SpeakingEntity.builder()
                 .learnedSongId(learned.getLearnedSongId())
                 .songId(learned.getSongId())
                 .originSentence(coreSentence)
                 .level(SpeakingEntity.Level.BEGINNER)
+                .questionNumber(questionNumber)
                 .situation(learned.getSituation())
                 .location(learned.getLocation())
                 .build();
         speakingRepository.save(speaking);
 
-        // 5. 응답 데이터 생성
+        // 3-4. 응답 데이터 생성
         return new SpeakingQuestionResponse(
                 speaking.getSpeakingId(),
                 learned.getLearnedSongId(),
