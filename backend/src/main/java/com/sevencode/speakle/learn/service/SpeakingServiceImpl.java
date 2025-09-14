@@ -199,7 +199,7 @@ public class SpeakingServiceImpl implements SpeakingService{
                 .speakingId(savedResult.getSpeakingId())
                 .isCorrect(savedResult.getIsCorrect())
                 .score(savedResult.getScore())
-                .createdAt(savedResult.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")))
+                .createdAt(savedResult.getCreatedAt())
                 .meta(savedResult.getMeta())
                 .build();
     }

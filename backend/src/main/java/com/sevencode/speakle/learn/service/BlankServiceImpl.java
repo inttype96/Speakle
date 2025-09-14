@@ -458,7 +458,7 @@ public class BlankServiceImpl implements BlankService{
             result.setBlankId(blankResult.getBlankId());
             result.setIsCorrect(blankResult.getIsCorrect());
             result.setScore(blankResult.getScore());
-            result.setCreatedAt(blankResult.getCreatedAt().toString() + "Z");
+            result.setCreatedAt(blankResult.getCreatedAt());
             result.setMeta(meta);
 
             results.add(result);

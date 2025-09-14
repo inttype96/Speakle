@@ -18,7 +18,7 @@ public class BlankResultResponse {
     private Boolean isCorrect;
     private Integer score;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     private LocalDateTime createdAt;
 
     private Map<String, Object> meta;
