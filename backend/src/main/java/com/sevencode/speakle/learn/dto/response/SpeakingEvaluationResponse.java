@@ -1,7 +1,9 @@
 package com.sevencode.speakle.learn.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Getter
@@ -14,6 +16,9 @@ public class SpeakingEvaluationResponse {
     private Long speakingId;
     private Boolean isCorrect;
     private Integer score;
-    private String createdAt;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
+    private LocalDateTime createdAt;
+
     private Map<String, Object> meta;
 }

@@ -4,7 +4,6 @@ import com.sevencode.speakle.config.security.UserPrincipal;
 import com.sevencode.speakle.learn.dto.request.*;
 import com.sevencode.speakle.learn.dto.response.*;
 import com.sevencode.speakle.learn.service.BlankService;
-import com.sevencode.speakle.learn.service.LearnService;
 
 import com.sevencode.speakle.learn.service.SpeakingService;
 import jakarta.validation.Valid;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/learn")
 public class LearnController {
 
-    private final LearnService learnService;
     private final SpeakingService speakingService;
     private final BlankService blankService;
 
@@ -77,7 +75,7 @@ public class LearnController {
             @Valid @RequestBody SpeakingQuestionRequest req,
             @AuthenticationPrincipal UserPrincipal me) {
         Long userId = me.userId();
-        SpeakingQuestionResponse res = learnService.getSpeakingQuestion(req.getLearnedSongId(), req.getQuestionNumber(), userId);
+        SpeakingQuestionResponse res = speakingService.getSpeakingQuestion(req.getLearnedSongId(), req.getQuestionNumber(), userId);
 
         return ResponseEntity.ok(ApiResponse.success(200, "스피킹 평가 문장을 조회했습니다.", res));
     }

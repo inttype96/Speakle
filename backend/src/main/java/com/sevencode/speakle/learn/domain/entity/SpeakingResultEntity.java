@@ -2,7 +2,6 @@ package com.sevencode.speakle.learn.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -38,7 +37,18 @@ public class SpeakingResultEntity {
     @Column(name = "meta", columnDefinition = "jsonb")
     private Map<String, Object> meta;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @PreUpdate
+    protected void onUpdate() {
+        createdAt = LocalDateTime.now();
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }
