@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -159,18 +160,33 @@ public class SpeakingServiceImpl implements SpeakingService{
                 "score", scoreStr   // 원본 점수 저장
         );
 
+        // 4. 기존 결과 확인 및 저장/업데이트
+        Optional<SpeakingResultEntity> existingResult = speakingResultRepository
+                .findBySpeakingIdAndUserId(request.getSpeakingId(), userId);
 
-        // 4. 결과 저장
-        SpeakingResultEntity result = SpeakingResultEntity.builder()
-                .userId(userId)
-                .speakingId(request.getSpeakingId())
-                .isCorrect(isCorrect)
-                .score(finalScore)
-                .meta(meta)
-                .build();
+        SpeakingResultEntity savedResult;
 
-        SpeakingResultEntity savedResult = speakingResultRepository.save(result);
+        if (existingResult.isPresent()) {
+            // 기존 결과가 있으면 업데이트
+            SpeakingResultEntity result = existingResult.get();
+            result.setIsCorrect(isCorrect);
+            result.setScore(finalScore);
+            result.setMeta(meta);
+            result.setCreatedAt(LocalDateTime.now());
 
+            savedResult = speakingResultRepository.save(result);
+        } else {
+            // 기존 결과가 없으면 새로 생성
+            SpeakingResultEntity result = SpeakingResultEntity.builder()
+                    .userId(userId)
+                    .speakingId(request.getSpeakingId())
+                    .isCorrect(isCorrect)
+                    .score(finalScore)
+                    .meta(meta)
+                    .build();
+
+            savedResult = speakingResultRepository.save(result);
+        }
 
         // 5. 포인트 업데이트
         if(isCorrect){
