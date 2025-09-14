@@ -57,6 +57,19 @@ public class LearnExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
+    @ExceptionHandler(ValidWordNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleValidWordNotFound(
+            ValidWordNotFoundException ex, WebRequest request) {
+        log.warn("유효한 단어를 찾을 수 없음 - 경로: {}", getRequestPath(request));
+
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "VALID_WORD_NOT_FOUND",
+                "빈칸으로 만들 적절한 단어를 찾을 수 없습니다."
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneral(
