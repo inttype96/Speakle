@@ -1,31 +1,103 @@
 // src/types/quiz.ts
-export type QuizGenReq = {
-  learned_song_id: number;
-  situation: string;
-  location: string;
-  song_id: number;
-  questionNumber: number; // 1..N
+// ──────────────────────────────────────────────────────────────────────────────
+// [역할]
+// - 백엔드 API 명세에 맞춘 타입 모음
+// - 프론트 내 데이터 안전성 확보 + 자동 완성 도움
+// ──────────────────────────────────────────────────────────────────────────────
+
+export type QuizGenerateReq = {
+  learnedSongId: number;
+  situation: string;     // 예: "daily_conversation"
+  location: string;      // 예: "cafe"
+  songId: number;
+  questionNumber: number; // 1..N (현재 1개 빈칸 기준)
 };
 
-export type QuizGenRes = {
-  questionNumber: number;
-  fullSentence: string;     // 정답 문장 (원문)
-  blankedSentence: string;  // 빈칸이 뚫린 문장
-  answerWord: string;       // 정답 단어/구
-  blankId: number;          // 저장용 ID
+export type QuizGenerateResData = {
+  blankId: number;
+  learnedSongId: number;
+  songId: number;
+  recommendationSentenceId: number;
+  originSentence: string;
+  korean: string;
+  question: string;       // "The club isn't the best place to find a _____"
+  answer: string[];       // ["lover"]  ← 다중 빈칸 확장 여지를 위해 배열
+  createdAt: string;      // ISO
 };
 
-export type SubmitScoreReq = {
-  userId: number;  // 로그인 연동 전이면 0 등 임시 값
+export type QuizGenerateRes = {
+  status: number;
+  message: string;
+  data: QuizGenerateResData;
+};
+
+export type MarkingReq = {
+  userId: number;
   blankId: number;
   isCorrect: boolean;
-  score: number;   // 정답 10 / 오답 0 등
+  score: number;         // 예: 정답 10, 오답 0
+  originSentence: string;
+  question: string;
+  correctAnswer: string[]; // ["wiser"]
+  userAnswer: string[];    // ["friend"]
 };
 
-export type QuizResultItem = {
-  questionNumber: number;
-  fullSentence: string;
+export type MarkingResData = {
+  blankResultId: number;
+  userId: number;
+  blankId: number;
   isCorrect: boolean;
-  userInput?: string;
-  answerWord: string;
+  score: number;
+  createdAt: string;
+  meta: {
+    originSentence: string;
+    question: string;
+    correctAnswer: string[];
+    userAnswer: string[];
+  };
+};
+
+export type MarkingRes = {
+  status: number;
+  message: string;
+  data: MarkingResData;
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
+// [주의] 스펙은 GET + Body 이지만, 일반적으로 GET은 body를 사용하지 않습니다.
+// - axios로는 params로 우회하거나, backend가 진짜 body-GET을 받도록 해야 합니다.
+// 여기서는 서비스단에서 두 방식 모두 시도할 수 있게 코드를 작성합니다.
+// ──────────────────────────────────────────────────────────────────────────────
+export type CompleteReq = {
+  learnedSongId: number;
+};
+
+export type CompleteResultItem = {
+  blankResultId: number;
+  userId: number;
+  blankId: number;
+  isCorrect: boolean;
+  score: number;
+  createdAt: string;
+  meta: {
+    originSentence: string;
+    question: string;
+    correctAnswer: string[];
+    userAnswer: string[];
+  };
+};
+
+export type CompleteResData = {
+  summary: {
+    totalQuestions: number;
+    correctAnswers: number;
+    totalScore: number;
+  };
+  results: CompleteResultItem[];
+};
+
+export type CompleteRes = {
+  status: number;
+  message: string;
+  data: CompleteResData;
 };
