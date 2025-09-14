@@ -178,13 +178,12 @@ public class BlankServiceImpl implements BlankService{
 
         // 3. 소문자만 포함되어야 함 (고유명사를 제외하기 위해)
         if(!word.equals(word.toLowerCase())) return false;
-//        if (!word.matches(".*[a-z].*")) return false;
 
         return true;
     }
 
     // ------------------------------------------------------------
-    // 유효한 단어 중 빈칸으로 만들 단어 랜덤 선택 (쭝복 없이)
+    // 유효한 단어 중 빈칸으로 만들 단어 랜덤 선택 (중복 없이)
     // ------------------------------------------------------------
     private List<String> selectRandomWords(List<String> validWords, int count) {
         List<String> shuffled = new ArrayList<>(validWords);
