@@ -1,4 +1,17 @@
 // src/pages/QuizPage.tsx
+/**
+ * [QuizPage 개요]
+ * - URL 쿼리파라미터(learned_song_id, song_id, situation, location, title, artist)를 읽는다.
+ * - 백엔드에서 문제를 한 문제씩 가져오고(quizService.generateQuiz), 번역도 가져온다(또는 FE에서 번역 호출).
+ * - 사용자가 답안을 입력해 제출하면 정오를 판단하고 토스트로 피드백을 준 뒤, 점수/결과를 저장하고 다음 문제로 이동한다.
+ * - Skip 버튼은 오답 처리와 동일하지만 사용자 입력 없이 넘어간다.
+ * - 상단에는 진행률, 중앙에는 문제 카드(포인트/타이머/난이도/문장/번역/입력), 하단에는 Skip/Next 버튼이 있다.
+ *
+ * [주의]
+ * - Navbar가 position: fixed라면 본문 컨테이너에 pt-16/pt-20 같은 상단 여백을 주어야 가려지지 않는다(아래 코드 반영).
+ * - Sonner 토스트를 쓰므로 App.tsx에 <Toaster />가 있어야 한다.
+ */
+
 import { useEffect, useMemo, useState, useCallback } from "react";
 import Navbar from "@/components/common/navbar";
 
@@ -35,6 +48,15 @@ const DEFAULT_SONG_ID = 123;
 // 총 문제 수(원하면 10으로 변경 가능)
 const TOTAL_QUESTIONS = 3;
 const POINTS_PER_Q = 100;
+
+// 00:00 형태로 시간(초)을 표시하는 포맷터
+const formatTime = (sec: number) => {
+  const m = Math.floor(sec / 60)
+    .toString()
+    .padStart(2, "0");
+  const s = (sec % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
+};
 
 export default function QuizPage() {
   const [qNum, setQNum] = useState(1);
@@ -133,6 +155,12 @@ export default function QuizPage() {
 
   const isCompleted = !!complete;
 
+  /**
+   * [실제 화면 렌더]
+   * - 상단: "곡으로 돌아가기" / 우측 곡 정보 카드
+   * - 진행률: "Question n of N" + Progress 바
+   * - 문제 카드: 포인트/타이머/난이도 + 문제 문장 + 번역 + 입력 + Skip/Next
+   */
   return (
     <div className="min-h-screen bg-black text-white">
       {/* 1) 최상단 Navbar */}
@@ -159,6 +187,9 @@ export default function QuizPage() {
             <div className="text-sm font-semibold">{TOP_RIGHT_MODE}</div>
           </div>
         </div>
+
+        {/* 진행률 바 */}
+        <Progress value={Math.max(progressPercent, 1)} className="h-2" />
 
         {/* 진행 영역 */}
         <div className="mt-6 text-xs text-zinc-400">
