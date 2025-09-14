@@ -53,6 +53,9 @@ public class BlankEntity {
     @Column(name = "level")
     private Level level;
 
+    @Column(name = "question_number")
+    private Integer questionNumber;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "meta", columnDefinition = "jsonb")
     private Map<String, Object> meta;

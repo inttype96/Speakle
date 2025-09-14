@@ -83,6 +83,18 @@ public class LearnExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
+    @ExceptionHandler(BlankResultNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleBlankResultNotFound(
+            BlankResultNotFoundException ex, WebRequest request) {
+        log.warn("빈칸 퀴즈 결과를 찾을 수 없음 - 경로: {}", getRequestPath(request));
+
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "BLANK_RESULT_NOT_FOUND",
+                "해당 퀴즈 결과를 찾을 수 없습니다."
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneral(
