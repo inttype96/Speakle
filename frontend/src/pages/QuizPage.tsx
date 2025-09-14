@@ -188,9 +188,6 @@ export default function QuizPage() {
           </div>
         </div>
 
-        {/* 진행률 바 */}
-        <Progress value={Math.max(progressPercent, 1)} className="h-2" />
-
         {/* 진행 영역 */}
         <div className="mt-6 text-xs text-zinc-400">
           Question {qNum} of {TOTAL_QUESTIONS}
