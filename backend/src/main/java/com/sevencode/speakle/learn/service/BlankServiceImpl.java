@@ -108,7 +108,15 @@ public class BlankServiceImpl implements BlankService{
         // 3. 빈칸 문제 생성
         BlankQuizResult quizResult = createBlankQuiz(originalSentence);
 
+
         // 4. BlankEntity 생성 및 저장
+        Map<String, Object> meta = new LinkedHashMap<>();
+        meta.put("question", quizResult.getQuestion());
+        meta.put("answer", quizResult.getAnswers()); // List<String> -> JSON 배열로 직렬화됨
+        meta.put("originSentence", originalSentence);
+//        meta.put("korean", recommendationSentence.getKorean());   // TODO: recommendation_sentence 테이블 연결하면 주석 삭제하기
+        meta.put("korean", "클럽은 연인을 찾기에 최적의 장소가 아닙니다"); // TODO: recommendation_sentence 테이블 연결하면 삭제하기
+
         BlankEntity blank = BlankEntity.builder()
                 .learnedSongId(req.getLearnedSongId())
                 .situation(req.getSituation())
@@ -120,6 +128,7 @@ public class BlankServiceImpl implements BlankService{
                 .question(quizResult.getQuestion())
                 .answer(quizResult.getAnswers().toArray(new String[0]))
                 .level(BlankEntity.Level.BEGINNER)
+                .meta(meta)
                 .build();
 
         BlankEntity savedBlank = blankRepository.save(blank);
