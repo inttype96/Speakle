@@ -12,7 +12,6 @@ import lombok.*;
 @Builder
 public class BlankQuestionRequest {
     @NotNull(message = "learned_song_id는 필수입니다.")
-    @JsonProperty("learned_song_id")
     private Long learnedSongId;
 
     private String situation;
@@ -20,7 +19,6 @@ public class BlankQuestionRequest {
     private String location;
 
     @NotNull(message = "song_id는 필수입니다.")
-    @JsonProperty("song_id")
     private Long songId;
 
     @Min(value = 1, message = "questionNumber는 1 이상이어야 합니다.")
