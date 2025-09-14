@@ -2,12 +2,10 @@ package com.sevencode.speakle.learn.controller;
 
 import com.sevencode.speakle.config.security.UserPrincipal;
 import com.sevencode.speakle.learn.dto.request.BlankQuestionRequest;
+import com.sevencode.speakle.learn.dto.request.BlankResultRequest;
 import com.sevencode.speakle.learn.dto.request.SpeakingEvaluationRequest;
 import com.sevencode.speakle.learn.dto.request.SpeakingQuestionRequest;
-import com.sevencode.speakle.learn.dto.response.ApiResponse;
-import com.sevencode.speakle.learn.dto.response.BlankQuestionResponse;
-import com.sevencode.speakle.learn.dto.response.SpeakingEvaluationResponse;
-import com.sevencode.speakle.learn.dto.response.SpeakingQuestionResponse;
+import com.sevencode.speakle.learn.dto.response.*;
 import com.sevencode.speakle.learn.service.BlankService;
 import com.sevencode.speakle.learn.service.LearnService;
 
@@ -42,6 +40,22 @@ public class LearnController {
 
         BlankQuestionResponse res = blankService.getBlankQuestion(req, userId);
         return ResponseEntity.ok(ApiResponse.success(200, "스피킹 평가 문장을 조회했습니다.", res));
+    }
+
+    /**
+     * 빈칸 퀴즈 채점 결과 저장
+     */
+    @PostMapping("/quiz/marking")
+    public ResponseEntity<ApiResponse<BlankResultResponse>> saveBlankResult(
+            @Valid @RequestBody BlankResultRequest request,
+            @AuthenticationPrincipal UserPrincipal me) {
+        Long userId = me.userId();
+
+        BlankResultResponse response = blankService.saveBlankResult(request, userId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "퀴즈 결과가 저장되었습니다.", response)
+        );
     }
 
     /**

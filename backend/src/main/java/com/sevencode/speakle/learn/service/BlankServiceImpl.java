@@ -1,13 +1,18 @@
 package com.sevencode.speakle.learn.service;
 
 import com.sevencode.speakle.learn.domain.entity.BlankEntity;
+import com.sevencode.speakle.learn.domain.entity.BlankResultEntity;
 import com.sevencode.speakle.learn.domain.entity.LearnedSongEntity;
 import com.sevencode.speakle.learn.dto.request.BlankQuestionRequest;
+import com.sevencode.speakle.learn.dto.request.BlankResultRequest;
 import com.sevencode.speakle.learn.dto.response.BlankQuestionResponse;
+import com.sevencode.speakle.learn.dto.response.BlankResultResponse;
+import com.sevencode.speakle.learn.exception.BlankNotFoundException;
 import com.sevencode.speakle.learn.exception.LearnedSongNotFoundException;
 import com.sevencode.speakle.learn.exception.UnauthorizedAccessException;
 import com.sevencode.speakle.learn.exception.ValidWordNotFoundException;
 import com.sevencode.speakle.learn.repository.BlankRepository;
+import com.sevencode.speakle.learn.repository.BlankResultRepository;
 import com.sevencode.speakle.learn.repository.LearnedSongRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +26,7 @@ import java.util.regex.Pattern;
 @Transactional
 public class BlankServiceImpl implements BlankService{
     private final BlankRepository blankRepository;
+    private final BlankResultRepository blankResultRepository;
     private final LearnedSongRepository learnedSongRepository;
 
     private final Random random = new Random();
@@ -74,6 +80,9 @@ public class BlankServiceImpl implements BlankService{
             "july", "august", "september", "october", "november", "december"
     );
 
+    /**
+     * 빈칸 문제 생성(조회)
+     */
     @Override
     public BlankQuestionResponse getBlankQuestion(BlankQuestionRequest req, Long userId) {
         // 1. 학습곡 존재 및 권한 확인
@@ -109,7 +118,7 @@ public class BlankServiceImpl implements BlankService{
                 // .korean(recommendationSentence.getKorean())      // TODO: recommendation_sentence 테이블 연결하면 주석 삭제하기
                 .korean("클럽은 연인을 찾기에 최적의 장소가 아닙니다")    // TODO: recommendation_sentence 테이블 연결하면 삭제하기
                 .question(quizResult.getQuestion())
-                .answer(quizResult.getAnswers())
+                .answer(quizResult.getAnswers().toArray(new String[0]))
                 .level(BlankEntity.Level.BEGINNER)
                 .build();
 
@@ -242,6 +251,66 @@ public class BlankServiceImpl implements BlankService{
 
         public List<String> getAnswers() {
             return answers;
+        }
+    }
+
+
+    /**
+     * 빈칸 퀴즈 채점 결과 저장
+     */
+    @Override
+    public BlankResultResponse saveBlankResult(BlankResultRequest req, Long userId) {
+        // 1. 권한 확인 및 빈칸 게임 존재 확인
+        System.out.println("blankId : " +req.getBlankId());
+        BlankEntity blank = blankRepository.findById(req.getBlankId())
+                .orElseThrow(() -> new BlankNotFoundException("존재하지 않는 퀴즈입니다."));
+
+        Long learnedSongId = blank.getLearnedSongId();
+        LearnedSongEntity learnedSongEntity = learnedSongRepository.findById(learnedSongId)
+                .orElseThrow(() -> new LearnedSongNotFoundException("존재하지 않는 학습곡입니다."));
+        System.out.println("learnedSongId : " +learnedSongId);
+
+        if (!Objects.equals(learnedSongEntity.getUserId(), userId)) {
+            throw new UnauthorizedAccessException("접근할 수 있는 권한이 없습니다.");
+        }
+
+        // 3. meta 정보 구성 (camelCase로 변경)
+        Map<String, Object> meta = new HashMap<>();
+        meta.put("originSentence", req.getOriginSentence());
+        meta.put("question", req.getQuestion());
+        meta.put("correctAnswer", req.getCorrectAnswer());
+        meta.put("userAnswer", req.getUserAnswer());
+
+        // 4. BlankResultEntity 생성 및 저장
+        BlankResultEntity blankResult = BlankResultEntity.builder()
+                .userId(userId)
+                .blankId(req.getBlankId())
+                .isCorrect(req.getIsCorrect())
+                .score(req.getScore())
+                .meta(meta)
+                .build();
+
+        try {
+            BlankResultEntity savedResult = blankResultRepository.save(blankResult);
+
+            // 5. 포인트 업데이트 (정답인 경우)
+            if (req.getIsCorrect()) {
+                // TODO: 포인트 업데이트 로직 추가
+            }
+
+            // 6. 응답 생성
+            return BlankResultResponse.builder()
+                    .blankResultId(savedResult.getBlankResultId())
+                    .userId(savedResult.getUserId())
+                    .blankId(savedResult.getBlankId())
+                    .isCorrect(savedResult.getIsCorrect())
+                    .score(savedResult.getScore())
+                    .createdAt(savedResult.getCreatedAt())
+                    .meta(savedResult.getMeta())
+                    .build();
+
+        } catch (Exception e) {
+            throw new RuntimeException("퀴즈 결과 저장 중 오류 발생");
         }
     }
 }
