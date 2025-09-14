@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -270,14 +271,12 @@ public class BlankServiceImpl implements BlankService{
     @Override
     public BlankResultResponse saveBlankResult(BlankResultRequest req, Long userId) {
         // 1. 권한 확인 및 빈칸 게임 존재 확인
-        System.out.println("blankId : " +req.getBlankId());
         BlankEntity blank = blankRepository.findById(req.getBlankId())
                 .orElseThrow(() -> new BlankNotFoundException("존재하지 않는 퀴즈입니다."));
 
         Long learnedSongId = blank.getLearnedSongId();
         LearnedSongEntity learnedSongEntity = learnedSongRepository.findById(learnedSongId)
                 .orElseThrow(() -> new LearnedSongNotFoundException("존재하지 않는 학습곡입니다."));
-        System.out.println("learnedSongId : " +learnedSongId);
 
         if (!Objects.equals(learnedSongEntity.getUserId(), userId)) {
             throw new UnauthorizedAccessException("접근할 수 있는 권한이 없습니다.");
@@ -290,14 +289,30 @@ public class BlankServiceImpl implements BlankService{
         meta.put("correctAnswer", req.getCorrectAnswer());
         meta.put("userAnswer", req.getUserAnswer());
 
-        // 4. BlankResultEntity 생성 및 저장
-        BlankResultEntity blankResult = BlankResultEntity.builder()
-                .userId(userId)
-                .blankId(req.getBlankId())
-                .isCorrect(req.getIsCorrect())
-                .score(req.getScore())
-                .meta(meta)
-                .build();
+        // 4. BlankResultEntity 생성 & 저장
+        BlankResultEntity blankResult;
+        // 기존 BlankResult 존재 여부 확인
+        Optional<BlankResultEntity> existingBlankResult = blankResultRepository
+                .findByBlankIdAndUserId(req.getBlankId(), userId);
+
+        if(existingBlankResult.isPresent()){
+            // 기존 데이터가 존재하면 업데이트
+            blankResult = existingBlankResult.get();
+            blankResult.setIsCorrect(req.getIsCorrect());
+            blankResult.setScore(req.getScore());
+            blankResult.setMeta(meta);
+            blankResult.setCreatedAt(LocalDateTime.now());
+        }
+        else{
+            // 기존 데이터가 없으면 새로 생성
+            blankResult = BlankResultEntity.builder()
+                    .userId(userId)
+                    .blankId(req.getBlankId())
+                    .isCorrect(req.getIsCorrect())
+                    .score(req.getScore())
+                    .meta(meta)
+                    .build();
+        }
 
         try {
             BlankResultEntity savedResult = blankResultRepository.save(blankResult);
