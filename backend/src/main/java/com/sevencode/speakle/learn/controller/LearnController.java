@@ -1,10 +1,7 @@
 package com.sevencode.speakle.learn.controller;
 
 import com.sevencode.speakle.config.security.UserPrincipal;
-import com.sevencode.speakle.learn.dto.request.BlankQuestionRequest;
-import com.sevencode.speakle.learn.dto.request.BlankResultRequest;
-import com.sevencode.speakle.learn.dto.request.SpeakingEvaluationRequest;
-import com.sevencode.speakle.learn.dto.request.SpeakingQuestionRequest;
+import com.sevencode.speakle.learn.dto.request.*;
 import com.sevencode.speakle.learn.dto.response.*;
 import com.sevencode.speakle.learn.service.BlankService;
 import com.sevencode.speakle.learn.service.LearnService;
@@ -16,10 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -55,6 +49,23 @@ public class LearnController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(200, "퀴즈 결과가 저장되었습니다.", response)
+        );
+    }
+
+
+    /**
+     * 빈칸 퀴즈 완료
+     */
+    @GetMapping("/quiz/complete")
+    public ResponseEntity<ApiResponse<BlankCompleteResponse>> getQuizComplete(
+            @RequestBody BlankCompleteRequest request,
+            @AuthenticationPrincipal UserPrincipal me) {
+
+        Long userId = me.userId();
+        BlankCompleteResponse response = blankService.getBlankComplete(request.getLearnedSongId(), userId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "퀴즈가 완료되었습니다.", response)
         );
     }
 

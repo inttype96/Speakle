@@ -7,10 +7,8 @@ import com.sevencode.speakle.learn.dto.request.BlankQuestionRequest;
 import com.sevencode.speakle.learn.dto.request.BlankResultRequest;
 import com.sevencode.speakle.learn.dto.response.BlankQuestionResponse;
 import com.sevencode.speakle.learn.dto.response.BlankResultResponse;
-import com.sevencode.speakle.learn.exception.BlankNotFoundException;
-import com.sevencode.speakle.learn.exception.LearnedSongNotFoundException;
-import com.sevencode.speakle.learn.exception.UnauthorizedAccessException;
-import com.sevencode.speakle.learn.exception.ValidWordNotFoundException;
+import com.sevencode.speakle.learn.dto.response.BlankCompleteResponse;
+import com.sevencode.speakle.learn.exception.*;
 import com.sevencode.speakle.learn.repository.BlankRepository;
 import com.sevencode.speakle.learn.repository.BlankResultRepository;
 import com.sevencode.speakle.learn.repository.LearnedSongRepository;
@@ -21,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +30,7 @@ public class BlankServiceImpl implements BlankService{
     private final LearnedSongRepository learnedSongRepository;
 
     private final Random random = new Random();
+
     private static final Set<String> EXCLUDED_WORDS = Set.of(
             // 관사
             "a", "an", "the",
@@ -335,6 +335,136 @@ public class BlankServiceImpl implements BlankService{
 
         } catch (Exception e) {
             throw new RuntimeException("퀴즈 결과 저장 중 오류 발생");
+        }
+    }
+
+    /**
+     * 빈칸 퀴즈 종료
+     */
+    public BlankCompleteResponse getBlankComplete(Long learnedSongId, Long userId) {
+        // 1. 권한 확인
+        LearnedSongEntity learnedSongEntity = learnedSongRepository.findById(learnedSongId)
+                .orElseThrow(() -> new LearnedSongNotFoundException("존재하지 않는 학습곡입니다."));
+
+        if (!Objects.equals(learnedSongEntity.getUserId(), userId)) {
+            throw new UnauthorizedAccessException("접근할 수 있는 권한이 없습니다.");
+        }
+
+        // 2. learned_song_id로 blank 테이블에서 데이터 조회
+        List<BlankEntity> blanks = blankRepository.findByLearnedSongId(learnedSongId);
+
+        if (blanks.isEmpty()) {
+            throw new BlankNotFoundException("해당 퀴즈를 찾을 수 없습니다.");
+        }
+
+        // 3. blank_id 리스트 추출
+        List<Long> blankIds = blanks.stream()
+                .map(BlankEntity::getBlankId)
+                .collect(Collectors.toList());
+
+        // 4. blank_result에서 해당 결과들 조회
+        List<BlankResultEntity> blankResults = blankResultRepository
+                .findByBlankIdInAndUserId(blankIds, userId);
+
+        if (blankResults.isEmpty()) {
+            throw new BlankResultNotFoundException("해당 퀴즈 결과를 찾을 수 없습니다.");
+        }
+
+        // 5. 응답 데이터 구성
+        return buildBlankCompleteResponse(blanks, blankResults);
+    }
+
+    // ------------------------------------------------------------
+    // 빈칸 퀴즈 완료 응답 생성
+    // ------------------------------------------------------------
+    private BlankCompleteResponse buildBlankCompleteResponse(List<BlankEntity> blanks, List<BlankResultEntity> blankResults) {
+        // Blank 데이터를 Map으로 변환 (빠른 조회를 위해)
+        Map<Long, BlankEntity> blankMap = blanks.stream()
+                .collect(Collectors.toMap(BlankEntity::getBlankId, blank -> blank));
+
+        List<BlankCompleteResponse.BlankResult> results = new ArrayList<>();
+        int correctCount = 0;
+        int totalScore = 0;
+
+        for (BlankResultEntity blankResult : blankResults) {
+            BlankEntity blank = blankMap.get(blankResult.getBlankId());
+            if (blank == null) continue;
+
+            // meta 데이터 파싱
+            BlankCompleteResponse.BlankMeta meta = parseMetaData(blank, blankResult);
+
+            BlankCompleteResponse.BlankResult result = new BlankCompleteResponse.BlankResult();
+            result.setBlankResultId(blankResult.getBlankResultId());
+            result.setUserId(blankResult.getUserId());
+            result.setBlankId(blankResult.getBlankId());
+            result.setIsCorrect(blankResult.getIsCorrect());
+            result.setScore(blankResult.getScore());
+            result.setCreatedAt(blankResult.getCreatedAt().toString() + "Z");
+            result.setMeta(meta);
+
+            results.add(result);
+
+            if (Boolean.TRUE.equals(blankResult.getIsCorrect())) {
+                correctCount++;
+            }
+            totalScore += blankResult.getScore();
+        }
+        
+        // blankId를 기준으로 오름차순 정렬
+        results.sort(Comparator.comparing(BlankCompleteResponse.BlankResult::getBlankId));
+        
+        // Summary 생성
+        BlankCompleteResponse.Summary summary = new BlankCompleteResponse.Summary();
+        summary.setTotalQuestions(results.size());
+        summary.setCorrectAnswers(correctCount);
+        summary.setTotalScore(totalScore);
+
+        // 최종 응답 구성
+        BlankCompleteResponse res = new BlankCompleteResponse();
+        res.setSummary(summary);
+        res.setResults(results);
+        return res;
+    }
+
+    // ------------------------------------------------------------
+    // 메타 데이터 생성
+    // ------------------------------------------------------------
+    private BlankCompleteResponse.BlankMeta parseMetaData(BlankEntity blank, BlankResultEntity blankResult) {
+//        // correctAnswer 파싱 (blank 테이블의 answer 필드에서)
+        List<String> correctAnswer = Arrays.asList(blank.getAnswer());
+
+        // userAnswer 파싱 (blankResult의 meta에서)
+        List<String> userAnswer = parseUserAnswerFromMeta(blankResult.getMeta());
+
+        return BlankCompleteResponse.BlankMeta.builder()
+                .originSentence(blank.getOriginSentence())
+                .question(blank.getQuestion())
+                .correctAnswer(correctAnswer)
+                .userAnswer(userAnswer)
+                .build();
+    }
+
+    // ------------------------------------------------------------
+    // 메타 데이터 중에서 userAnswer 생성
+    // ------------------------------------------------------------
+    private List<String> parseUserAnswerFromMeta(Map<String, Object> meta) {
+        try {
+            if (meta == null) {
+                return new ArrayList<>();
+            }
+
+            Object userAnswerObj = meta.get("userAnswer");
+            if (userAnswerObj == null) {
+                return new ArrayList<>();
+            }
+            else {
+                List<String> userAnswerList = (List<String>) userAnswerObj;
+                return userAnswerList.stream()
+                        .map(Object::toString)
+                        .collect(Collectors.toList());
+            }
+        } catch (Exception e) {
+            return new ArrayList<>();
         }
     }
 }
