@@ -94,7 +94,26 @@ public class BlankServiceImpl implements BlankService{
             throw new UnauthorizedAccessException("접근할 수 있는 권한이 없습니다.");
         }
 
-        // 2. recommendation_sentence에서 문장 조회
+        // 2. learned_song_id와 questionNumber(order)로 기존 데이터 조회
+        Optional<BlankEntity> existingBlank = blankRepository.findByLearnedSongIdAndQuestionNumber(
+                req.getLearnedSongId(),
+                req.getQuestionNumber()
+        );
+
+        if (existingBlank.isPresent()) {
+            // 기존 데이터가 있으면 조회하여 반환
+            return convertToBlankQuestionResponse(existingBlank.get());
+        }
+
+        // 3. 기존 데이터가 없으면 새로 생성
+        return createNewBlankQuestion(req, userId);
+    }
+
+    // ------------------------------------------------------------
+    // 새로운 빈칸 문제 생성
+    // ------------------------------------------------------------
+    private BlankQuestionResponse createNewBlankQuestion(BlankQuestionRequest req, Long userId) {
+        // 1. recommendation_sentence에서 문장 조회
         // TODO: Recommendation_sentence 테이블에서 퀴즈 문장 가져오기 (getRecommendationSentence() 함수 구현하기)
         // RecommendationSentence recommendationSentence = getRecommendationSentence(
         //         request.getLearnedSongId(),
@@ -106,11 +125,10 @@ public class BlankServiceImpl implements BlankService{
         String originalSentence = "The club isn't the best place to find a lover";
         //
 
-        // 3. 빈칸 문제 생성
+        // 2. 빈칸 문제 생성
         BlankQuizResult quizResult = createBlankQuiz(originalSentence);
 
-
-        // 4. BlankEntity 생성 및 저장
+        // 3. BlankEntity 생성 및 저장
         Map<String, Object> meta = new LinkedHashMap<>();
         meta.put("question", quizResult.getQuestion());
         meta.put("answer", quizResult.getAnswers()); // List<String> -> JSON 배열로 직렬화됨
@@ -129,12 +147,13 @@ public class BlankServiceImpl implements BlankService{
                 .question(quizResult.getQuestion())
                 .answer(quizResult.getAnswers().toArray(new String[0]))
                 .level(BlankEntity.Level.BEGINNER)
+                .questionNumber(req.getQuestionNumber())
                 .meta(meta)
                 .build();
 
         BlankEntity savedBlank = blankRepository.save(blank);
 
-        // 5. 응답 데이터 생성
+        // 4. 응답 데이터 생성
         BlankQuestionResponse res = BlankQuestionResponse.builder()
                 .blankId(savedBlank.getBlankId())
                 .learnedSongId(savedBlank.getLearnedSongId())
@@ -264,6 +283,46 @@ public class BlankServiceImpl implements BlankService{
         }
     }
 
+
+
+    // ------------------------------------------------------------
+    // questionNumber에 따라 적절한 BlankEntity 선택
+    // ------------------------------------------------------------
+    private BlankEntity selectBlankByQuestionNumber(List<BlankEntity> blanks, Integer questionNumber) {
+        if (blanks.isEmpty()) {
+            throw new BlankNotFoundException("해당 퀴즈를 찾을 수 없습니다.");
+        }
+        switch (questionNumber) {
+            case 1:
+                return blanks.get(0);
+            case 2:
+                return blanks.get(1);
+            case 3:
+                return blanks.get(2);
+            default:
+                return blanks.get(0);
+        }
+    }
+
+    // ------------------------------------------------------------
+    // BlankEntity를 BlankQuestionResponse로 변환
+    // ------------------------------------------------------------
+    private BlankQuestionResponse convertToBlankQuestionResponse(BlankEntity blank) {
+        // answer 배열을 List로 변환
+        List<String> answerList = Arrays.asList(blank.getAnswer());
+
+        return BlankQuestionResponse.builder()
+                .blankId(blank.getBlankId())
+                .learnedSongId(blank.getLearnedSongId())
+                .songId(blank.getSongId())
+                .recommendationSentenceId(123L) // TODO: recommendation_sentence 테이블 연결하면 수정
+                .originSentence(blank.getOriginSentence())
+                .korean(blank.getKorean())
+                .question(blank.getQuestion())
+                .answer(answerList)
+                .createdAt(blank.getCreatedAt())
+                .build();
+    }
 
     /**
      * 빈칸 퀴즈 채점 결과 저장
