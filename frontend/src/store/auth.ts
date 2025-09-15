@@ -1,46 +1,61 @@
-import { create } from 'zustand';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { User, Tokens } from "@/types/auth";
+import { refreshAPI } from "@/services/auth";
 
-interface User {
-  userId: number;
-  email: string;
-  username: string;
-  profileImageUrl: string;
-}
-
-interface Tokens {
-  accessToken: string;
-  refreshToken: string;
-  expiresAt: string;
-}
-
-interface AuthState {
+type AuthState = {
   user: User | null;
   tokens: Tokens | null;
-  isLoggedIn: boolean;
   login: (user: User, tokens: Tokens) => void;
   logout: () => void;
-}
+  setTokens: (tokens: Tokens | null) => void;
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  tokens: null,
-  isLoggedIn: false,
-  login: (user, tokens) => {
-    set({ user, tokens, isLoggedIn: true });
-    // You might want to persist the tokens to localStorage here
-    localStorage.setItem('tokens', JSON.stringify(tokens));
-    localStorage.setItem('user', JSON.stringify(user));
-  },
-  logout: () => {
-    set({ user: null, tokens: null, isLoggedIn: false });
-    localStorage.removeItem('tokens');
-    localStorage.removeItem('user');
-  },
-}));
+  // 편의 getter
+  isAuthed: () => boolean;
+  accessToken: string | null;
+  refreshToken: string | null;
 
-// Check for persisted auth state on initialization
-const initialTokens = localStorage.getItem('tokens');
-const initialUser = localStorage.getItem('user');
-if (initialTokens && initialUser) {
-  useAuthStore.getState().login(JSON.parse(initialUser), JSON.parse(initialTokens));
-}
+  // (선택) refresh 시도
+  tryRefreshToken: () => Promise<boolean>;
+};
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      tokens: null,
+
+      login: (user, tokens) => set({ user, tokens }),
+      logout: () => set({ user: null, tokens: null }),
+      setTokens: (tokens) => set({ tokens }),
+
+      isAuthed: () => !!get().tokens?.accessToken && !!get().user,
+      get accessToken() {
+        return get().tokens?.accessToken ?? null;
+      },
+      get refreshToken() {
+        return get().tokens?.refreshToken ?? null;
+      },
+
+      tryRefreshToken: async () => {
+        const rt = get().tokens?.refreshToken;
+        if (!rt) return false;
+        try {
+          const res = await refreshAPI(rt);
+          const newTokens = res.data.data.tokens;
+          set({ tokens: newTokens });
+          return true;
+        } catch {
+          return false;
+        }
+      },
+    }),
+    {
+      name: "auth-storage", // localStorage key
+      partialize: (state) => ({
+        user: state.user,
+        tokens: state.tokens,
+      }),
+    }
+  )
+);
