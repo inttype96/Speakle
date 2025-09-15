@@ -17,6 +17,7 @@ replay_pid*
 .env.*
 !.env.example
 
+
 ### Gradle ###
 .gradle/
 build/

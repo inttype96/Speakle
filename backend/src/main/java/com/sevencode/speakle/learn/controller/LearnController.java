@@ -5,6 +5,7 @@ import com.sevencode.speakle.learn.dto.request.*;
 import com.sevencode.speakle.learn.dto.response.*;
 import com.sevencode.speakle.learn.service.BlankService;
 
+import com.sevencode.speakle.learn.service.DictationService;
 import com.sevencode.speakle.learn.service.SpeakingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class LearnController {
 
     private final SpeakingService speakingService;
     private final BlankService blankService;
+    private final DictationService dictationService;
 
     /**
      * 빈칸 문제 생성(조회)
@@ -64,6 +66,34 @@ public class LearnController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(200, "퀴즈가 완료되었습니다.", response)
+        );
+    }
+
+    /**
+     * 딕테이션 문제 생성(조회)
+     */
+    @PostMapping("/dictation/start")
+    public ResponseEntity<ApiResponse<DictationQuestionResponse>> startDictation(
+            @RequestBody DictationQuestionRequest request,
+            @AuthenticationPrincipal UserPrincipal me) {
+        Long userId = me.userId();
+        DictationQuestionResponse response = dictationService.getDictationQuestion(request, userId);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "딕테이션 평가 문장을 조회했습니다.", response)
+        );
+    }
+
+    /**
+     * 딕테이션 문제 채점 결과 저장
+     */
+    @PostMapping("/dictation/result")
+    public ResponseEntity<ApiResponse<DictationEvaluationResponse>> saveDictationResult(
+            @RequestBody DictationEvaluationRequest request,
+            @AuthenticationPrincipal UserPrincipal me) {
+        Long userId = me.userId();
+        DictationEvaluationResponse response = dictationService.saveDictationResult(request, userId);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "딕테이션 결과가 저장되었습니다.", response)
         );
     }
 

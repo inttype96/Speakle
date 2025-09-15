@@ -34,7 +34,7 @@ public class SecurityConfig {
 		if ("local".equals(activeProfile)) {
 			// 로컬 개발환경 → 보안 무시, 모든 요청 허용
 			http.csrf(csrf -> csrf.disable())
-				.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+					.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 		} else {
 			// dev / prod 환경 → 보안 정책 적용
 			http
