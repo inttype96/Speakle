@@ -5,7 +5,6 @@
  * - 상태는 부모(페이지)에서 제어하는 controlled input 패턴
  */
 
-import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
