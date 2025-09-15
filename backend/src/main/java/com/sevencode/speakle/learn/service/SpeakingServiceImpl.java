@@ -6,6 +6,7 @@ import com.sevencode.speakle.learn.domain.entity.SpeakingEntity;
 import com.sevencode.speakle.learn.domain.entity.SpeakingResultEntity;
 import com.sevencode.speakle.learn.dto.request.SpeakingEvaluationRequest;
 import com.sevencode.speakle.learn.dto.response.EtriPronunciationResponse;
+import com.sevencode.speakle.learn.dto.response.SpeakingCompleteResponse;
 import com.sevencode.speakle.learn.dto.response.SpeakingEvaluationResponse;
 import com.sevencode.speakle.learn.dto.response.SpeakingQuestionResponse;
 import com.sevencode.speakle.learn.exception.*;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -201,6 +203,113 @@ public class SpeakingServiceImpl implements SpeakingService{
                 .score(savedResult.getScore())
                 .createdAt(savedResult.getCreatedAt())
                 .meta(savedResult.getMeta())
+                .build();
+    }
+
+    /**
+     * 스피킹 테스트 종료
+     */
+    @Override
+    public SpeakingCompleteResponse getSpeakingComplete(Long learnedSongId, Long userId) {
+        // 1. 권한 확인
+        LearnedSongEntity learnedSongEntity = learnedSongRepository.findById(learnedSongId)
+                .orElseThrow(() -> new LearnedSongNotFoundException("존재하지 않는 학습곡입니다."));
+
+        if (!Objects.equals(learnedSongEntity.getUserId(), userId)) {
+            throw new UnauthorizedAccessException("접근할 수 있는 권한이 없습니다.");
+        }
+
+        // 2. learned_song_id로 speaking 테이블에서 데이터 조회
+        List<SpeakingEntity> speakings = speakingRepository.findByLearnedSongId(learnedSongId);
+
+        if (speakings.isEmpty()) {
+            throw new SpeakingNotFoundException("해당 스피킹 게임을 찾을 수 없습니다.");
+        }
+
+        // 3. speaking_id 리스트 추출
+        List<Long> speakingIds = speakings.stream()
+                .map(SpeakingEntity::getSpeakingId)
+                .collect(Collectors.toList());
+
+        // 4. speaking_result에서 해당 결과들 조회
+        List<SpeakingResultEntity> speakingResults = speakingResultRepository
+                .findBySpeakingIdInAndUserId(speakingIds, userId);
+
+        if (speakingResults.isEmpty()) {
+            throw new SpeakingResultNotFoundException("스피킹 게임 결과를 찾을 수 없습니다.");
+        }
+
+        // 5. 응답 데이터 구성
+        return buildSpeakingCompleteResponse(speakings, speakingResults);
+    }
+
+    // ------------------------------------------------------------
+    // 스피킹 퀴즈 완료 응답 생성
+    // ------------------------------------------------------------
+    private SpeakingCompleteResponse buildSpeakingCompleteResponse(List<SpeakingEntity> speakings, List<SpeakingResultEntity> speakingResults) {
+        // Speaking 데이터를 Map으로 변환 (빠른 조회를 위해)
+        Map<Long, SpeakingEntity> speakingMap = speakings.stream()
+                .collect(Collectors.toMap(SpeakingEntity::getSpeakingId, speaking -> speaking));
+
+        List<SpeakingCompleteResponse.SpeakingResult> results = new ArrayList<>();
+        int correctCount = 0;
+        int totalScore = 0;
+
+        for (SpeakingResultEntity speakingResult : speakingResults) {
+            SpeakingEntity speaking = speakingMap.get(speakingResult.getSpeakingId());
+            if (speaking == null) continue;
+
+            // meta 데이터 파싱
+            SpeakingCompleteResponse.SpeakingMeta meta = parseSpeakingMetaData(speaking, speakingResult);
+
+            SpeakingCompleteResponse.SpeakingResult result = new SpeakingCompleteResponse.SpeakingResult();
+            result.setSpeakingResultId(speakingResult.getSpeakingResultId());
+            result.setUserId(speakingResult.getUserId());
+            result.setSpeakingId(speakingResult.getSpeakingId());
+            result.setIsCorrect(speakingResult.getIsCorrect());
+            result.setScore(speakingResult.getScore());
+            result.setCreatedAt(speakingResult.getCreatedAt());
+            result.setMeta(meta);
+
+            results.add(result);
+
+            if (Boolean.TRUE.equals(speakingResult.getIsCorrect())) {
+                correctCount++;
+            }
+            totalScore += speakingResult.getScore();
+        }
+
+        // speakingId를 기준으로 오름차순 정렬
+        results.sort(Comparator.comparing(SpeakingCompleteResponse.SpeakingResult::getSpeakingId));
+
+        // Summary 생성
+        SpeakingCompleteResponse.Summary summary = new SpeakingCompleteResponse.Summary();
+        summary.setTotalQuestions(results.size());
+        summary.setCorrectAnswers(correctCount);
+        summary.setTotalScore(totalScore);
+
+        // 최종 응답 구성
+        SpeakingCompleteResponse res = new SpeakingCompleteResponse();
+        res.setSummary(summary);
+        res.setResults(results);
+        return res;
+    }
+
+    // ------------------------------------------------------------
+    // 스피킹 메타 데이터 생성
+    // ------------------------------------------------------------
+    private SpeakingCompleteResponse.SpeakingMeta parseSpeakingMetaData(SpeakingEntity speaking, SpeakingResultEntity speakingResult) {
+        // meta에서 각 필드 추출
+        Map<String, Object> meta = speakingResult.getMeta();
+
+        String score = meta.get("score") != null ? meta.get("score").toString() : "";
+        String recognized = meta.get("recognized") != null ? meta.get("recognized").toString() : "";
+        String originSentence = meta.get("originSentence") != null ? meta.get("originSentence").toString() : "";
+
+        return SpeakingCompleteResponse.SpeakingMeta.builder()
+                .score(score)
+                .recognized(recognized)
+                .originSentence(originSentence)
                 .build();
     }
 }

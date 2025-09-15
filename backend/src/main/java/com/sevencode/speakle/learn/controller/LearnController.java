@@ -158,4 +158,21 @@ public class LearnController {
             }
         }
     }
+
+    /**
+     * 스피킹 게임 완료 결과 조회
+     */
+    @GetMapping("/speaking/complete")
+    public ResponseEntity<ApiResponse<SpeakingCompleteResponse>> getSpeakingComplete(
+            @RequestParam("learnedSongId") Long learnedSongId,
+            @AuthenticationPrincipal UserPrincipal me) {
+
+        Long userId = me.userId();
+
+        SpeakingCompleteResponse response = speakingService.getSpeakingComplete(learnedSongId, userId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "스피킹 테스트가 완료 되었습니다.", response)
+        );
+    }
 }
