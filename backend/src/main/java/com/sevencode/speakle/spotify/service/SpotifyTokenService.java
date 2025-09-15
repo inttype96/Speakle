@@ -1,7 +1,6 @@
 package com.sevencode.speakle.spotify.service;
 
 import java.time.Instant;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
@@ -48,9 +47,9 @@ public class SpotifyTokenService {
 
 	@Transactional
 	public String resolveValidAccessToken(Long userId) {
-		try {
-			log.debug("토큰 유효성 검사 시작 - userId: {}", userId);
+		log.debug("토큰 유효성 검사 시작 - userId: {}", userId);
 
+		try {
 			SpotifyAccount acc = spotifyAccountRepository.findByUserId(userId)
 				.orElseThrow(() -> new SpotifyNotLinkedException("user"));
 
@@ -64,13 +63,35 @@ public class SpotifyTokenService {
 			return refreshAccessToken(acc);
 
 		} catch (SpotifyNotLinkedException e) {
-			log.warn("Spotify 계정 미연결 - userId: {}", userId);
+			log.warn("Spotify 계정 미연결 - userId: {}, message: {}", userId, e.getMessage());
+			// 사용자에게 구체적인 피드백을 위한 추가 컨텍스트 로깅
+			log.info("사용자 액션 필요 - userId: {}, 해결방법: 설정에서 Spotify 계정 연결", userId);
 			throw e;
-		} catch (SpotifyTokenException | SpotifyApiException | SpotifyRateLimitException e) {
-			log.error("토큰 관련 예외 발생 - userId: {}, message: {}", userId, e.getMessage());
+		} catch (SpotifyTokenException e) {
+			log.error("토큰 관련 오류 - userId: {}, 오류유형: {}, message: {}", 
+				userId, e.getClass().getSimpleName(), e.getMessage());
+			// 토큰 문제 발생 시 재연결 권장 로깅
+			log.info("토큰 복구 권장 - userId: {}, 해결방법: Spotify 계정 재연결", userId);
+			throw e;
+		} catch (SpotifyApiException e) {
+			log.error("Spotify API 오류 - userId: {}, statusCode: {}, message: {}", 
+				userId, e.getStatusCode(), e.getMessage());
+			// API 오류에 대한 구체적인 대응 방안 로깅
+			if (e.getStatusCode() >= 500) {
+				log.info("서버 오류 감지 - userId: {}, 권장사항: 잠시 후 재시도", userId);
+			}
+			throw e;
+		} catch (SpotifyRateLimitException e) {
+			log.warn("API 요청 한도 초과 - userId: {}, retryAfter: {}초, message: {}", 
+				userId, e.getRetryAfterSeconds(), e.getMessage());
+			// 사용자 경험 개선을 위한 구체적인 안내 로깅
+			log.info("사용자 대기 필요 - userId: {}, 권장사항: {}초 후 재시도", userId, e.getRetryAfterSeconds());
 			throw e;
 		} catch (Exception e) {
-			log.error("토큰 처리 중 예상치 못한 오류 발생 - userId: {}", userId, e);
+			log.error("토큰 처리 중 예상치 못한 오류 발생 - userId: {}, errorType: {}", 
+				userId, e.getClass().getSimpleName(), e);
+			// 시스템 오류에 대한 추적 가능한 로깅
+			log.error("시스템 오류 상세 - userId: {}, stackTrace: {}", userId, e.getStackTrace());
 			throw new SpotifyTokenException("토큰 처리 중 시스템 오류가 발생했습니다. 다시 시도해 주세요.");
 		}
 	}
@@ -96,7 +117,7 @@ public class SpotifyTokenService {
 
 			String refreshToken = decryptRefreshToken(acc);
 			MultiValueMap<String, String> form = createTokenRefreshForm(refreshToken);
-			Optional<SpotifyTokenResponse> tokenResponse = requestTokenRefresh(form);
+			SpotifyTokenResponse tokenResponse = requestTokenRefresh(form);
 			
 			updateTokensInDatabase(acc, tokenResponse);
 
@@ -134,9 +155,9 @@ public class SpotifyTokenService {
 	}
 
 	/**
-	 * Spotify API에 토큰 갱신 요청
+	 * Spotify API에 토큰 갱신 요청 (간소화된 버전)
 	 */
-	private Optional<SpotifyTokenResponse> requestTokenRefresh(MultiValueMap<String, String> form) {
+	private SpotifyTokenResponse requestTokenRefresh(MultiValueMap<String, String> form) {
 		try {
 			SpotifyTokenResponse response = accountsWebClient.post()
 				.uri("/api/token")
@@ -147,11 +168,15 @@ public class SpotifyTokenService {
 				.bodyToMono(SpotifyTokenResponse.class)
 				.block();
 
-			return Optional.ofNullable(response);
+			if (response == null) {
+				throw new SpotifyTokenException("토큰 응답이 비어있습니다.");
+			}
+
+			return response;
 
 		} catch (WebClientResponseException e) {
 			handleWebClientResponseException(e);
-			return Optional.empty(); // 이 라인은 실행되지 않지만 컴파일러를 위해 필요
+			return null; // 이 라인은 실행되지 않지만 컴파일러를 위해 필요
 		} catch (WebClientException e) {
 			log.error("Spotify 토큰 갱신 요청 실패 - 네트워크 오류", e);
 			throw new SpotifyTokenException("네트워크 연결 오류로 토큰 갱신에 실패했습니다. 인터넷 연결을 확인해 주세요.");
@@ -196,26 +221,17 @@ public class SpotifyTokenService {
 	}
 
 	/**
-	 * DB에 토큰 정보 업데이트
+	 * DB에 토큰 정보 업데이트 (단일 책임으로 분리)
 	 */
-	private void updateTokensInDatabase(SpotifyAccount acc, Optional<SpotifyTokenResponse> tokenResponseOpt) {
+	private void updateTokensInDatabase(SpotifyAccount acc, SpotifyTokenResponse tokenResponse) {
 		try {
-			SpotifyTokenResponse tokenResponse = tokenResponseOpt
-				.orElseThrow(() -> new SpotifyTokenException("토큰 응답이 비어있습니다."));
-
-			String accessToken = validateAndGetAccessToken(tokenResponse);
+			validateTokenResponse(tokenResponse);
 			
-			// 새로운 토큰들을 암호화하여 저장
-			acc.setAccessTokenEnc(crypto.encrypt(accessToken));
-
-			// refresh 토큰이 새로 발급된 경우에만 업데이트
+			encryptAndSaveAccessToken(acc, tokenResponse);
 			updateRefreshTokenIfPresent(acc, tokenResponse);
-
-			// 만료 시간 업데이트
-			updateExpirationTime(acc, tokenResponse);
-
-			spotifyAccountRepository.save(acc);
-			log.debug("토큰 정보 DB 업데이트 완료 - userId: {}", acc.getUserId());
+			updateTokenExpirationTime(acc, tokenResponse);
+			
+			saveSpotifyAccount(acc);
 
 		} catch (Exception e) {
 			log.error("토큰 정보 DB 업데이트 실패 - userId: {}", acc.getUserId(), e);
@@ -227,14 +243,31 @@ public class SpotifyTokenService {
 	}
 
 	/**
-	 * 액세스 토큰 유효성 검사 및 반환
+	 * 토큰 응답 유효성 검사
 	 */
-	private String validateAndGetAccessToken(SpotifyTokenResponse tokenResponse) {
+	private void validateTokenResponse(SpotifyTokenResponse tokenResponse) {
+		if (tokenResponse == null) {
+			throw new SpotifyTokenException("토큰 응답이 비어있습니다.");
+		}
+		
 		String accessToken = tokenResponse.getAccessToken();
 		if (accessToken == null || accessToken.trim().isEmpty()) {
 			throw new SpotifyTokenException("응답에서 액세스 토큰을 찾을 수 없습니다.");
 		}
-		return accessToken;
+	}
+
+	/**
+	 * 액세스 토큰 암호화 및 저장
+	 */
+	private void encryptAndSaveAccessToken(SpotifyAccount acc, SpotifyTokenResponse tokenResponse) {
+		try {
+			String encryptedAccessToken = crypto.encrypt(tokenResponse.getAccessToken());
+			acc.setAccessTokenEnc(encryptedAccessToken);
+			log.debug("액세스 토큰 암호화 완료 - userId: {}", acc.getUserId());
+		} catch (Exception e) {
+			log.error("액세스 토큰 암호화 실패 - userId: {}", acc.getUserId(), e);
+			throw new SpotifyTokenException("액세스 토큰 암호화 중 오류가 발생했습니다.");
+		}
 	}
 
 	/**
@@ -242,22 +275,50 @@ public class SpotifyTokenService {
 	 */
 	private void updateRefreshTokenIfPresent(SpotifyAccount acc, SpotifyTokenResponse tokenResponse) {
 		if (tokenResponse.getRefreshToken() != null) {
-			acc.setRefreshTokenEnc(crypto.encrypt(tokenResponse.getRefreshToken()));
-			log.debug("새로운 refresh 토큰으로 업데이트됨 - userId: {}", acc.getUserId());
+			try {
+				String encryptedRefreshToken = crypto.encrypt(tokenResponse.getRefreshToken());
+				acc.setRefreshTokenEnc(encryptedRefreshToken);
+				log.debug("새로운 refresh 토큰으로 업데이트됨 - userId: {}", acc.getUserId());
+			} catch (Exception e) {
+				log.error("refresh 토큰 암호화 실패 - userId: {}", acc.getUserId(), e);
+				throw new SpotifyTokenException("refresh 토큰 암호화 중 오류가 발생했습니다.");
+			}
 		}
 	}
 
 	/**
 	 * 토큰 만료 시간 업데이트
 	 */
-	private void updateExpirationTime(SpotifyAccount acc, SpotifyTokenResponse tokenResponse) {
-		int expiresIn = Math.toIntExact(tokenResponse.getExpiresIn());
-		if (expiresIn <= 0) {
-			log.warn("유효하지 않은 만료시간, 기본값 사용 - userId: {}, expiresIn: {}",
-				acc.getUserId(), expiresIn);
-			expiresIn = 3600; // 기본 1시간
+	private void updateTokenExpirationTime(SpotifyAccount acc, SpotifyTokenResponse tokenResponse) {
+		try {
+			int expiresIn = Math.toIntExact(tokenResponse.getExpiresIn());
+			if (expiresIn <= 0) {
+				log.warn("유효하지 않은 만료시간, 기본값 사용 - userId: {}, expiresIn: {}",
+					acc.getUserId(), expiresIn);
+				expiresIn = 3600; // 기본 1시간
+			}
+			
+			Instant expirationTime = Instant.now().plusSeconds(expiresIn);
+			acc.setExpiresAt(expirationTime);
+			log.debug("토큰 만료 시간 업데이트 완료 - userId: {}, expiresAt: {}", 
+				acc.getUserId(), expirationTime);
+		} catch (Exception e) {
+			log.error("토큰 만료 시간 업데이트 실패 - userId: {}", acc.getUserId(), e);
+			throw new SpotifyTokenException("토큰 만료 시간 설정 중 오류가 발생했습니다.");
 		}
-		acc.setExpiresAt(Instant.now().plusSeconds(expiresIn));
+	}
+
+	/**
+	 * SpotifyAccount 엔티티 저장
+	 */
+	private void saveSpotifyAccount(SpotifyAccount acc) {
+		try {
+			spotifyAccountRepository.save(acc);
+			log.debug("토큰 정보 DB 저장 완료 - userId: {}", acc.getUserId());
+		} catch (Exception e) {
+			log.error("SpotifyAccount 저장 실패 - userId: {}", acc.getUserId(), e);
+			throw new SpotifyTokenException("토큰 정보 데이터베이스 저장 중 오류가 발생했습니다.");
+		}
 	}
 }
 
