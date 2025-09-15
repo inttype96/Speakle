@@ -14,8 +14,8 @@ replay_pid*
 
 ### Environment Variables ###
 .env
-.env.*
-!.env.example
+.env
+!.env
 
 ### Gradle ###
 .gradle/
