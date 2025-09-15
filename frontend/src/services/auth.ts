@@ -3,7 +3,7 @@ import type { LoginReq, LoginRes } from "@/types/auth";
 
 export async function loginAPI(payload: LoginReq) {
   // POST /api/auth/login
-  const res = await http.post<LoginRes>("/api/auth/login", payload, {
+  const res = await http.post<LoginRes>("/auth/login", payload, {
     headers: { "Content-Type": "application/json" },
   });
   return res;
