@@ -13,6 +13,7 @@ export default defineConfig({
   },
   // 프록시 설정을 추가합니다.
   server: {
+    port: 3000,
     proxy: {
       // '/api'로 시작하는 요청은 모두 백엔드 서버로 전달합니다.
       '/api': {
