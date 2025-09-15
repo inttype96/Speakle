@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react"
 import { useAuthStore } from "@/store/auth"
-import { loginAPI } from "@/api/auth"
+import { loginAPI } from "@/services/auth"
 
 export function LoginForm({
     className,
