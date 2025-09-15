@@ -1,17 +1,24 @@
 package com.sevencode.speakle.learn.service;
 
 import com.sevencode.speakle.learn.domain.entity.DictationEntity;
+import com.sevencode.speakle.learn.domain.entity.DictationResultEntity;
 import com.sevencode.speakle.learn.domain.entity.LearnedSongEntity;
+import com.sevencode.speakle.learn.dto.request.DictationEvaluationRequest;
 import com.sevencode.speakle.learn.dto.request.DictationQuestionRequest;
+import com.sevencode.speakle.learn.dto.response.DictationEvaluationResponse;
 import com.sevencode.speakle.learn.dto.response.DictationQuestionResponse;
+import com.sevencode.speakle.learn.exception.DictationNotFoundException;
 import com.sevencode.speakle.learn.exception.LearnedSongNotFoundException;
+import com.sevencode.speakle.learn.exception.UnauthorizedAccessException;
 import com.sevencode.speakle.learn.repository.DictationRepository;
+import com.sevencode.speakle.learn.repository.DictationResultRepository;
 import com.sevencode.speakle.learn.repository.LearnedSongRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -21,6 +28,7 @@ public class DictationServiceImpl implements DictationService{
 
     private final LearnedSongRepository learnedSongRepository;
     private final DictationRepository dictationRepository;
+    private final DictationResultRepository dictationResultRepository;
 
     /**
      * 딕테이션 문제 생성(조회)
@@ -151,6 +159,62 @@ public class DictationServiceImpl implements DictationService{
                 .duration(duration)
                 .endTime(dictation.getEndTime())
                 .createdAt(dictation.getCreatedAt())
+                .build();
+    }
+
+    /**
+     * 딕테이션 문제 채점 결과 저장
+     */
+    @Override
+    public DictationEvaluationResponse saveDictationResult(DictationEvaluationRequest request, Long userId) {
+        // 1. 딕테이션 문제 존재 여부 확인
+        DictationEntity dictation = dictationRepository.findById(request.getDictationId())
+                .orElseThrow(() -> new DictationNotFoundException("해당 딕테이션 문제를 찾을 수 없습니다."));
+
+        // 2. 학습곡 존재 및 권한 확인
+        Long learnedSongId = dictation.getLearnedSongId();
+        LearnedSongEntity learned = learnedSongRepository.findById(learnedSongId)
+                .orElseThrow(() -> new LearnedSongNotFoundException("존재하지 않는 학습곡입니다."));
+
+        if (!Objects.equals(learned.getUserId(), userId)) {
+            throw new UnauthorizedAccessException("접근할 수 있는 권한이 없습니다.");
+        }
+
+        // 3. 기존 BlankResult 존재 여부 확인
+        Optional<DictationResultEntity> existingDictationResult = dictationResultRepository
+                .findByDictationIdAndUserId(request.getDictationId(), request.getUserId());
+
+        DictationResultEntity dictationResult;
+
+        if (existingDictationResult.isPresent()) {
+            // 기존 데이터가 존재하면 업데이트
+            dictationResult = existingDictationResult.get();
+            dictationResult.setIsCorrect(request.getIsCorrect());
+            dictationResult.setScore(request.getScore());
+            dictationResult.setMeta(request.getMeta());
+        } else {
+            // 기존 데이터가 없으면 새로 생성
+            dictationResult = DictationResultEntity.builder()
+                    .dictationId(request.getDictationId())
+                    .userId(request.getUserId())
+                    .isCorrect(request.getIsCorrect())
+                    .score(request.getScore())
+                    .meta(request.getMeta())
+                    .build();
+        }
+
+        // 4. 결과 저장
+        DictationResultEntity savedResult = dictationResultRepository.save(dictationResult);
+
+        // 5. 응답 DTO 변환 후 반환
+        return DictationEvaluationResponse.builder()
+                .dictationResultId(savedResult.getDictationResultId())
+                .userId(savedResult.getUserId())
+                .dictationId(savedResult.getDictationId())
+                .isCorrect(savedResult.getIsCorrect())
+                .score(savedResult.getScore())
+                .createdAt(savedResult.getCreatedAt())
+                .meta(savedResult.getMeta())
                 .build();
     }
 }

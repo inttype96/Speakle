@@ -84,6 +84,20 @@ public class LearnController {
     }
 
     /**
+     * 딕테이션 문제 채점 결과 저장
+     */
+    @PostMapping("/dictation/result")
+    public ResponseEntity<ApiResponse<DictationEvaluationResponse>> saveDictationResult(
+            @RequestBody DictationEvaluationRequest request,
+            @AuthenticationPrincipal UserPrincipal me) {
+        Long userId = me.userId();
+        DictationEvaluationResponse response = dictationService.saveDictationResult(request, userId);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "딕테이션 결과가 저장되었습니다.", response)
+        );
+    }
+
+    /**
      * 스피킹 평가 문제 생성(조회)
      */
     @PostMapping("/speaking/evaluate")
