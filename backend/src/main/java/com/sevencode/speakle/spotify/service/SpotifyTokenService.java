@@ -1,7 +1,6 @@
 package com.sevencode.speakle.spotify.service;
 
 import java.time.Instant;
-import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
@@ -10,23 +9,204 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.sevencode.speakle.auth.dto.SpotifyTokenResponse;
 import com.sevencode.speakle.common.util.CryptoUtil;
 import com.sevencode.speakle.spotify.config.SpotifyProps;
 import com.sevencode.speakle.spotify.entity.SpotifyAccount;
+import com.sevencode.speakle.spotify.exception.SpotifyApiException;
 import com.sevencode.speakle.spotify.exception.SpotifyNotLinkedException;
+import com.sevencode.speakle.spotify.exception.SpotifyRateLimitException;
 import com.sevencode.speakle.spotify.exception.SpotifyTokenException;
 import com.sevencode.speakle.spotify.repository.SpotifyAccountRepository;
 
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class SpotifyTokenService {
 	private final SpotifyAccountRepository spotifyAccountRepository;
 	private final CryptoUtil crypto;
 	private final WebClient accountsWebClient;
 	private final SpotifyProps props;
+
+	public SpotifyTokenService(
+		SpotifyProps props,
+		SpotifyAccountRepository spotifyAccountRepository,
+		CryptoUtil crypto,
+		@Qualifier("spotifyAccountsWebClient") WebClient accountsWebClient
+	) {
+		this.props = props;
+		this.spotifyAccountRepository = spotifyAccountRepository;
+		this.crypto = crypto;
+		this.accountsWebClient = accountsWebClient;
+	}
+
+	@Transactional
+	public String resolveValidAccessToken(Long userId) {
+		try {
+			log.debug("토큰 유효성 검사 시작 - userId: {}", userId);
+
+			SpotifyAccount acc = spotifyAccountRepository.findByUserId(userId)
+				.orElseThrow(() -> new SpotifyNotLinkedException("user"));
+
+			// 토큰이 아직 유효한지 확인 (30초 여유시간)
+			if (Instant.now().getEpochSecond() < acc.getExpiresAtEpochSec() - 30) {
+				log.debug("기존 토큰이 유효함 - userId: {}", userId);
+				try {
+					return crypto.decrypt(acc.getAccessTokenEnc());
+				} catch (Exception e) {
+					log.error("액세스 토큰 복호화 실패 - userId: {}", userId, e);
+					throw new SpotifyTokenException("액세스 토큰", "복호화 실패");
+				}
+			}
+
+			log.info("토큰 만료됨, 갱신 시작 - userId: {}", userId);
+			return refreshAccessToken(acc);
+
+		} catch (SpotifyNotLinkedException e) {
+			log.warn("Spotify 계정 미연결 - userId: {}", userId);
+			throw e;
+		} catch (SpotifyTokenException | SpotifyApiException | SpotifyRateLimitException e) {
+			log.error("토큰 관련 예외 발생 - userId: {}, message: {}", userId, e.getMessage());
+			throw e;
+		} catch (Exception e) {
+			log.error("토큰 처리 중 예상치 못한 오류 발생 - userId: {}", userId, e);
+			throw new SpotifyTokenException("토큰 처리 중 시스템 오류가 발생했습니다. 다시 시도해 주세요.");
+		}
+	}
+
+	private String refreshAccessToken(SpotifyAccount acc) {
+		try {
+			log.debug("refresh 토큰으로 액세스 토큰 갱신 시작 - userId: {}", acc.getUserId());
+
+			String refreshToken;
+			try {
+				refreshToken = crypto.decrypt(acc.getRefreshTokenEnc());
+			} catch (Exception e) {
+				log.error("refresh 토큰 복호화 실패 - userId: {}", acc.getUserId(), e);
+				throw new SpotifyTokenException("refresh 토큰", "복호화 실패");
+			}
+
+			MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+			form.add("grant_type", "refresh_token");
+			form.add("refresh_token", refreshToken);
+
+			SpotifyTokenResponse tokenResponse = requestTokenRefresh(form);
+
+			updateTokensInDatabase(acc, tokenResponse);
+
+			log.info("토큰 갱신 완료 - userId: {}", acc.getUserId());
+			try {
+				return crypto.decrypt(acc.getAccessTokenEnc());
+			} catch (Exception e) {
+				log.error("갱신된 액세스 토큰 복호화 실패 - userId: {}", acc.getUserId(), e);
+				throw new SpotifyTokenException("갱신된 액세스 토큰", "복호화 실패");
+			}
+
+		} catch (SpotifyTokenException | SpotifyApiException | SpotifyRateLimitException e) {
+			throw e;
+		} catch (Exception e) {
+			log.error("토큰 갱신 중 예상치 못한 오류 - userId: {}", acc.getUserId(), e);
+			throw new SpotifyTokenException("토큰 갱신 중 시스템 오류가 발생했습니다.");
+		}
+	}
+
+	private SpotifyTokenResponse requestTokenRefresh(MultiValueMap<String, String> form) {
+		try {
+			return accountsWebClient.post()
+				.uri("/api/token")
+				.headers(h -> h.setBasicAuth(props.getClientId(), props.getClientSecret()))
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+				.body(BodyInserters.fromFormData(form))
+				.retrieve()
+				.bodyToMono(SpotifyTokenResponse.class)
+				.block();
+
+		} catch (WebClientResponseException e) {
+			log.error("Spotify 토큰 갱신 API 호출 실패 - status: {}, body: {}",
+				e.getStatusCode(), e.getResponseBodyAsString());
+
+			int statusCode = e.getStatusCode().value();
+			switch (statusCode) {
+				case 400 -> throw new SpotifyTokenException("refresh 토큰이 만료되었거나 유효하지 않습니다. 다시 로그인해 주세요.");
+
+				case 401 -> throw new SpotifyApiException("토큰 갱신", statusCode);
+
+				case 429 -> {
+					// Retry-After 헤더 파싱 시도
+					int retrySeconds = 60; // 기본값
+					try {
+						String retryAfter = e.getHeaders().getFirst("Retry-After");
+						if (retryAfter != null) {
+							retrySeconds = Integer.parseInt(retryAfter);
+						}
+					} catch (NumberFormatException ex) {
+						log.warn("Retry-After 헤더 파싱 실패, 기본값 사용: {}", ex.getMessage());
+					}
+					throw new SpotifyRateLimitException(retrySeconds);
+				}
+				case 500, 502, 503 -> throw new SpotifyApiException("토큰 갱신", statusCode);
+
+				default -> throw new SpotifyTokenException(
+						String.format("토큰 갱신 실패 (상태코드: %d). 잠시 후 다시 시도해 주세요.", statusCode));
+			}
+		} catch (WebClientException e) {
+			log.error("Spotify 토큰 갱신 요청 실패 - 네트워크 오류", e);
+			throw new SpotifyTokenException("네트워크 연결 오류로 토큰 갱신에 실패했습니다. 인터넷 연결을 확인해 주세요.");
+		} catch (Exception e) {
+			log.error("토큰 갱신 요청 중 예상치 못한 오류", e);
+			throw new SpotifyTokenException("토큰 갱신 요청 중 오류가 발생했습니다.");
+		}
+	}
+
+	private void updateTokensInDatabase(SpotifyAccount acc, SpotifyTokenResponse tokenResponse) {
+		try {
+			if (tokenResponse == null) {
+				throw new SpotifyTokenException("토큰 응답이 비어있습니다.");
+			}
+
+			String accessToken = tokenResponse.getAccessToken();
+			if (accessToken == null || accessToken.trim().isEmpty()) {
+				throw new SpotifyTokenException("응답에서 액세스 토큰을 찾을 수 없습니다.");
+			}
+
+			// 새로운 토큰들을 암호화하여 저장
+			acc.setAccessTokenEnc(crypto.encrypt(accessToken));
+
+			// refresh 토큰이 새로 발급된 경우에만 업데이트
+			if (tokenResponse.getRefreshToken() != null) {
+				acc.setRefreshTokenEnc(crypto.encrypt(tokenResponse.getRefreshToken()));
+				log.debug("새로운 refresh 토큰으로 업데이트됨 - userId: {}", acc.getUserId());
+			}
+
+			// 만료 시간 업데이트
+			int expiresIn = Math.toIntExact(tokenResponse.getExpiresIn());
+			if (expiresIn <= 0) {
+				log.warn("유효하지 않은 만료시간, 기본값 사용 - userId: {}, expiresIn: {}",
+					acc.getUserId(), expiresIn);
+				expiresIn = 3600; // 기본 1시간
+			}
+			acc.setExpiresAt(Instant.now().plusSeconds(expiresIn));
+
+			spotifyAccountRepository.save(acc);
+			log.debug("토큰 정보 DB 업데이트 완료 - userId: {}", acc.getUserId());
+
+		} catch (Exception e) {
+			log.error("토큰 정보 DB 업데이트 실패 - userId: {}", acc.getUserId(), e);
+			if (e instanceof SpotifyTokenException) {
+				throw e;
+			}
+			throw new SpotifyTokenException("토큰 정보 저장 중 오류가 발생했습니다.");
+		}
+	}
+}
+
+
+/*
 
 	public SpotifyTokenService(
 		SpotifyProps props,
@@ -61,7 +241,7 @@ public class SpotifyTokenService {
 			.contentType(MediaType.APPLICATION_FORM_URLENCODED)
 			.body(BodyInserters.fromFormData(form))
 			.retrieve()
-			.onStatus(status -> status.is4xxClientError() || status.is5xxServerError(), 
+			.onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
 				response -> response.bodyToMono(String.class)
 					.map(body -> new SpotifyTokenException("토큰 갱신 실패: " + response.statusCode())))
 			.bodyToMono(SpotifyTokenResponse.class)
@@ -76,4 +256,5 @@ public class SpotifyTokenService {
 
 		return crypto.decrypt(acc.getAccessTokenEnc());
 	}
-}
+
+ */
