@@ -1,16 +1,28 @@
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import { Search } from "lucide-react"
 
+import { Label } from "@/components/ui/label"
+import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarInput,
+} from "@/components/ui/sidebar"
 
-
-export function SearchForm() {
-    return (
-        <div className="flex w-full max-w items-center gap-2 mb-6">
-            <Input type="search" placeholder="노래 제목 입력" />
-            <Button type="submit" variant="outline">
-                <MagnifyingGlassIcon className="h-6 w-6 text-gray-500" /> 검색
-            </Button>
-        </div>
-    )
+export function SearchForm({ ...props }: React.ComponentProps<"form">) {
+  return (
+    <form {...props}>
+      <SidebarGroup className="py-0">
+        <SidebarGroupContent className="relative">
+          <Label htmlFor="search" className="sr-only">
+            Search
+          </Label>
+          <SidebarInput
+            id="search"
+            placeholder="어떤 콘텐츠를 감상하고 싶으세요?"
+            className="pl-8"
+          />
+          <Search className="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 opacity-50 select-none" />
+        </SidebarGroupContent>
+      </SidebarGroup>
+    </form>
+  )
 }

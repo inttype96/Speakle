@@ -4,7 +4,8 @@ import IndexPage from "@/pages/common/indexPage";
 import LoginPage from "@/pages/auth/loginPage";
 import QuizPage from "@/pages/QuizPage";
 import SpeakingPage from "@/pages/SpeakingPage";
-
+import SignupPage from "@/pages/auth/signupPage";
+import TestPage from "@/pages/test/testPage";
 const router = createBrowserRouter([
     {
         path: "/",
@@ -21,6 +22,14 @@ const router = createBrowserRouter([
     {
     path: "/learn/speaking",
     element: <SpeakingPage />,
+    },
+    {
+        path: "/signup",
+        element: <SignupPage />,
+    },
+    {
+        path: "/test",
+        element: <TestPage />,
     },
 ]);
 

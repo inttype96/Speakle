@@ -1,4 +1,8 @@
 import Navbar from "@/components/common/navbar"
+import { Button } from "@/components/ui/button"
+import { LockClosedIcon, StarIcon } from '@heroicons/react/24/outline'
+import Footer from "./footer"
+import { Link } from "react-router-dom"
 
 export default function IndexPage() {
     return (
@@ -8,7 +12,7 @@ export default function IndexPage() {
             {/* Hero Section */}
             <div className="relative isolate px-6 pt-14 lg:px-8">
                 <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
-                    <div className="hidden sm:mb-8 sm:flex sm:justify-center">
+                    {/* <div className="hidden sm:mb-8 sm:flex sm:justify-center">
                         <div className="relative rounded-full px-3 py-1 text-sm text-muted-foreground ring-1 ring-border hover:ring-foreground/40">
                             Announcing our next round of funding.{" "}
                             <a href="#" className="font-semibold text-primary">
@@ -16,32 +20,30 @@ export default function IndexPage() {
                                 Read more <span aria-hidden="true">&rarr;</span>
                             </a>
                         </div>
-                    </div>
+                    </div> */}
                     <div className="text-center">
-                        <h1 className="text-5xl font-bold tracking-tight text-balance sm:text-7xl">
-                            Data to enrich your online business
+                        <h1 className="text-5xl font-bold subpixel-antialiased tracking-tight text-balance sm:text-7xl">
+                            Speakle
                         </h1>
                         <p className="mt-8 text-lg font-medium text-muted-foreground sm:text-xl">
                             Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui
                             lorem cupidatat commodo. Elit sunt amet fugiat veniam occaecat.
                         </p>
                         <div className="mt-10 flex items-center justify-center gap-x-6">
-                            <a
-                                href="#"
-                                className="rounded-md bg-primary px-3.5 py-2.5 text-sm font-semibold text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                            >
-                                Get started
-                            </a>
-                            <a
-                                href="#"
-                                className="text-sm font-semibold text-muted-foreground hover:text-foreground"
-                            >
-                                Learn more <span aria-hidden="true">→</span>
-                            </a>
+                            <Button asChild size="lg" className="">
+                                <Link to="/login" className="flex items-center">
+                                    <LockClosedIcon className="h-6 w-6 mr-2" /> 로그인
+                                </Link>
+                            </Button>
+                            <Button variant="outline" size="lg" className="">
+                                <StarIcon className="h-6 w-6 mr-2" /> 더 알아보기
+                            </Button>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <Footer />
         </div>
     )
 }
