@@ -1,5 +1,6 @@
 package com.sevencode.speakle.member.controller;
 
+import com.sevencode.speakle.common.dto.ResponseWrapper;
 import com.sevencode.speakle.config.security.UserPrincipal;
 import com.sevencode.speakle.member.domain.Member;
 import com.sevencode.speakle.member.service.MemberService;
@@ -19,47 +20,40 @@ import java.net.URI;
 @RequiredArgsConstructor
 @RequestMapping("/api/user")
 public class MemberController {
-
 	private final MemberService memberService;
 
 	/** 회원 가입 */
-	@PostMapping
-	public ResponseEntity<MemberResponse> register(@Valid @RequestBody MemberRegisterRequest req) {
+    @PostMapping
+    public ResponseEntity<ResponseWrapper<MemberResponse>> register(@Valid @RequestBody MemberRegisterRequest req) {
+        Member created = memberService.register(req);
+        MemberResponse body = MemberResponse.from(created);
+        URI location = URI.create("/api/user/" + created.getId());
+        return ResponseEntity
+                .created(location)
+                .body(ResponseWrapper.success(201, "회원이 생성되었습니다.", body));
+    }
 
-		Member created = memberService.register(req);
+    /** 회원 정보 조회(자기 자신) */
+    @GetMapping
+    public ResponseEntity<ResponseWrapper<MemberResponse>> me(@AuthenticationPrincipal UserPrincipal me) {
+        return memberService.getById(me.userId())
+                .map(member -> ResponseEntity.ok(ResponseWrapper.success(200, "성공", MemberResponse.from(member))))
+                .orElseGet(() -> ResponseEntity.status(404).body(ResponseWrapper.fail(404, "회원 정보를 찾을 수 없습니다.")));
+    }
 
-		MemberResponse body = MemberResponse.from(created);
+    /** 회원 정보 수정 (Partial Update) */
+    @PatchMapping
+    public ResponseEntity<ResponseWrapper<MemberResponse>> updateMe(@AuthenticationPrincipal UserPrincipal me, @Valid @RequestBody MemberUpdateRequest req) {
+        Member updated = memberService.updateMember(me.userId(), req);
+        return ResponseEntity.ok(ResponseWrapper.success(200, "수정되었습니다.", MemberResponse.from(updated)));
+    }
 
-		URI location = URI.create("user/" + created.getId());
-
-		return ResponseEntity.created(location).body(body);
-	}
-
-	// /** 회원 정보 조회 (자기 자신) */
-	@GetMapping
-	public ResponseEntity<MemberResponse> me(@AuthenticationPrincipal UserPrincipal me) {
-		return memberService.getById(me.userId())
-			.map(MemberResponse::from)
-			.map(ResponseEntity::ok)
-			.orElse(ResponseEntity.notFound().build());
-	}
-
-	// /** 회원 정보 수정 (Partial Update) */
-	@PatchMapping
-	public ResponseEntity<MemberResponse> updateMe(@AuthenticationPrincipal UserPrincipal me,
-		@Valid @RequestBody MemberUpdateRequest req) {
-		Member updated = memberService.updateMember(me.userId(), req); // 서비스에서 patch 적용
-		return ResponseEntity.ok(MemberResponse.from(updated));
-	}
-
-	// /** 회원 삭제 (Soft delete) */
-
-	/** 회원 탈퇴(소프트 삭제) */
-	@DeleteMapping
-	public ResponseEntity<Void> deleteMe(@AuthenticationPrincipal UserPrincipal me) {
-		memberService.softDelete(me.userId());
-		return ResponseEntity.noContent().build();
-	}
+    /** 회원 탈퇴 (Soft delete) */
+    @DeleteMapping
+    public ResponseEntity<ResponseWrapper<Void>> deleteMe(@AuthenticationPrincipal UserPrincipal me) {
+        memberService.softDelete(me.userId());
+        return ResponseEntity.ok(ResponseWrapper.success(200, "탈퇴 처리되었습니다.", null));
+    }
 
 	// /** 비밀번호 변경 */
 	// @PatchMapping("/password")
