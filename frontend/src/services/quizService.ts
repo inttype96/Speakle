@@ -117,7 +117,7 @@ export async function marking(body: MarkingReq): Promise<MarkingRes> {
     };
   }
 
-  const res = await http.post<MarkingRes>("/api/learn/quiz/marking", body, {
+  const res = await http.post<MarkingRes>("/learn/quiz/marking", body, {
     headers: { "Content-Type": "application/json" },
   });
   return res.data;
