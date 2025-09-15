@@ -1,7 +1,6 @@
 /*주석 미작성-작성자:kang */
 package com.sevencode.speakle.config.security;
 
-import com.sevencode.speakle.config.security.filter.MockUserFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -33,10 +32,9 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http, JwtProvider jwtProvider) throws Exception {
 		if ("local".equals(activeProfile)) {
-			// 로컬 개발환경 → Mock User 자동 주입 + 보안 무시, 모든 요청 허용
+			// 로컬 개발환경 → 보안 무시, 모든 요청 허용
 			http.csrf(csrf -> csrf.disable())
-					.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-					.addFilterBefore(new MockUserFilter(), UsernamePasswordAuthenticationFilter.class);
+					.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 		} else {
 			// dev / prod 환경 → 보안 정책 적용
 			http
