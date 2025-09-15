@@ -5,6 +5,7 @@ import com.sevencode.speakle.learn.dto.request.*;
 import com.sevencode.speakle.learn.dto.response.*;
 import com.sevencode.speakle.learn.service.BlankService;
 
+import com.sevencode.speakle.learn.service.DictationService;
 import com.sevencode.speakle.learn.service.SpeakingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class LearnController {
 
     private final SpeakingService speakingService;
     private final BlankService blankService;
+    private final DictationService dictationService;
 
     /**
      * 빈칸 문제 생성(조회)
@@ -68,6 +70,50 @@ public class LearnController {
     }
 
     /**
+     * 딕테이션 문제 생성(조회)
+     */
+    @PostMapping("/dictation/start")
+    public ResponseEntity<ApiResponse<DictationQuestionResponse>> startDictation(
+            @RequestBody DictationQuestionRequest request,
+            @AuthenticationPrincipal UserPrincipal me) {
+        Long userId = me.userId();
+        DictationQuestionResponse response = dictationService.getDictationQuestion(request, userId);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "딕테이션 평가 문장을 조회했습니다.", response)
+        );
+    }
+
+    /**
+     * 딕테이션 문제 채점 결과 저장
+     */
+    @PostMapping("/dictation/result")
+    public ResponseEntity<ApiResponse<DictationEvaluationResponse>> saveDictationResult(
+            @RequestBody DictationEvaluationRequest request,
+            @AuthenticationPrincipal UserPrincipal me) {
+        Long userId = me.userId();
+        DictationEvaluationResponse response = dictationService.saveDictationResult(request, userId);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "딕테이션 결과가 저장되었습니다.", response)
+        );
+    }
+
+
+    /**
+     * 딕테이션 퀴즈 완료 결과 조회
+     */
+    @GetMapping("/dictation/complete")
+    public ResponseEntity<ApiResponse<DictationCompleteResponse>> getDictationComplete(
+            @RequestParam("learnedSongId") Long learnedSongId,
+            @AuthenticationPrincipal UserPrincipal me) {
+        Long userId = me.userId();
+        DictationCompleteResponse response = dictationService.getDictationComplete(learnedSongId, userId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "딕테이션 테스트가 완료 되었습니다.", response)
+        );
+    }
+
+    /**
      * 스피킹 평가 문제 생성(조회)
      */
     @PostMapping("/speaking/evaluate")
@@ -111,5 +157,22 @@ public class LearnController {
                 );
             }
         }
+    }
+
+    /**
+     * 스피킹 게임 완료 결과 조회
+     */
+    @GetMapping("/speaking/complete")
+    public ResponseEntity<ApiResponse<SpeakingCompleteResponse>> getSpeakingComplete(
+            @RequestParam("learnedSongId") Long learnedSongId,
+            @AuthenticationPrincipal UserPrincipal me) {
+
+        Long userId = me.userId();
+
+        SpeakingCompleteResponse response = speakingService.getSpeakingComplete(learnedSongId, userId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "스피킹 테스트가 완료 되었습니다.", response)
+        );
     }
 }

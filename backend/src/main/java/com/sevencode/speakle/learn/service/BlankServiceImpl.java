@@ -113,17 +113,67 @@ public class BlankServiceImpl implements BlankService{
     // 새로운 빈칸 문제 생성
     // ------------------------------------------------------------
     private BlankQuestionResponse createNewBlankQuestion(BlankQuestionRequest req, Long userId) {
-        // 1. recommendation_sentence에서 문장 조회
-        // TODO: Recommendation_sentence 테이블에서 퀴즈 문장 가져오기 (getRecommendationSentence() 함수 구현하기)
-        // RecommendationSentence recommendationSentence = getRecommendationSentence(
-        //         request.getLearnedSongId(),
-        //         request.getQuestionNumber()
-        // );
-        // String originalSentence = recommendationSentence.getCoreSentence();
+        String originalSentence;
+        String korean;
+        Long recommendationSentenceId = null;
 
-        // 테스트용 더미 값
-        String originalSentence = "The club isn't the best place to find a lover";
-        //
+        // 1. questionNumber에 따라 문장 출처 결정
+        if(req.getQuestionNumber()==1){
+            // 첫 번째 문제: recommendation_sentence 테이블에서 가져오기
+            // TODO: Recommendation_sentence 테이블에서 퀴즈 문장 가져오기 (getRecommendationSentence() 함수 구현하기)
+            // RecommendationSentence recommendationSentence = getRecommendationSentence(
+            //         request.getLearnedSongId(),
+            //         request.getQuestionNumber()
+            // );
+            // originalSentence = recommendationSentence.getCoreSentence();
+            // korean = recommendationSentence.getKorean();
+            // recommendationSentenceId = recommendationSentence.getRecommendationSentenceId();
+            // 테스트용 더미 값
+            originalSentence = "The club isn't the best place to find a lover";
+            korean = "클럽은 연인을 찾기에 최적의 장소가 아닙니다";
+            recommendationSentenceId = 123L;
+            //
+        }else{
+            // 두 번째, 세 번째 문제: sentences 테이블에서 가져오기
+            // TODO : Sentence 테이블에서 learnedSongId인 데이터 개수 계산하기
+            // long sentenceCount = sentenceRepository.countByLearnedSongId(learnedSongId);
+            // 테스트용 더미 값
+            long sentenceCount = 6;
+            //
+
+            if (sentenceCount == 0) {
+                throw new NoSentenceAvailableException("해당 학습 곡에서 추출할 문장이 없습니다.");
+            }
+
+            // 문장 조회 (학습한 sentence에서 가져오기)
+            // TODO : Sentence 테이블에서 Sentence 객체 기져오기
+            //  List<SentencesEntity> sentences = sentencesRepository.findByLearnedSongIdOrderBySentencesIdAsc(learnedSongId);
+            // 테스트용 더미 값
+            List<String> sentences = new ArrayList<>(Arrays.asList(
+                    "I have to buy new shoes",
+                    "I've been tryna call",
+                    "Sin City's cold and empty",
+                    "I said ooh I'm blinede by the lights",
+                    "I'm running out of time",
+                    "So I hit the road in overdrive"));
+            //
+
+            int index;
+            if(sentenceCount == 6){
+                index = (req.getQuestionNumber() * 2) - 3;   // 빈칸 게임에 2, 4, 5번 문장 가져오기
+            }else{
+                index = req.getQuestionNumber() - 1;         // 빈칸 게임에 1, 2번 문장 가져오기
+            }
+
+            if(index >= sentences.size()){
+                throw new IllegalArgumentException("해당 questionNumber에 맞는 문장이 존재하지 않습니다.");
+            }
+
+            // String coreSentence = sentences.get(index).getSentence();
+            // 테스트용 코드
+            originalSentence =  sentences.get(index);
+            //
+        }
 
         // 2. 빈칸 문제 생성
         BlankQuizResult quizResult = createBlankQuiz(originalSentence);
