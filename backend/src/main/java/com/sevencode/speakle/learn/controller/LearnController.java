@@ -97,6 +97,22 @@ public class LearnController {
         );
     }
 
+
+    /**
+     * 딕테이션 퀴즈 완료 결과 조회
+     */
+    @GetMapping("/dictation/complete")
+    public ResponseEntity<ApiResponse<DictationCompleteResponse>> getDictationComplete(
+            @RequestParam("learnedSongId") Long learnedSongId,
+            @AuthenticationPrincipal UserPrincipal me) {
+        Long userId = me.userId();
+        DictationCompleteResponse response = dictationService.getDictationComplete(learnedSongId, userId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "딕테이션 테스트가 완료 되었습니다.", response)
+        );
+    }
+
     /**
      * 스피킹 평가 문제 생성(조회)
      */

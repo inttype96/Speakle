@@ -5,9 +5,11 @@ import com.sevencode.speakle.learn.domain.entity.DictationResultEntity;
 import com.sevencode.speakle.learn.domain.entity.LearnedSongEntity;
 import com.sevencode.speakle.learn.dto.request.DictationEvaluationRequest;
 import com.sevencode.speakle.learn.dto.request.DictationQuestionRequest;
+import com.sevencode.speakle.learn.dto.response.DictationCompleteResponse;
 import com.sevencode.speakle.learn.dto.response.DictationEvaluationResponse;
 import com.sevencode.speakle.learn.dto.response.DictationQuestionResponse;
 import com.sevencode.speakle.learn.exception.DictationNotFoundException;
+import com.sevencode.speakle.learn.exception.DictationResultNotFoundException;
 import com.sevencode.speakle.learn.exception.LearnedSongNotFoundException;
 import com.sevencode.speakle.learn.exception.UnauthorizedAccessException;
 import com.sevencode.speakle.learn.repository.DictationRepository;
@@ -18,8 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -215,6 +217,111 @@ public class DictationServiceImpl implements DictationService{
                 .score(savedResult.getScore())
                 .createdAt(savedResult.getCreatedAt())
                 .meta(savedResult.getMeta())
+                .build();
+    }
+
+    /**
+     * 딕테이션 퀴즈 종료
+     */
+    @Override
+    public DictationCompleteResponse getDictationComplete(Long learnedSongId, Long userId) {
+        // 1. 권한 확인
+        LearnedSongEntity learnedSongEntity = learnedSongRepository.findById(learnedSongId)
+                .orElseThrow(() -> new LearnedSongNotFoundException("존재하지 않는 학습곡입니다."));
+
+        if (!Objects.equals(learnedSongEntity.getUserId(), userId)) {
+            throw new UnauthorizedAccessException("접근할 수 있는 권한이 없습니다.");
+        }
+
+        // 2. learned_song_id로 dictation 테이블에서 데이터 조회
+        List<DictationEntity> dictations = dictationRepository.findByLearnedSongId(learnedSongId);
+
+        if (dictations.isEmpty()) {
+            throw new DictationNotFoundException("해당 딕테이션 퀴즈를 찾을 수 없습니다.");
+        }
+
+        // 3. dictation_id 리스트 추출
+        List<Long> dictationIds = dictations.stream()
+                .map(DictationEntity::getDictationId)
+                .collect(Collectors.toList());
+
+        // 4. dictation_result에서 해당 결과들 조회
+        List<DictationResultEntity> dictationResults = dictationResultRepository
+                .findByDictationIdInAndUserId(dictationIds, userId);
+
+        if (dictationResults.isEmpty()) {
+            throw new DictationResultNotFoundException("딕테이션 퀴즈 결과를 찾을 수 없습니다.");
+        }
+
+        // 5. 응답 데이터 구성
+        return buildDictationCompleteResponse(dictations, dictationResults);
+    }
+
+    // ------------------------------------------------------------
+    // 딕테이션 퀴즈 완료 응답 생성
+    // ------------------------------------------------------------
+    private DictationCompleteResponse buildDictationCompleteResponse(List<DictationEntity> dictations, List<DictationResultEntity> dictationResults) {
+        // Dictation 데이터를 Map으로 변환 (빠른 조회를 위해)
+        Map<Long, DictationEntity> dictationMap = dictations.stream()
+                .collect(Collectors.toMap(DictationEntity::getDictationId, dictation -> dictation));
+
+        List<DictationCompleteResponse.DictationResult> results = new ArrayList<>();
+        int correctCount = 0;
+        int totalScore = 0;
+
+        for (DictationResultEntity dictationResult : dictationResults) {
+            DictationEntity dictation = dictationMap.get(dictationResult.getDictationId());
+            if (dictation == null) continue;
+
+            // meta 데이터 파싱
+            DictationCompleteResponse.DictationMeta meta = parseDictationMetaData(dictation, dictationResult);
+
+            DictationCompleteResponse.DictationResult result = new DictationCompleteResponse.DictationResult();
+            result.setDictationResultId(dictationResult.getDictationResultId());
+            result.setUserId(dictationResult.getUserId());
+            result.setDictationId(dictationResult.getDictationId());
+            result.setIsCorrect(dictationResult.getIsCorrect());
+            result.setScore(dictationResult.getScore());
+            result.setCreatedAt(dictationResult.getCreatedAt());
+            result.setMeta(meta);
+
+            results.add(result);
+
+            if (Boolean.TRUE.equals(dictationResult.getIsCorrect())) {
+                correctCount++;
+            }
+            totalScore += dictationResult.getScore();
+        }
+
+        // dictationId를 기준으로 오름차순 정렬
+        results.sort(Comparator.comparing(DictationCompleteResponse.DictationResult::getDictationId));
+
+        // Summary 생성
+        DictationCompleteResponse.Summary summary = new DictationCompleteResponse.Summary();
+        summary.setTotalQuestions(results.size());
+        summary.setCorrectAnswers(correctCount);
+        summary.setTotalScore(totalScore);
+
+        // 최종 응답 구성
+        DictationCompleteResponse res = new DictationCompleteResponse();
+        res.setSummary(summary);
+        res.setResults(results);
+        return res;
+    }
+
+    // ------------------------------------------------------------
+    // 딕테이션 메타 데이터 생성
+    // ------------------------------------------------------------
+    private DictationCompleteResponse.DictationMeta parseDictationMetaData(DictationEntity dictation, DictationResultEntity dictationResult) {
+        // correctAnswer는 dictation 테이블의 answer 필드에서
+        String correctAnswer = dictation.getAnswer();
+
+        // userAnswer는 dictationResult의 meta에서 파싱
+        String userAnswer = dictationResult.getMeta().get("userAnswer").toString();
+
+        return DictationCompleteResponse.DictationMeta.builder()
+                .userAnswer(userAnswer)
+                .correctAnswer(correctAnswer)
                 .build();
     }
 }
