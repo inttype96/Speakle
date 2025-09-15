@@ -16,4 +16,4 @@ ENV SPRING_PROFILES_ACTIVE=local \
 EXPOSE 8080
 
 ENTRYPOINT ["java"]
-CMD ["-Xms512m", "-Xmx1024m", "-jar", "app.jar"]
+CMD ["-Xms2048m", "-Xmx2048m", "-jar", "app.jar"]
