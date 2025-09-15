@@ -26,7 +26,7 @@ export async function evaluateSpeaking(
   }
 
   const res = await http.post<SpeakingEvalRes>(
-    "/api/learn/speaking/evaluate",
+    "/learn/speaking/evaluate",
     body,
     {
       headers: {
