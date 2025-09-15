@@ -150,7 +150,7 @@ export default function SpeakingPage() {
   const title = useMemo(() => `문제 ${qNum}`, [qNum]);
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="bg-background text-foreground">
       {/* Navbar + 스페이서 */}
       <Navbar />
       <div aria-hidden className="h-16 md:h-20" />
@@ -161,48 +161,48 @@ export default function SpeakingPage() {
           <button
             type="button"
             onClick={() => history.back()}
-            className="inline-flex items-center gap-2 text-[15px] text-zinc-200 hover:text-white"
+            className="inline-flex items-center gap-2 text-[15px]"
           >
             <ChevronLeft size={18} />
             곡으로 돌아가기
           </button>
 
-          <div className="hidden md:block rounded-md bg-zinc-900/75 px-4 py-2.5 text-right">
-            <div className="text-xs text-zinc-400">{TOP_RIGHT_SONG}</div>
+          <div className="hidden md:block rounded-md px-4 py-2.5 text-right">
+            <div className="text-xs">{TOP_RIGHT_SONG}</div>
             <div className="text-sm font-semibold">{TOP_RIGHT_MODE}</div>
           </div>
         </div>
 
         {/* 진행 정보 + 바 */}
-        <div className="mt-6 text-xs text-zinc-400">
+        <div className="mt-6 text-xs">
           Question {qNum} of {TOTAL_QUESTIONS}
         </div>
-        <Progress value={Math.min(progressPct, 100)} className="mt-2 h-2 bg-zinc-800" />
-        <div className="mt-1 text-right text-[11px] sm:text-xs text-zinc-400">
+        <Progress value={Math.min(progressPct, 100)} className="mt-2 h-2" />
+        <div className="mt-1 text-right text-[11px] sm:text-xs">
           {progressPct}% Complete
         </div>
       </div>
 
       {/* 본문 카드 */}
       <div className="mx-auto mt-8 mb-24 w-[min(940px,88vw)]">
-        <Card className="border border-zinc-800 bg-zinc-950/70 text-white shadow-2xl">
+        <Card className="border shadow-2xl">
           <CardHeader className="flex flex-col items-center gap-2 pt-8">
-            <div className="text-sm text-violet-200/90">{title}</div>
-            <div className="text-xs text-zinc-400">주어진 문장을 정확한 발음으로 따라 읽어주세요</div>
+            <div className="text-sm">{title}</div>
+            <div className="text-xs">주어진 문장을 정확한 발음으로 따라 읽어주세요</div>
 
             {/* 상단 라벨: 포인트/타이머/난이도 */}
             <div className="mt-3 flex items-center gap-3">
-              <Badge className="rounded-full bg-violet-600/20 text-violet-300"> {POINTS_PER_Q} points </Badge>
-              <span className="inline-flex items-center gap-1 text-sm text-zinc-300">
-                <Timer size={16} className="text-orange-400" /> {mmss(elapsed)}
+              <Badge className="rounded-full"> {POINTS_PER_Q} points </Badge>
+              <span className="inline-flex items-center gap-1 text-sm">
+                <Timer size={16} /> {mmss(elapsed)}
               </span>
-              <Badge variant="outline" className="rounded-full border-zinc-700 text-zinc-300">Medium</Badge>
+              <Badge variant="outline" className="rounded-full">Medium</Badge>
             </div>
           </CardHeader>
 
           <CardContent className="space-y-6 pb-8">
             {/* 코어 문장 */}
-            <div className="mx-auto w-full rounded-xl border border-violet-900/30 bg-violet-900/15 px-5 py-4 text-center text-[17px] text-violet-200">
+            <div className="mx-auto w-full rounded-xl border px-5 py-4 text-center text-[17px]">
               {evalData?.coreSentence ?? "Loading..."}
             </div>
 
@@ -211,7 +211,7 @@ export default function SpeakingPage() {
               <Button
                 type="button"
                 onClick={speak}
-                className="h-9 rounded-full bg-violet-700/30 px-3 text-violet-200 hover:bg-violet-700/40"
+                className="h-9 rounded-full px-3"
                 variant="secondary"
               >
                 <Volume2 size={16} className="mr-2" />
@@ -233,7 +233,7 @@ export default function SpeakingPage() {
               >
                 {recording ? <MicOff size={26} /> : <Mic size={26} />}
               </button>
-              <div className="text-xs text-zinc-400">
+              <div className="text-xs">
                 마이크 버튼을 눌러 발음해보세요
               </div>
 
@@ -249,14 +249,14 @@ export default function SpeakingPage() {
                 type="button"
                 onClick={onSubmit}
                 disabled={!recBlob}
-                className="h-10 rounded-md bg-violet-600 px-5 text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-10 rounded-md disabled:cursor-not-allowed disabled:opacity-60"
               >
                 답안 제출 ›
               </Button>
             </div>
 
             {/* 하단 현재 점수 (원하면 누적 로직로 교체 가능) */}
-            <div className="mt-2 text-center text-xs text-zinc-400">
+            <div className="mt-2 text-center text-xs">
               현재 점수: {lastScore ?? 0} / 4
             </div>
           </CardContent>
@@ -265,20 +265,20 @@ export default function SpeakingPage() {
 
       {/* 결과 모달 */}
       <Dialog open={openResult} onOpenChange={setOpenResult}>
-        <DialogContent className="bg-zinc-950 text-white">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>
               {lastIsCorrect ? "정답입니다! 🎉" : "오답입니다 😢"}
             </DialogTitle>
-            <DialogDescription className="space-y-2 text-zinc-400">
+            <DialogDescription className="space-y-2">
               {evalData && (
                 <>
                   <div>
-                    <span className="text-zinc-500">문장: </span>
+                    <span>문장: </span>
                     {evalData.coreSentence}
                   </div>
                   <div>
-                    <span className="text-zinc-500">점수: </span>
+                    <span>점수: </span>
                     {lastScore} {lastRawScore ? `(raw: ${Number(lastRawScore).toFixed(2)})` : ""}
                   </div>
                 </>
@@ -289,14 +289,14 @@ export default function SpeakingPage() {
             <Button
               type="button"
               variant="secondary"
-              className="w-full sm:w-auto bg-zinc-800 text-white hover:bg-zinc-700"
+              className="w-full sm:w-auto"
               onClick={() => setOpenResult(false)}
             >
               닫기
             </Button>
             <Button
               type="button"
-              className="w-full sm:w-auto bg-violet-600 text-white hover:bg-violet-500"
+              className="w-full sm:w-auto"
               onClick={() => {
                 setOpenResult(false);
                 if (qNum < TOTAL_QUESTIONS) setQNum((n) => n + 1);

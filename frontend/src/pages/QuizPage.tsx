@@ -162,7 +162,7 @@ export default function QuizPage() {
    * - 문제 카드: 포인트/타이머/난이도 + 문제 문장 + 번역 + 입력 + Skip/Next
    */
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="bg-background text-foreground">
       {/* 1) 최상단 Navbar */}
       <Navbar />
       <div aria-hidden className="h-16 md:h-20" />
@@ -176,75 +176,75 @@ export default function QuizPage() {
           <button
             type="button"
             onClick={() => history.back()}
-            className="inline-flex items-center gap-2 text-[15px] text-zinc-200 hover:text-white"
+            className="inline-flex items-center gap-2 text-[15px]"
           >
             <ChevronLeft size={18} />
             곡으로 돌아가기
           </button>
 
-          <div className="rounded-md bg-zinc-900/75 px-4 py-2.5 text-right">
-            <div className="text-xs text-zinc-400">{TOP_RIGHT_SONG}</div>
+          <div className="rounded-md  px-4 py-2.5 text-right">
+            <div className="text-xs ">{TOP_RIGHT_SONG}</div>
             <div className="text-sm font-semibold">{TOP_RIGHT_MODE}</div>
           </div>
         </div>
 
         {/* 진행 영역 */}
-        <div className="mt-6 text-xs text-zinc-400">
+        <div className="mt-6 text-xs">
           Question {qNum} of {TOTAL_QUESTIONS}
         </div>
-        <Progress value={progressPct} className="mt-2 h-2 bg-zinc-800" />
-        <div className="mt-1 text-right text-xs text-zinc-400">
+        <Progress value={progressPct} className="mt-2 h-2 " />
+        <div className="mt-1 text-right text-xs ">
           {progressPct}% Complete
         </div>
 
         {/* 3) 본문: 문제 카드 + 입력 + 버튼 라인 */}
         {!isCompleted && (
           <div className="mx-auto mt-8 w-[min(980px,92vw)]">
-            <Card className="border border-zinc-800 bg-zinc-950/70 text-white shadow-2xl">
+            <Card className="border shadow-2xl">
               <CardHeader className="flex flex-col gap-4">
                 {/* 상단 라벨: 포인트 / 타이머 / 난이도 */}
                 <div className="flex items-center justify-between">
                   <Badge
                     variant="secondary"
-                    className="rounded-full bg-violet-600/20 py-1 text-[12px] text-violet-300"
+                    className="rounded-full py-1 text-[12px]"
                   >
                     {POINTS_PER_Q} points
                   </Badge>
 
-                  <div className="flex items-center gap-2 text-sm text-zinc-300">
-                    <Timer size={16} className="text-orange-400" />
+                  <div className="flex items-center gap-2 text-sm">
+                    <Timer size={16} />
                     <span className="tabular-nums">{mmss(elapsed)}</span>
                   </div>
 
                   <Badge
                     variant="outline"
-                    className="rounded-full border-zinc-700 py-1 text-[12px] text-zinc-300"
+                    className="rounded-full border-zinc-700 py-1 text-[12px]"
                   >
                     Medium
                   </Badge>
                 </div>
 
-                <div className="text-zinc-300">문제 {qNum}.</div>
+                <div className="font-bold">문제 {qNum}.</div>
 
                 <CardTitle className="font-bold leading-relaxed text-[clamp(22px,2vw+12px,36px)]">
-                  <span className="text-violet-300">
+                  <span>
                     {question ? emphasizeBlank(question.question) : "—"}
                   </span>
                 </CardTitle>
 
-                <p className="text-[15px] text-zinc-400">
+                <p className="text-[15px]">
                   {question?.korean ?? "문제를 불러오는 중..."}
                 </p>
               </CardHeader>
 
               <CardContent className="space-y-6">
                 {/* 입력 */}
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                <div className="rounded-2xl border p-4">
                   <Input
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value)}
                     placeholder="빈칸에 들어갈 단어를 입력하세요"
-                    className="h-14 border-zinc-800 bg-black text-lg text-white placeholder:text-zinc-500"
+                    className="h-14 text-lg"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") onSubmitAnswer();
                     }}
@@ -255,7 +255,7 @@ export default function QuizPage() {
                 <div className="flex items-center justify-between">
                   <Button
                     variant="ghost"
-                    className="h-10 text-zinc-300 hover:bg-zinc-800"
+                    className="h-10  hover:bg-zinc-800"
                     onClick={onSkip}
                   >
                     <SkipForward size={16} className="mr-2" />
@@ -265,13 +265,13 @@ export default function QuizPage() {
                   <div className="flex gap-2">
                     <Button
                       variant="secondary"
-                      className="h-10 bg-zinc-800 text-white hover:bg-zinc-700"
+                      className="h-10 hover:bg-zinc-700"
                       onClick={onComplete}
                     >
                       퀴즈 종료
                     </Button>
                     <Button
-                      className="h-10 px-5 bg-violet-600 text-white hover:bg-violet-500"
+                      className="h-10 px-5"
                       onClick={onSubmitAnswer}
                     >
                       Next Question &rsaquo;
@@ -296,12 +296,12 @@ export default function QuizPage() {
         {/* 4) 종료 요약 */}
         {isCompleted && (
           <div className="mx-auto mt-10 w-[min(980px,92vw)]">
-            <Card className="border-zinc-800 bg-zinc-950/70 text-white shadow-xl">
+            <Card className="shadow-xl">
               <CardHeader>
                 <CardTitle className="text-xl">퀴즈 결과 요약</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="text-sm text-zinc-300">
+                <div className="text-sm">
                   총 문제 {complete?.summary.totalQuestions}개 · 정답{" "}
                   {complete?.summary.correctAnswers}개 · 총점{" "}
                   {complete?.summary.totalScore}점
@@ -311,17 +311,17 @@ export default function QuizPage() {
                   {complete?.results.map((r) => (
                     <div
                       key={r.blankResultId}
-                      className="rounded-xl border border-zinc-800 p-3 text-sm"
+                      className="rounded-xl border p-3 text-sm"
                     >
-                      <div className="font-medium text-zinc-200">
+                      <div className="font-medium">
                         {r.meta.question}
                       </div>
-                      <div className="mt-1 text-zinc-400">
-                        <span className="text-zinc-500">정답: </span>
+                      <div className="mt-1">
+                        <span>정답: </span>
                         {r.meta.correctAnswer.join(", ")}
                       </div>
-                      <div className="text-zinc-400">
-                        <span className="text-zinc-500">내 답: </span>
+                      <div>
+                        <span>내 답: </span>
                         {r.meta.userAnswer.join(", ")}
                       </div>
                       <div className="mt-1">
@@ -348,15 +348,15 @@ export default function QuizPage() {
 
       {/* 정답/오답 모달 */}
       <Dialog open={openResult} onOpenChange={setOpenResult}>
-        <DialogContent className="bg-zinc-950 text-white">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{isCorrect ? "정답입니다! 🎉" : "오답입니다 😢"}</DialogTitle>
-            <DialogDescription className="space-y-2 text-zinc-400">
+            <DialogDescription className="space-y-2">
               {question && (
                 <>
-                  <div><span className="text-zinc-500">문제: </span>{question.question}</div>
-                  <div><span className="text-zinc-500">정답: </span>{question.answer.join(", ")}</div>
-                  <div><span className="text-zinc-500">내 답: </span>{userInput || "—"}</div>
+                  <div><span>문제: </span>{question.question}</div>
+                  <div><span>정답: </span>{question.answer.join(", ")}</div>
+                  <div><span>내 답: </span>{userInput || "—"}</div>
                 </>
               )}
             </DialogDescription>
@@ -364,13 +364,11 @@ export default function QuizPage() {
           <DialogFooter className="gap-2">
             <Button
               variant="secondary"
-              className="bg-zinc-800 text-white hover:bg-zinc-700"
               onClick={() => setOpenResult(false)}
             >
               닫기
             </Button>
             <Button
-              className="bg-violet-600 text-white hover:bg-violet-500"
               onClick={onNextQuestion}
               disabled={qNum >= TOTAL_QUESTIONS}
               title={qNum >= TOTAL_QUESTIONS ? "마지막 문제입니다. 종료를 눌러주세요." : ""}
