@@ -50,13 +50,13 @@ const TOTAL_QUESTIONS = 3;
 const POINTS_PER_Q = 100;
 
 // 00:00 형태로 시간(초)을 표시하는 포맷터
-const formatTime = (sec: number) => {
-  const m = Math.floor(sec / 60)
-    .toString()
-    .padStart(2, "0");
-  const s = (sec % 60).toString().padStart(2, "0");
-  return `${m}:${s}`;
-};
+// const formatTime = (sec: number) => {
+//   const m = Math.floor(sec / 60)
+//     .toString()
+//     .padStart(2, "0");
+//   const s = (sec % 60).toString().padStart(2, "0");
+//   return `${m}:${s}`;
+// };
 
 export default function QuizPage() {
   const [qNum, setQNum] = useState(1);

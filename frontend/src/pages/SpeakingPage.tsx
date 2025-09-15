@@ -1,7 +1,7 @@
 // src/pages/SpeakingPage.tsx
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Navbar from "@/components/common/navbar";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
