@@ -3,11 +3,22 @@ export type LoginReq = {
   password: string;
 };
 
+export type SignupReq = {
+  email: string;
+  password: string;
+  username: string;
+  gender?: string;
+  birth?: string;
+  profileImageUrl?: string;
+};
+
 export type User = {
   userId: number;
   email: string;
   username: string;
-  profileImageUrl: string;
+  gender?: string;
+  birth?: string;
+  profileImageUrl?: string;
 };
 
 export type Tokens = {
@@ -23,4 +34,15 @@ export type LoginRes = {
     user: User;
     tokens: Tokens;
   };
+};
+
+export type SignupRes = {
+  status: number;      // 200
+  message: string;     // "회원가입이 완료되었습니다."
+  data: User;
+};
+
+export type ApiError = {
+  status: number;
+  message: string;
 };
