@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Drawer from "@/components/common/drawer"
 import { Bars3Icon } from '@heroicons/react/24/solid'
+import { SearchForm } from "@/components/common/search-form"
 
 export default function Navbar() {
     const [drawerOpen, setDrawerOpen] = useState(false)
@@ -24,6 +25,13 @@ export default function Navbar() {
                                     className="h-8 w-auto"
                                 />
                             </a>
+                        </div>
+
+                        {/* 검색창 */}
+                        <div className="flex-1 flex justify-center px-2 lg:ml-6 lg:justify-end">
+                            <div className="max-w-lg w-full lg:max-w-xs">
+                                <SearchForm />
+                            </div>
                         </div>
 
                         {/* drawer */}
