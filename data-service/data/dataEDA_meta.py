@@ -4,7 +4,7 @@ pd.set_option("display.max_colwidth", None)  # 문자열 자르지 말고 전부
 
 # ✅ 파일 로드
 df = pd.read_csv("data/clean_meta_en_with_popularity.csv")
-df_lyric = pd.read_csv("data/songs_with_lyrics_and_timestamps_filtered2.csv")
+df_lyric = pd.read_csv("data/songs_with_lyrics_and_timestamps_filtered3.csv")
 
 print("===== clean_meta_en_with_popularity.csv EDA =====")
 
