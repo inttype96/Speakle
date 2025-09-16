@@ -111,6 +111,9 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // === Email-sender === kang
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 }
 
 // ============================================
