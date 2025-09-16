@@ -9,8 +9,8 @@ type AuthState = {
   logout: () => void;
   setTokens: (tokens: AuthTokens | null) => void;
 
-  // 편의 getter
-  isAuthed: () => boolean;
+  // 편의 getter - 상태에 반응하도록 computed property로 변경
+  isAuthed: boolean;
   accessToken: string | null;
   refreshToken: string | null;
 
@@ -27,7 +27,9 @@ export const useAuthStore = create<AuthState>()(
       logout: () => set({ tokens: null }),
       setTokens: (tokens) => set({ tokens }),
 
-      isAuthed: () => !!get().tokens?.accessToken,
+      get isAuthed() {
+        return !!get().tokens?.accessToken;
+      },
       get accessToken() {
         return get().tokens?.accessToken ?? null;
       },
