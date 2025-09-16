@@ -36,27 +36,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		@NonNull FilterChain filterChain)
 		throws ServletException, IOException {
 
+		String requestUri = request.getRequestURI();
+		System.out.println("JWT Filter - Request URI: " + requestUri);
+
 		String token = resolveBearerToken(request);
+		System.out.println("JWT Filter - Token: " + (token != null ? token.substring(0, Math.min(token.length(), 20)) + "..." : "null"));
 
 		if (token != null) {
 			try {
 				if (jwtProvider.isValid(token)) {
 					Long userId = jwtProvider.extractUserId(token);
 					String username = jwtProvider.extractUsername(token);
+					System.out.println("JWT Filter - Extracted userId: " + userId + ", username: " + username);
 
 					var principal = new UserPrincipal(userId, username);
 					var auth = new UsernamePasswordAuthenticationToken(principal, null, List.of());
 					SecurityContextHolder.getContext().setAuthentication(auth);
+					System.out.println("JWT Filter - Authentication set successfully");
+				} else {
+					System.out.println("JWT Filter - Token is invalid");
 				}
 			} catch (ExpiredJwtException ex) {
+				System.out.println("JWT Filter - Token expired: " + ex.getMessage());
 				if (jwtProvider.isRefreshToken(token)) {
 					request.setAttribute("auth_error", "REFRESH_EXPIRED");
 				} else {
 					request.setAttribute("auth_error", "ACCESS_EXPIRED");
 				}
 			} catch (JwtException | IllegalArgumentException ex) {
+				System.out.println("JWT Filter - Token error: " + ex.getMessage());
 				request.setAttribute("auth_error", "INVALID_TOKEN");
 			}
+		} else {
+			System.out.println("JWT Filter - No token found");
 		}
 
 		filterChain.doFilter(request, response);
