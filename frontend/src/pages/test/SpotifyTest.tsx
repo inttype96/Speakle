@@ -28,7 +28,7 @@ function SpotifyTest() {
         setLoginError(null)
 
         try {
-            const result = await fetch('https://j13c104.p.ssafy.io/api/auth/login', {
+            const result = await fetch('https://j13c104.p.ssafy.io/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
