@@ -1,5 +1,5 @@
 import { http } from "./http";
-import type { LoginReq, LoginRes, SignupReq, SignupRes } from "@/types/auth";
+import type { LoginReq, LoginRes, SignupReq, SignupRes, UserProfileRes } from "@/types/auth";
 
 export async function loginAPI(payload: LoginReq) {
   // POST /api/auth/login
@@ -14,6 +14,11 @@ export async function signupAPI(payload: SignupReq) {
   const res = await http.post<SignupRes>("/user", payload, {
     headers: { "Content-Type": "application/json" },
   });
+  return res;
+}
+
+export async function getUserProfileAPI() {
+  const res = await http.get<UserProfileRes>("/user");
   return res;
 }
 

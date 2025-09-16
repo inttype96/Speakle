@@ -108,7 +108,7 @@ export function SignupForm({
                     // 자동 로그인 실패해도 회원가입은 성공했으므로 계속 진행
                 }
 
-                navigate('/spotify-setup');
+                navigate('/spotify-settings');
             }
         } catch (error) {
             if (error instanceof AxiosError && error.response) {

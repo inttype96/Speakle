@@ -7,8 +7,10 @@ import SpeakingPage from "@/pages/SpeakingPage";
 import SignupPage from "@/pages/auth/signupPage";
 import SpotifySetupPage from "@/pages/spotify/spotify-setup";
 import SpotifyCallbackPage from "@/pages/spotify/spotify-callback";
-import TestPage from "@/pages/test/testPage";
+import SpotifySettingsPage from "@/pages/spotify/spotify-settings";
+import MyPage from "@/pages/user/myPage";
 import NotFoundPage from "@/pages/common/notFoundPage";
+
 const router = createBrowserRouter([
     {
         path: "/",
@@ -19,12 +21,12 @@ const router = createBrowserRouter([
         element: <LoginPage />,
     },
     {
-    path: "/learn/quiz",
-    element: <QuizPage />,
+        path: "/learn/quiz",
+        element: <QuizPage />,
     },
     {
-    path: "/learn/speaking",
-    element: <SpeakingPage />,
+        path: "/learn/speaking",
+        element: <SpeakingPage />,
     },
     {
         path: "/signup",
@@ -39,8 +41,12 @@ const router = createBrowserRouter([
         element: <SpotifyCallbackPage />,
     },
     {
-        path: "/test",
-        element: <TestPage />,
+        path: "/spotify-settings",
+        element: <SpotifySettingsPage />,
+    },
+    {
+        path: "/mypage",
+        element: <MyPage />,
     },
     {
         path: "*",

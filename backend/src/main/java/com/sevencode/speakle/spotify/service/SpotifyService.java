@@ -152,6 +152,11 @@ public class SpotifyService {
 				throw new SpotifyTokenException("토큰 응답이 비어있습니다.");
 			}
 
+			// 실제 부여된 scope 로깅
+			log.info("토큰 교환 완료 - scope: {}, token: {}...",
+				token.getScope(),
+				token.getAccessToken().substring(0, Math.min(20, token.getAccessToken().length())));
+
 			return token;
 		} catch (Exception e) {
 			log.error("Spotify 토큰 교환 실패", e);

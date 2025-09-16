@@ -32,9 +32,17 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http, JwtProvider jwtProvider) throws Exception {
 		if ("local".equals(activeProfile)) {
-			// 로컬 개발환경 → 보안 무시, 모든 요청 허용
+			// 로컬 개발환경 → Spotify API만 인증 적용, 나머지는 허용
 			http.csrf(csrf -> csrf.disable())
-					.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+				.httpBasic(b -> b.disable())
+				.formLogin(f -> f.disable())
+				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.authorizeHttpRequests(auth -> auth
+					.requestMatchers("/api/spotify/callback").permitAll()  // Spotify OAuth callback
+					.requestMatchers("/api/spotify/**").authenticated()    // Spotify API 인증 필요
+					.anyRequest().permitAll()  // 나머지는 모두 허용
+				);
+			http.addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
 		} else {
 			// dev / prod 환경 → 보안 정책 적용
 			http
@@ -53,6 +61,7 @@ public class SecurityConfig {
 
 					// ── 공개/인증 예외 경로
 					.requestMatchers("/api/oauth/**").permitAll()
+					.requestMatchers("/api/spotify/callback").permitAll()  // Spotify OAuth callback
 					.requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh").permitAll()
 					.requestMatchers(HttpMethod.POST, "/api/user").permitAll()
 					.requestMatchers(HttpMethod.POST, "/api/user/temp-password").permitAll()
@@ -64,6 +73,7 @@ public class SecurityConfig {
 					// ── 보호 경로
 					.requestMatchers("/user/**").authenticated()
 					.requestMatchers("/api/learn/**").authenticated()			// ay
+					.requestMatchers("/api/spotify/**").authenticated()			// spotify
 
 					// 그 외 필요 시 정책 추가
 					.anyRequest().permitAll()
