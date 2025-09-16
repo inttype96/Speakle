@@ -28,7 +28,7 @@ function SpotifyTest() {
         setLoginError(null)
 
         try {
-            const result = await fetch('http://localhost:8080/auth/login', {
+            const result = await fetch('https://j13c104.p.ssafy.io/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ function SpotifyTest() {
                 console.warn('유효한 토큰이 없습니다.')
             }
 
-            const result = await fetch('http://localhost:8080/api/spotify/connect', {
+            const result = await fetch('https://j13c104.p.ssafy.io/api/spotify/connect', {
                 method: 'GET',
                 headers,
                 credentials: 'include'

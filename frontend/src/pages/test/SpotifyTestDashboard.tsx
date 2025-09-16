@@ -48,7 +48,7 @@ const SpotifyTestDashboard = () => {
             setError(null);
             setLoading(endpoint);
 
-            const response = await fetch(`http://localhost:8080/api/spotify${endpoint}`, {
+            const response = await fetch(`https://j13c104.p.ssafy.io/api/spotify/callback`, {
                 method,
                 headers: getAuthHeaders(),
                 credentials: 'include'
