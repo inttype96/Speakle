@@ -37,12 +37,20 @@ export function SpotifyConnect({ onSuccess, onError, className }: SpotifyConnect
 
       console.log('Spotify 연결 응답:', response);
 
-      if (response.data?.data?.redirectUrl) {
+      console.log('응답 전체 구조:', response);
+      console.log('response.data:', response.data);
+      console.log('response.data.data:', response.data?.data);
+
+      const redirectUrl = response.data?.redirectUrl;
+
+      if (redirectUrl) {
+        console.log('리다이렉트 URL 찾음:', redirectUrl);
         // Spotify 인증 페이지로 리다이렉트
-        window.location.href = response.data.data.redirectUrl;
+        window.location.href = redirectUrl;
         onSuccess?.();
       } else {
         const errorMsg = '리다이렉트 URL을 받지 못했습니다.';
+        console.error('리다이렉트 URL을 찾을 수 없음. 응답 구조를 확인하세요:', response);
         setError(errorMsg);
         onError?.(errorMsg);
       }
