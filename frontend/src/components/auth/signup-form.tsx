@@ -83,7 +83,7 @@ export function SignupForm({
             const response = await signupAPI(formData);
 
             if (response.data.status === 200) {
-                alert(response.data.message);
+                alert("회원가입이 완료되었습니다.");
                 navigate('/');
             }
         } catch (error) {
