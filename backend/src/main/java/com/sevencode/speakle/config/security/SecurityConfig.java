@@ -53,6 +53,7 @@ public class SecurityConfig {
 
 					// ── 공개/인증 예외 경로
 					.requestMatchers("/api/oauth/**").permitAll()
+					.requestMatchers("/api/spotify/callback").permitAll()  // Spotify OAuth callback
 					.requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh").permitAll()
 					.requestMatchers(HttpMethod.POST, "/api/user").permitAll()
 					.requestMatchers(HttpMethod.POST, "/api/user/temp-password").permitAll()
@@ -64,6 +65,7 @@ public class SecurityConfig {
 					// ── 보호 경로
 					.requestMatchers("/user/**").authenticated()
 					.requestMatchers("/api/learn/**").authenticated()			// ay
+					.requestMatchers("/api/spotify/**").authenticated()			// spotify
 
 					// 그 외 필요 시 정책 추가
 					.anyRequest().permitAll()
