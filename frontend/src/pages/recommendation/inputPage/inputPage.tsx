@@ -1,6 +1,6 @@
 import React from 'react';
 import Navbar from "@/components/common/navbar";
-import FindMusic from "./components/findmusic";
+import FindMusic from "./components/findMusic";
 import SituationListen from "./components/situationListen";
 import WhereListen from "./components/whereListen";
 import FavoriteGenre from "./components/favoriteGenre";

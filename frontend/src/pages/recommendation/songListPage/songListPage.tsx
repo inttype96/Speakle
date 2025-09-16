@@ -6,11 +6,11 @@ import FilterList from "./components/filterList"
 
 const RecommendationPage: React.FC = () => {
   return (
-    <div className="min-h-screen">
-      <div className="bg-background text-foreground">
+    <div className="min-h-screen bg-background">
+      <div className="bg-background">
         <Navbar />
       </div>
-      <div className="min-h-screen max-w-6xl mx-auto px-4 py-8">
+       <div className="min-h-screen max-w-6xl mx-auto px-4 py-8">
           <ListText />
           <ResultList />
           <FilterList />  

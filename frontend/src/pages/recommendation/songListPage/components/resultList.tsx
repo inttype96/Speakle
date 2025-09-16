@@ -1,6 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 const ResultList: React.FC = () => {
+  useEffect(() => {
+    // 스크롤바 숨기기
+    const style = document.createElement('style');
+    style.textContent = `
+      .songlist::-webkit-scrollbar {
+        display: none;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
   // 테스트용 곡 데이터
   const songs = [
     { id: 1, title: 'Shape of You', artist: 'Ed Sheeran', album: '÷ (Divide)', duration: '3:53', genre: 'Pop' },
@@ -14,7 +28,7 @@ const ResultList: React.FC = () => {
   ];
 
   return (
-    <div className="result border border-gray-500 rounded-lg p-4 mb-8 flex h-96">
+    <div className="result border border-gray-500 rounded-lg p-4 mb-8 flex h-96 w-full max-w-none">
         <div className="first w-1/3 pr-4">
             <h2 className="text-2xl font-bold text-foreground mb-6">상위 결과</h2>
             <div className="bg-card border border-border rounded-lg p-4 h-72">
@@ -36,7 +50,13 @@ const ResultList: React.FC = () => {
 
         <div className="second w-2/3 pl-4">
             <h2 className="text-2xl font-bold text-foreground mb-6">곡</h2>
-            <div className="songlist space-y-4 h-72 overflow-y-auto pr-2 scrollbar-hide">
+            <div 
+              className="songlist space-y-4 h-72 overflow-y-auto pr-2"
+              style={{
+                msOverflowStyle: 'none',
+                scrollbarWidth: 'none'
+              }}
+            >
                 {songs.map((song) => (
                 <div key={song.id} className="bg-card border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors shadow-sm">
                     <div className="flex items-center justify-between">

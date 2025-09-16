@@ -6,7 +6,7 @@
 body {
   margin: 0;
   /* display: flex; */
-  width: 100%;
+  place-items: center;
   min-width: 320px;
   min-height: 100vh;
 }
@@ -126,15 +126,5 @@ body {
 
   body {
     @apply bg-background text-foreground;
-  }
-
-  /* 스크롤바 숨기기 */
-  .scrollbar-hide {
-    -ms-overflow-style: none; 
-    scrollbar-width: none;  
-  }
-  
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;  
   }
 }
