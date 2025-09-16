@@ -34,13 +34,16 @@ export const useAuthStore = create<AuthState>()(
       setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       get isAuthed() {
-        return !!get().tokens?.accessToken;
+        const state = get();
+        return !!state.tokens?.accessToken;
       },
       get accessToken() {
-        return get().tokens?.accessToken ?? null;
+        const state = get();
+        return state.tokens?.accessToken ?? null;
       },
       get refreshToken() {
-        return get().tokens?.refreshToken ?? null;
+        const state = get();
+        return state.tokens?.refreshToken ?? null;
       },
 
       tryRefreshToken: async () => {
