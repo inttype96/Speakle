@@ -4,7 +4,6 @@ import { useAuthStore, isAuthenticated } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getUserProfileAPI } from '@/services/auth'
 import type { UserProfile } from '@/types/auth'
 import { AxiosError } from 'axios'
@@ -155,12 +154,17 @@ export default function MyPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-start gap-6">
-                <Avatar className="w-20 h-20">
-                  <AvatarImage src={profile.profileImageUrl} alt={profile.username} />
-                  <AvatarFallback className="text-lg">
-                    {getUserInitials(profile.username)}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-semibold text-primary">
+                  {profile.profileImageUrl ? (
+                    <img
+                      src={profile.profileImageUrl}
+                      alt={profile.username}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    getUserInitials(profile.username)
+                  )}
+                </div>
 
                 <div className="flex-1 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
