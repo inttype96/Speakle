@@ -13,19 +13,24 @@ interface SpotifyConnectProps {
 
 export function SpotifyConnect({ onSuccess, onError, className }: SpotifyConnectProps) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const tokens = useAuthStore((state) => state.tokens);
   const isAuthenticated = !!tokens?.accessToken;
 
   const handleSpotifyConnect = async () => {
     if (!isAuthenticated) {
-      alert('먼저 로그인해주세요!');
+      const errorMsg = '먼저 로그인해주세요!';
+      setError(errorMsg);
+      onError?.(errorMsg);
       return;
     }
 
     const token = getAccessToken();
     console.log('Spotify 연결 시도 - 토큰:', token ? `${token.substring(0, 20)}...` : 'null');
+    console.log('Authorization header will be:', token ? `Bearer ${token.substring(0, 20)}...` : 'null');
 
     setLoading(true);
+    setError(null);
 
     try {
       const response = await connectSpotifyAPI();
@@ -38,20 +43,46 @@ export function SpotifyConnect({ onSuccess, onError, className }: SpotifyConnect
         onSuccess?.();
       } else {
         const errorMsg = '리다이렉트 URL을 받지 못했습니다.';
-        alert(errorMsg);
+        setError(errorMsg);
         onError?.(errorMsg);
       }
     } catch (error) {
       let errorMsg = '네트워크 오류가 발생했습니다.';
 
       if (error instanceof AxiosError && error.response) {
-        errorMsg = error.response.data?.message || `Spotify 연결 실패: ${error.response.statusText}`;
+        const status = error.response.status;
+
+        switch (status) {
+          case 503:
+            errorMsg = 'Spotify 서비스가 일시적으로 사용할 수 없습니다. 나중에 다시 시도해 주세요.';
+            break;
+          case 401:
+            errorMsg = '인증에 실패했습니다. 로그아웃 후 다시 로그인해 주세요.';
+            console.error('401 인증 실패 - 토큰:', token ? `${token.substring(0, 20)}...` : 'null');
+            console.error('응답 데이터:', error.response.data);
+            break;
+          case 404:
+            errorMsg = 'Spotify 연동 서비스를 찾을 수 없습니다.';
+            break;
+          case 500:
+            // 백엔드 로그에서 "사용자 인증 정보가 필요합니다" 에러 확인됨
+            if (error.response.data?.message?.includes('인증') || error.response.data?.message?.includes('사용자')) {
+              errorMsg = '사용자 인증에 문제가 있습니다. 로그아웃 후 다시 로그인해 주세요.';
+              console.error('500 인증 관련 오류 - 토큰:', token ? `${token.substring(0, 20)}...` : 'null');
+            } else {
+              errorMsg = '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+            }
+            console.error('500 에러 상세:', error.response.data);
+            break;
+          default:
+            errorMsg = error.response.data?.message || `Spotify 연결 실패 (${status})`;
+        }
       } else if (error instanceof Error) {
         errorMsg = `네트워크 에러: ${error.message}`;
       }
 
       console.error('Spotify 연결 오류:', error);
-      alert(errorMsg);
+      setError(errorMsg);
       onError?.(errorMsg);
     } finally {
       setLoading(false);
@@ -69,6 +100,13 @@ export function SpotifyConnect({ onSuccess, onError, className }: SpotifyConnect
         <p className="text-muted-foreground mb-4">
           Spotify와 연동하여 음악 기반 영어 학습을 시작하세요!
         </p>
+
+        {error && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 mb-4">
+            <p className="text-sm text-destructive">{error}</p>
+          </div>
+        )}
+
         <Button
           onClick={handleSpotifyConnect}
           disabled={loading || !isAuthenticated}

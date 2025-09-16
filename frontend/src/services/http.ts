@@ -19,6 +19,9 @@ http.interceptors.request.use((config) => {
   if (token) {
     config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
+    console.log(`[HTTP] ${config.method?.toUpperCase()} ${config.url} - 토큰 부착됨:`, token.substring(0, 20) + '...');
+  } else {
+    console.log(`[HTTP] ${config.method?.toUpperCase()} ${config.url} - 토큰 없음`);
   }
   return config;
 });
@@ -33,8 +36,11 @@ http.interceptors.response.use(
     const { response, config } = error;
     if (!response || !config) return Promise.reject(error);
 
+    console.log(`[HTTP] ${config.method?.toUpperCase()} ${config.url} - 응답 상태:`, response.status);
+
     // 토큰 만료
     if (response.status === 401 && !config._retry) {
+      console.log('[HTTP] 401 인증 실패 감지');
       const store = useAuthStore.getState();
       const rt = store.tokens?.refreshToken;
 
