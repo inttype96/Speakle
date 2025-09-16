@@ -1,5 +1,5 @@
 import axios, { AxiosError} from "axios";
-import { useAuthStore } from "@/store/auth"; // ✅ 누락된 임포트 추가
+import { useAuthStore, getAccessToken } from "@/store/auth";
 
 // AxiosRequestConfig에 커스텀 플래그(_retry) 사용하려면 타입 보강
 declare module "axios" {
@@ -15,10 +15,13 @@ export const http = axios.create({
 
 // 요청 인터셉터: accessToken 자동 부착
 http.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().tokens?.accessToken; // ✅ 사용 가능
+  const token = getAccessToken();
   if (token) {
     config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
+    console.log(`[HTTP] ${config.method?.toUpperCase()} ${config.url} - 토큰 부착됨:`, token.substring(0, 20) + '...');
+  } else {
+    console.log(`[HTTP] ${config.method?.toUpperCase()} ${config.url} - 토큰 없음`);
   }
   return config;
 });
@@ -33,9 +36,12 @@ http.interceptors.response.use(
     const { response, config } = error;
     if (!response || !config) return Promise.reject(error);
 
+    console.log(`[HTTP] ${config.method?.toUpperCase()} ${config.url} - 응답 상태:`, response.status);
+
     // 토큰 만료
     if (response.status === 401 && !config._retry) {
-      const store = useAuthStore.getState(); // ✅ 사용 가능
+      console.log('[HTTP] 401 인증 실패 감지');
+      const store = useAuthStore.getState();
       const rt = store.tokens?.refreshToken;
 
       // refresh 엔드포인트 없으면 아래 블록을 주석 처리하거나 logout만 수행하세요.
@@ -47,7 +53,7 @@ http.interceptors.response.use(
       if (isRefreshing) {
         await new Promise<void>((resolve) => queue.push(resolve));
         config.headers = config.headers ?? {};
-        config.headers.Authorization = `Bearer ${useAuthStore.getState().tokens?.accessToken ?? ""}`;
+        config.headers.Authorization = `Bearer ${getAccessToken() ?? ""}`;
         config._retry = true;
         return http(config);
       }
@@ -60,7 +66,7 @@ http.interceptors.response.use(
 
         if (ok) {
           config.headers = config.headers ?? {};
-          config.headers.Authorization = `Bearer ${useAuthStore.getState().tokens?.accessToken ?? ""}`;
+          config.headers.Authorization = `Bearer ${getAccessToken() ?? ""}`;
           config._retry = true;
           return http(config);
         }

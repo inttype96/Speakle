@@ -5,15 +5,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react"
-import { signupAPI } from "@/services/auth"
+import { signupAPI, loginAPI } from "@/services/auth"
 import type { SignupReq } from "@/types/auth"
 import { AxiosError } from "axios"
+import { useAuthStore } from "@/store/auth"
 
 export function SignupForm({
     className,
     ...props
 }: React.ComponentProps<"div">) {
     const navigate = useNavigate();
+    const login = useAuthStore((state) => state.login);
     const [formData, setFormData] = useState<SignupReq>({
         email: '',
         password: '',
@@ -88,7 +90,25 @@ export function SignupForm({
             // HTTP 상태 코드 또는 응답 데이터의 status 필드 확인
             if (response.status === 201 || response.data?.status === 201) {
                 alert("회원가입이 완료되었습니다.");
-                navigate('/');
+
+                // 회원가입 성공 후 자동 로그인 시도
+                try {
+                    const loginResponse = await loginAPI({
+                        email: formData.email,
+                        password: formData.password
+                    });
+
+                    if (loginResponse.status === 200) {
+                        const tokens = loginResponse.data.data;
+                        login(tokens);
+                        console.log('회원가입 후 자동 로그인 성공');
+                    }
+                } catch (loginError) {
+                    console.warn('자동 로그인 실패:', loginError);
+                    // 자동 로그인 실패해도 회원가입은 성공했으므로 계속 진행
+                }
+
+                navigate('/spotify-setup');
             }
         } catch (error) {
             if (error instanceof AxiosError && error.response) {
