@@ -10,9 +10,11 @@ import { useAuthStore } from '@/store/auth'
 export default function Drawer({ open, setOpen }: { open: boolean, setOpen: (open: boolean) => void }) {
   const isAuthed = useAuthStore((state) => state.isAuthed);
   const tokens = useAuthStore((state) => state.tokens);
+  const hasHydrated = useAuthStore((state) => state._hasHydrated);
   const logout = useAuthStore((state) => state.logout);
 
   // 디버깅용 로그
+  console.log('Drawer - hasHydrated:', hasHydrated);
   console.log('Drawer - isAuthed:', isAuthed);
   console.log('Drawer - tokens:', tokens);
   console.log('Drawer - localStorage:', localStorage.getItem('auth-storage'));
@@ -21,6 +23,11 @@ export default function Drawer({ open, setOpen }: { open: boolean, setOpen: (ope
     logout();
     setOpen(false);
   };
+
+  // hydration이 완료되지 않았으면 로딩 상태로 처리
+  if (!hasHydrated) {
+    return null; // 또는 로딩 스피너
+  }
   return (
     <Dialog open={open} onClose={setOpen} className="relative z-50">
       <DialogBackdrop

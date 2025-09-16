@@ -16,7 +16,7 @@ export function LoginForm({
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
-    const { login } = useAuthStore();
+    const login = useAuthStore((state) => state.login);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -24,9 +24,15 @@ export function LoginForm({
 
         try {
             const response = await loginAPI({ email, password });
+            console.log('Login response:', response);
+            console.log('Response status:', response.status);
+            console.log('Response data:', response.data);
+
             if (response.status === 200) {
                 const tokens = response.data.data;
+                console.log('Tokens to save:', tokens);
                 login(tokens);
+                console.log('After login - auth state:', useAuthStore.getState());
                 navigate('/');
             }
         } catch (err: any) {

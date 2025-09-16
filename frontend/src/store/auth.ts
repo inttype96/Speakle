@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import type { AuthTokens } from "@/types/auth";
 import { refreshAPI } from "@/services/auth";
 
@@ -14,6 +14,10 @@ type AuthState = {
   accessToken: string | null;
   refreshToken: string | null;
 
+  // hydration 상태 확인
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
+
   // (선택) refresh 시도
   tryRefreshToken: () => Promise<boolean>;
 };
@@ -22,10 +26,12 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       tokens: null,
+      _hasHydrated: false,
 
       login: (tokens) => set({ tokens }),
       logout: () => set({ tokens: null }),
       setTokens: (tokens) => set({ tokens }),
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       get isAuthed() {
         return !!get().tokens?.accessToken;
@@ -52,9 +58,13 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage", // localStorage key
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         tokens: state.tokens,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );
