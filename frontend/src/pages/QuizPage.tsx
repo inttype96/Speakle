@@ -12,7 +12,7 @@
  * - Sonner 토스트를 쓰므로 App.tsx에 <Toaster />가 있어야 한다.
  */
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import Navbar from "@/components/common/navbar";
 
 // shadcn/ui
@@ -39,27 +39,42 @@ const TOP_RIGHT_SONG = "Blinding Lights - The Weeknd";
 const TOP_RIGHT_MODE = "빈칸 퀴즈";
 
 // 기본 파라미터
-const DEFAULT_USER_ID = 101;
-const DEFAULT_LEARNED_SONG_ID = 12345;
+const DEFAULT_USER_ID = 4;
+const DEFAULT_LEARNED_SONG_ID = 1;
 const DEFAULT_SITUATION = "daily_conversation";
 const DEFAULT_LOCATION = "cafe";
-const DEFAULT_SONG_ID = 123;
+const DEFAULT_SONG_ID = 1;
 
 // 총 문제 수(원하면 10으로 변경 가능)
 const TOTAL_QUESTIONS = 3;
 const POINTS_PER_Q = 100;
 
-// 00:00 형태로 시간(초)을 표시하는 포맷터
-// const formatTime = (sec: number) => {
-//   const m = Math.floor(sec / 60)
-//     .toString()
-//     .padStart(2, "0");
-//   const s = (sec % 60).toString().padStart(2, "0");
-//   return `${m}:${s}`;
-// };
+// ✅ learnedSongId별로 진행을 분리해 저장
+const STORAGE_KEY = `quiz-progress:${DEFAULT_LEARNED_SONG_ID}`;
+
+// ✅ 초기 qNum 결정: 1) URL ?q= → 2) localStorage → 3) 1
+function getInitialQ(): number {
+  const sp = new URLSearchParams(window.location.search);
+  const fromUrl = Number(sp.get("q"));
+  if (Number.isFinite(fromUrl) && fromUrl >= 1 && fromUrl <= TOTAL_QUESTIONS) {
+    return fromUrl;
+  }
+  const saved = Number(localStorage.getItem(STORAGE_KEY));
+  if (Number.isFinite(saved) && saved >= 1 && saved <= TOTAL_QUESTIONS) {
+    return saved;
+  }
+  return 1;
+}
+
+// 00:00 형태로 시간(초)을 표시
+const mmss = (sec: number) =>
+  `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 
 export default function QuizPage() {
-  const [qNum, setQNum] = useState(1);
+  const lastFetchedQRef = useRef<number | null>(null);  
+  // ✅ 새로고침 복원 대응
+  const [qNum, setQNum] = useState<number>(getInitialQ());
+
   const [question, setQuestion] = useState<QuizGenerateRes["data"] | null>(null);
   const [userInput, setUserInput] = useState("");
   const [openResult, setOpenResult] = useState(false);
@@ -67,8 +82,25 @@ export default function QuizPage() {
   const [complete, setComplete] = useState<CompleteRes["data"] | null>(null);
   const [elapsed, setElapsed] = useState(0);
 
+  // ✅ qNum 변경 → URL & localStorage 동기화
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, String(qNum));
+
+    const sp = new URLSearchParams(window.location.search);
+    sp.set("q", String(qNum));
+    const newUrl = `${window.location.pathname}?${sp.toString()}`;
+    window.history.replaceState(null, "", newUrl);
+  }, [qNum]);
+
   // 문제 로드
   useEffect(() => {
+    // 안전장치: 범위 보정
+    if (qNum < 1 || qNum > TOTAL_QUESTIONS) {
+      setQNum(1);
+      return;
+    }
+    if (lastFetchedQRef.current === qNum) return; // ← 같은 qNum 중복 호출 방지
+    lastFetchedQRef.current = qNum;
     (async () => {
       const res = await generateQuiz({
         learnedSongId: DEFAULT_LEARNED_SONG_ID,
@@ -98,8 +130,7 @@ export default function QuizPage() {
   );
 
   const progressPct = Math.round(((qNum - 1) / TOTAL_QUESTIONS) * 100);
-  const mmss = (sec: number) =>
-    `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+  const isLastQuestion = qNum >= TOTAL_QUESTIONS; // ✅ 마지막 문제 여부
 
   // 제출 → 정오판정 → 모달
   const onSubmitAnswer = useCallback(() => {
@@ -131,6 +162,31 @@ export default function QuizPage() {
     if (qNum < TOTAL_QUESTIONS) setQNum((n) => n + 1);
   }, [question, isCorrect, userInput, qNum]);
 
+  // 마지막 문제에서 모달의 "퀴즈 종료" 누를 때: 마지막 답안 저장 + complete
+  const finishFromModal = useCallback(async () => {
+    if (!question || isCorrect === null) return setOpenResult(false);
+
+    // 마지막 문제의 채점 결과도 저장
+    const body: MarkingReq = {
+      userId: DEFAULT_USER_ID,
+      blankId: question.blankId,
+      isCorrect,
+      score: isCorrect ? POINTS_PER_Q : 0,
+      originSentence: question.originSentence,
+      question: question.question,
+      correctAnswer: question.answer,
+      userAnswer: [userInput],
+    };
+    await marking(body);
+
+    // 퀴즈 종료(요약 데이터 수령)
+    const res = await completeQuiz({ learnedSongId: DEFAULT_LEARNED_SONG_ID });
+    setComplete(res.data);
+    localStorage.removeItem(STORAGE_KEY);
+
+    setOpenResult(false);
+  }, [question, isCorrect, userInput]);
+
   // 스킵(오답으로 저장 후 다음)
   const onSkip = useCallback(async () => {
     if (!question) return;
@@ -147,30 +203,27 @@ export default function QuizPage() {
     if (qNum < TOTAL_QUESTIONS) setQNum((n) => n + 1);
   }, [question, qNum]);
 
-  // 종료
+  // 종료 (페이지 상단의 종료 버튼)
   const onComplete = useCallback(async () => {
     const res = await completeQuiz({ learnedSongId: DEFAULT_LEARNED_SONG_ID });
     setComplete(res.data);
+
+    // ✅ 종료하면 진행 저장 삭제(다음 입장 시 1번부터 시작)
+    localStorage.removeItem(STORAGE_KEY);
   }, []);
 
   const isCompleted = !!complete;
 
-  /**
-   * [실제 화면 렌더]
-   * - 상단: "곡으로 돌아가기" / 우측 곡 정보 카드
-   * - 진행률: "Question n of N" + Progress 바
-   * - 문제 카드: 포인트/타이머/난이도 + 문제 문장 + 번역 + 입력 + Skip/Next
-   */
   return (
     <div className="bg-background text-foreground">
       {/* 1) 최상단 Navbar */}
       <Navbar />
       <div aria-hidden className="h-16 md:h-20" />
-      {/* 2) Navbar 아래 레이아웃(두 번째 스샷과 동일한 구조) */}
-       <div
-          className="mx-auto max-w-none w-[var(--shell-w)] px-[var(--shell-gutter)]"
-          style={{ paddingTop: "calc(var(--nav-h) + 8px)" }}  // 겹침 방지
-        >
+      {/* 2) Navbar 아래 레이아웃 */}
+      <div
+        className="mx-auto max-w-none w-[var(--shell-w)] px-[var(--shell-gutter)]"
+        style={{ paddingTop: "calc(var(--nav-h) + 8px)" }}
+      >
         {/* 상단 행: 좌 뒤로가기 / 우 곡정보 박스 */}
         <div className="flex items-center justify-between">
           <button
@@ -182,8 +235,8 @@ export default function QuizPage() {
             곡으로 돌아가기
           </button>
 
-          <div className="rounded-md  px-4 py-2.5 text-right">
-            <div className="text-xs ">{TOP_RIGHT_SONG}</div>
+        <div className="rounded-md px-4 py-2.5 text-right">
+            <div className="text-xs">{TOP_RIGHT_SONG}</div>
             <div className="text-sm font-semibold">{TOP_RIGHT_MODE}</div>
           </div>
         </div>
@@ -192,8 +245,8 @@ export default function QuizPage() {
         <div className="mt-6 text-xs">
           Question {qNum} of {TOTAL_QUESTIONS}
         </div>
-        <Progress value={progressPct} className="mt-2 h-2 " />
-        <div className="mt-1 text-right text-xs ">
+        <Progress value={progressPct} className="mt-2 h-2" />
+        <div className="mt-1 text-right text-xs">
           {progressPct}% Complete
         </div>
 
@@ -218,7 +271,7 @@ export default function QuizPage() {
 
                   <Badge
                     variant="outline"
-                    className="rounded-full border-zinc-700 py-1 text-[12px]"
+                    className="rounded-full py-1 text-[12px]"
                   >
                     Medium
                   </Badge>
@@ -255,7 +308,7 @@ export default function QuizPage() {
                 <div className="flex items-center justify-between">
                   <Button
                     variant="ghost"
-                    className="h-10  hover:bg-zinc-800"
+                    className="h-10"
                     onClick={onSkip}
                   >
                     <SkipForward size={16} className="mr-2" />
@@ -263,13 +316,13 @@ export default function QuizPage() {
                   </Button>
 
                   <div className="flex gap-2">
-                    <Button
+                    {/* <Button
                       variant="secondary"
-                      className="h-10 hover:bg-zinc-700"
+                      className="h-10"
                       onClick={onComplete}
                     >
                       퀴즈 종료
-                    </Button>
+                    </Button> */}
                     <Button
                       className="h-10 px-5"
                       onClick={onSubmitAnswer}
@@ -278,14 +331,6 @@ export default function QuizPage() {
                     </Button>
                   </div>
                 </div>
-
-                {/* 원문(학습용) */}
-                {/* {question && (
-                  <p className="mt-1 text-xs text-zinc-500">
-                    <span className="font-medium text-zinc-400">원문: </span>
-                    {question.originSentence}
-                  </p>
-                )} */}
               </CardContent>
             </Card>
 
@@ -327,7 +372,7 @@ export default function QuizPage() {
                       <div className="mt-1">
                         결과:{" "}
                         <span
-                          className={r.isCorrect ? "text-green-400" : "text-rose-400"}
+                          className={r.isCorrect ? "text-green-500" : "text-rose-500"}
                         >
                           {r.isCorrect ? "정답" : "오답"}
                         </span>{" "}
@@ -368,13 +413,21 @@ export default function QuizPage() {
             >
               닫기
             </Button>
-            <Button
-              onClick={onNextQuestion}
-              disabled={qNum >= TOTAL_QUESTIONS}
-              title={qNum >= TOTAL_QUESTIONS ? "마지막 문제입니다. 종료를 눌러주세요." : ""}
-            >
-              다음 문제
-            </Button>
+
+            {/* ✅ 마지막 문제면 '다음 문제' 숨기고 '퀴즈 종료'만 표시 */}
+            {!isLastQuestion ? (
+              <Button
+                onClick={onNextQuestion}
+                disabled={qNum >= TOTAL_QUESTIONS}
+                title={qNum >= TOTAL_QUESTIONS ? "마지막 문제입니다. 종료를 눌러주세요." : ""}
+              >
+                다음 문제
+              </Button>
+            ) : (
+              <Button onClick={finishFromModal}>
+                퀴즈 종료
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

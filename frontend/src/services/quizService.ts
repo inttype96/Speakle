@@ -74,7 +74,6 @@ let MOCK_RESULT_ID = 5000;
 // ──────────────────────────────────────────────────────────────────────────────
 export async function generateQuiz(req: QuizGenerateReq): Promise<QuizGenerateRes> {
   if (USE_MOCK) {
-    // questionNumber에 따라 목업 반환
     const idx = Math.max(0, req.questionNumber - 1);
     const data = MOCK_QUESTIONS[idx % MOCK_QUESTIONS.length];
     return {
@@ -84,9 +83,18 @@ export async function generateQuiz(req: QuizGenerateReq): Promise<QuizGenerateRe
     };
   }
 
-  const res = await http.post<QuizGenerateRes>("/api/learn/quiz/generate", req, {
-    headers: { "Content-Type": "application/json" },
-  });
+  // ✅ 쿼리파라미터 없음. Body에 questionNumber 포함해서 그대로 전송
+  const res = await http.post<QuizGenerateRes>(
+    "/learn/quiz/generate",          // baseURL 이 "/api"라면 최종 /api/learn/quiz/generate
+    {
+      learnedSongId: req.learnedSongId,
+      situation: req.situation,
+      location: req.location,
+      songId: req.songId,
+      questionNumber: req.questionNumber, // ← 반드시 포함 (NPE 방지)
+    },
+    { headers: { "Content-Type": "application/json" } }
+  );
   return res.data;
 }
 
@@ -125,9 +133,8 @@ export async function marking(body: MarkingReq): Promise<MarkingRes> {
 
 // ──────────────────────────────────────────────────────────────────────────────
 // 3) 퀴즈 종료(complete)
-// - 스펙은 GET + Body 이지만 일반적으로는 params 로 보내는 것을 권장
-// - 여기서는 axios.request 로 data도 시도한 뒤, 실패 시 params 로 폴백 가능
-// - Authorization 헤더 필요: Bearer {token}
+// - 서버가 GET + body 를 허용하지 않을 수 있어 params 폴백
+// - Authorization 헤더 필요 시 accessToken 인자로 주입
 // ──────────────────────────────────────────────────────────────────────────────
 export async function completeQuiz(
   body: CompleteReq,
@@ -198,11 +205,11 @@ export async function completeQuiz(
     };
   }
 
-  // 우선 body 포함 시도
+  // 1차: GET with body (허용된다면 사용)
   try {
     const res = await http.request<CompleteRes>({
       method: "GET",
-      url: "/api/learn/quiz/complete",
+      url: "/learn/quiz/complete",
       headers: {
         "Content-Type": "application/json",
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
@@ -211,8 +218,8 @@ export async function completeQuiz(
     });
     return res.data;
   } catch {
-    // 실패 시 params로 재시도 (권장 방식)
-    const res2 = await http.get<CompleteRes>("/api/learn/quiz/complete", {
+    // 2차: params 폴백(권장)
+    const res2 = await http.get<CompleteRes>("/learn/quiz/complete", {
       headers: {
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       },
