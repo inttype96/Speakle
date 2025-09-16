@@ -4,6 +4,7 @@ import com.sevencode.speakle.config.security.UserPrincipal;
 import com.sevencode.speakle.learn.dto.response.ApiResponse;
 import com.sevencode.speakle.reward.dto.request.RewardUpdateRequest;
 import com.sevencode.speakle.reward.dto.response.RewardProfileResponse;
+import com.sevencode.speakle.reward.dto.response.RewardRankingResponse;
 import com.sevencode.speakle.reward.dto.response.RewardUpdateResponse;
 import com.sevencode.speakle.reward.service.RewardService;
 import jakarta.validation.Valid;
@@ -11,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -38,5 +41,14 @@ public class RewardController {
             @RequestParam Long userId) {
         RewardProfileResponse response = rewardService.getPointProfile(userId);
         return ResponseEntity.ok(ApiResponse.success(200, "포인트 프로필 조회에 성공했습니다.", response));
+    }
+
+    /**
+     * 포인트 랭킹 조회
+     */
+    @GetMapping("/ranking")
+    public ResponseEntity<ApiResponse<List<RewardRankingResponse>>> getPointRanking() {
+        List<RewardRankingResponse> response = rewardService.getTop5PointRanking();
+        return ResponseEntity.ok(ApiResponse.success(200, "포인트 랭킹 조회에 성공했습니다.", response));
     }
 }
