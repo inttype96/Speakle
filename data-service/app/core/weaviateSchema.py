@@ -37,19 +37,19 @@ def init_schema():
     )
 
     # LyricChunk 클래스 정의
-    # client.collections.create(
-    #     name="LyricChunk",
-    #     description="Lyric chunks with embeddings",
-    #     vectorizer_config=Configure.Vectorizer.none(),
-    #     properties=[
-    #         {"name": "lyric_id", "data_type": DataType.TEXT},
-    #         {"name": "song_id", "data_type": DataType.TEXT},
-    #         {"name": "chunk_idx", "data_type": DataType.INT},
-    #         {"name": "start_ms", "data_type": DataType.INT},
-    #         {"name": "words", "data_type": DataType.TEXT},
-    #         {"name": "created_at", "data_type": DataType.DATE},
-    #     ]
-    # )
+    client.collections.create(
+        name="LyricChunk",
+        description="Lyric chunks with embeddings",
+        vectorizer_config=Configure.Vectorizer.none(),
+        properties=[
+            {"name": "lyric_id", "data_type": DataType.TEXT},
+            {"name": "song_id", "data_type": DataType.TEXT},
+            {"name": "chunk_idx", "data_type": DataType.INT},
+            {"name": "start_ms", "data_type": DataType.INT},
+            {"name": "words", "data_type": DataType.TEXT},
+            {"name": "created_at", "data_type": DataType.DATE},
+        ]
+    )
 
     print(" Schema initialized successfully!")
     client.close()

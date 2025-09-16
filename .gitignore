@@ -20,10 +20,10 @@
 ### dataset ###
 /data-service/data/*.csv
 /data-service/data/*.parquet
-
+/
 ### venv ###
 /data-service/venv311/*
-
+/weaviate_data/*
 # Local History for Visual Studio Code
 .history/
 

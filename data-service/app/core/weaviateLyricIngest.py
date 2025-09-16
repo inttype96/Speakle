@@ -5,8 +5,8 @@ from app.core.weaviateClient import get_client
 
 def ingest_embeddings(
     parquet_files,
-    meta_path="data/clean_meta_en_with_popularity.csv",
-    lyrics_path="data/songs_with_lyrics_and_timestamps_filtered3.csv",
+    meta_path="data/clean_meta_en_with_popularity_with_adult_pop50.csv",
+    lyrics_path="data/songs_with_lyrics_and_timestamps_clean.csv",
     max_per_song=50
 ):
     client = get_client()
