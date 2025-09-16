@@ -1,11 +1,7 @@
 import { http } from "./http";
 
 export type SpotifyConnectResponse = {
-  status: number;
-  message: string;
-  data: {
-    redirectUrl: string;
-  };
+  redirectUrl: string;
 };
 
 export async function connectSpotifyAPI() {

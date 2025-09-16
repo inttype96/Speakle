@@ -39,7 +39,6 @@ export function SpotifyConnect({ onSuccess, onError, className }: SpotifyConnect
 
       console.log('응답 전체 구조:', response);
       console.log('response.data:', response.data);
-      console.log('response.data.data:', response.data?.data);
 
       const redirectUrl = response.data?.redirectUrl;
 
