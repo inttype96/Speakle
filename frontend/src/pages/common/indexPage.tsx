@@ -1,8 +1,5 @@
 import Navbar from "@/components/common/navbar"
-import { Button } from "@/components/ui/button"
-import { LockClosedIcon, StarIcon } from '@heroicons/react/24/outline'
 import Footer from "./footer"
-import { Link } from "react-router-dom"
 
 export default function IndexPage() {
     return (
@@ -26,10 +23,9 @@ export default function IndexPage() {
                             Speakle
                         </h1>
                         <p className="mt-8 text-lg font-medium text-muted-foreground sm:text-xl">
-                            Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui
-                            lorem cupidatat commodo. Elit sunt amet fugiat veniam occaecat.
+                            음악처럼 스며드는 영어학습. 듣고, 따라하고, 오래 남는 영어
                         </p>
-                        <div className="mt-10 flex items-center justify-center gap-x-6">
+                        {/* <div className="mt-10 flex items-center justify-center gap-x-6">
                             <Button asChild size="lg" className="">
                                 <Link to="/login" className="flex items-center">
                                     <LockClosedIcon className="h-6 w-6 mr-2" /> 로그인
@@ -38,7 +34,7 @@ export default function IndexPage() {
                             <Button variant="outline" size="lg" className="">
                                 <StarIcon className="h-6 w-6 mr-2" /> 더 알아보기
                             </Button>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>

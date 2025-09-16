@@ -13,32 +13,33 @@ export type SignupReq = {
 };
 
 export type User = {
-  userId: number;
+  id: number;
   email: string;
   username: string;
   gender?: string;
   birth?: string;
   profileImageUrl?: string;
+  deleted: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
-export type Tokens = {
+export type AuthTokens = {
+  tokenType: string;   // "Bearer"
   accessToken: string;
   refreshToken: string;
-  expiresAt: string; // ISO UTC
+  expiresIn: number;   // 3600 (seconds)
 };
 
 export type LoginRes = {
   status: number;      // 200
   message: string;     // "로그인에 성공했습니다."
-  data: {
-    user: User;
-    tokens: Tokens;
-  };
+  data: AuthTokens;
 };
 
 export type SignupRes = {
-  status: number;      // 200
-  message: string;     // "회원가입이 완료되었습니다."
+  status: number;      // 201
+  message: string;     // "회원이 생성되었습니다."
   data: User;
 };
 
