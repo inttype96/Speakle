@@ -13,12 +13,15 @@ export type SignupReq = {
 };
 
 export type User = {
-  userId: number;
+  id: number;
   email: string;
   username: string;
   gender?: string;
   birth?: string;
   profileImageUrl?: string;
+  deleted: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type AuthTokens = {
@@ -35,8 +38,8 @@ export type LoginRes = {
 };
 
 export type SignupRes = {
-  status: number;      // 200
-  message: string;     // "회원가입이 완료되었습니다."
+  status: number;      // 201
+  message: string;     // "회원이 생성되었습니다."
   data: User;
 };
 
