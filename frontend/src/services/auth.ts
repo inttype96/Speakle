@@ -14,6 +14,7 @@ export async function signupAPI(payload: SignupReq) {
   const res = await http.post<SignupRes>("/user", payload, {
     headers: { "Content-Type": "application/json" },
   });
+  console.log(res)
   return res;
 }
 
