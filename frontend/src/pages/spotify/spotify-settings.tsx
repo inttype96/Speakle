@@ -26,7 +26,6 @@ interface SpotifyProfile {
 
 export default function SpotifySettingsPage() {
   const navigate = useNavigate()
-  const logout = useAuthStore((state) => state.logout)
   const [status, setStatus] = useState<SpotifyStatus | null>(null)
   const [profile, setProfile] = useState<SpotifyProfile | null>(null)
   const [loading, setLoading] = useState(true)
