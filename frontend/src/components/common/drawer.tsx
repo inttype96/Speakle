@@ -9,25 +9,15 @@ import { useAuthStore } from '@/store/auth'
 
 export default function Drawer({ open, setOpen }: { open: boolean, setOpen: (open: boolean) => void }) {
   const tokens = useAuthStore((state) => state.tokens);
-  const hasHydrated = useAuthStore((state) => state._hasHydrated);
   const logout = useAuthStore((state) => state.logout);
 
-  // isAuthed를 직접 계산
-  const isAuthed = !!tokens?.accessToken;
-
-  // 디버깅용 로그
-  console.log('Drawer - hasHydrated:', hasHydrated);
-  console.log('Drawer - isAuthed (computed):', isAuthed);
-  console.log('Drawer - tokens:', tokens);
-  console.log('Drawer - localStorage:', localStorage.getItem('auth-storage'));
+  // accessToken 존재 여부로만 로그인 상태 판단
+  const isAuthenticated = !!tokens?.accessToken;
 
   const handleLogout = () => {
     logout();
     setOpen(false);
   };
-
-  // hydration이 완료되지 않았으면 기본값으로 처리 (drawer는 여전히 열리도록)
-  const shouldShowLogin = !hasHydrated ? true : !isAuthed;
   return (
     <Dialog open={open} onClose={setOpen} className="relative z-50">
       <DialogBackdrop
@@ -61,7 +51,7 @@ export default function Drawer({ open, setOpen }: { open: boolean, setOpen: (ope
                 </div>
                 <div className="relative mt-6 flex-1 px-4 sm:px-6">
                   {/* 로그인 상태에 따른 조건부 렌더링 */}
-                  {shouldShowLogin ? (
+                  {!isAuthenticated ? (
                     <Button asChild variant="outline" size="lg" className="w-full mb-2">
                       <Link to="/login" className="flex items-center justify-center">
                         <LockClosedIcon className="h-6 w-6 mr-2" /> 로그인

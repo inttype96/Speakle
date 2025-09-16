@@ -9,15 +9,6 @@ type AuthState = {
   logout: () => void;
   setTokens: (tokens: AuthTokens | null) => void;
 
-  // 편의 getter - 상태에 반응하도록 computed property로 변경
-  isAuthed: boolean;
-  accessToken: string | null;
-  refreshToken: string | null;
-
-  // hydration 상태 확인
-  _hasHydrated: boolean;
-  setHasHydrated: (state: boolean) => void;
-
   // (선택) refresh 시도
   tryRefreshToken: () => Promise<boolean>;
 };
@@ -26,25 +17,10 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       tokens: null,
-      _hasHydrated: false,
 
       login: (tokens) => set({ tokens }),
       logout: () => set({ tokens: null }),
       setTokens: (tokens) => set({ tokens }),
-      setHasHydrated: (state) => set({ _hasHydrated: state }),
-
-      get isAuthed() {
-        const state = get();
-        return !!state.tokens?.accessToken;
-      },
-      get accessToken() {
-        const state = get();
-        return state.tokens?.accessToken ?? null;
-      },
-      get refreshToken() {
-        const state = get();
-        return state.tokens?.refreshToken ?? null;
-      },
 
       tryRefreshToken: async () => {
         const rt = get().tokens?.refreshToken;
@@ -65,9 +41,19 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         tokens: state.tokens,
       }),
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
-      },
     }
   )
 );
+
+// 편의 함수들 - 컴포넌트에서 사용
+export const isAuthenticated = () => {
+  return !!useAuthStore.getState().tokens?.accessToken;
+};
+
+export const getAccessToken = () => {
+  return useAuthStore.getState().tokens?.accessToken ?? null;
+};
+
+export const getRefreshToken = () => {
+  return useAuthStore.getState().tokens?.refreshToken ?? null;
+};
