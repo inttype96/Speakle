@@ -81,8 +81,12 @@ export function SignupForm({
 
         try {
             const response = await signupAPI(formData);
+            console.log('Signup response:', response);
+            console.log('Response status:', response.status);
+            console.log('Response data:', response.data);
 
-            if (response.data.status === 201) {
+            // HTTP 상태 코드 또는 응답 데이터의 status 필드 확인
+            if (response.status === 201 || response.data?.status === 201) {
                 alert("회원가입이 완료되었습니다.");
                 navigate('/');
             }
