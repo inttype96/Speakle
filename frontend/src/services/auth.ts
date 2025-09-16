@@ -24,11 +24,10 @@ export async function refreshAPI(refreshToken: string) {
     status: number;
     message: string;
     data: {
-      tokens: {
-        accessToken: string;
-        refreshToken: string;
-        expiresAt: string;
-      };
+      tokenType: string;
+      accessToken: string;
+      refreshToken: string;
+      expiresIn: number;
     };
   }>("/auth/refresh", { refreshToken });
   return res;

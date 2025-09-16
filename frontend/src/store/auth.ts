@@ -40,7 +40,7 @@ export const useAuthStore = create<AuthState>()(
         if (!rt) return false;
         try {
           const res = await refreshAPI(rt);
-          const newTokens = res.data.data.tokens;
+          const newTokens = res.data.data;
           set({ tokens: newTokens });
           return true;
         } catch {
