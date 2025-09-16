@@ -5,6 +5,8 @@ import LoginPage from "@/pages/auth/loginPage";
 import QuizPage from "@/pages/QuizPage";
 import SpeakingPage from "@/pages/SpeakingPage";
 import SignupPage from "@/pages/auth/signupPage";
+import SpotifySetupPage from "@/pages/spotify/spotify-setup";
+import SpotifyCallbackPage from "@/pages/spotify/spotify-callback";
 import TestPage from "@/pages/test/testPage";
 const router = createBrowserRouter([
     {
@@ -26,6 +28,14 @@ const router = createBrowserRouter([
     {
         path: "/signup",
         element: <SignupPage />,
+    },
+    {
+        path: "/spotify-setup",
+        element: <SpotifySetupPage />,
+    },
+    {
+        path: "/spotify/callback",
+        element: <SpotifyCallbackPage />,
     },
     {
         path: "/test",
