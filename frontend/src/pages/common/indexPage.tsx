@@ -1,8 +1,5 @@
 import Navbar from "@/components/common/navbar"
-import { Button } from "@/components/ui/button"
-import { LockClosedIcon, StarIcon } from '@heroicons/react/24/outline'
 import Footer from "./footer"
-import { Link } from "react-router-dom"
 
 export default function IndexPage() {
     return (
