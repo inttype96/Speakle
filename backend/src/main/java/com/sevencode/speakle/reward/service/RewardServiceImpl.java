@@ -1,0 +1,133 @@
+package com.sevencode.speakle.reward.service;
+
+import com.sevencode.speakle.reward.domain.entity.PointsAccountEntity;
+import com.sevencode.speakle.reward.domain.entity.PointsLedgerEntity;
+import com.sevencode.speakle.reward.domain.enums.PointLevel;
+import com.sevencode.speakle.reward.dto.request.RewardUpdateRequest;
+import com.sevencode.speakle.reward.dto.response.RewardUpdateResponse;
+import com.sevencode.speakle.reward.exception.InsufficientPointsException;
+import com.sevencode.speakle.reward.exception.InvalidRefTypeException;
+import com.sevencode.speakle.reward.exception.InvalidSourceTypeException;
+import com.sevencode.speakle.reward.repository.PointsAccountRepository;
+import com.sevencode.speakle.reward.repository.PointsLedgerRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+@Slf4j
+public class RewardServiceImpl implements RewardService{
+
+    private final PointsAccountRepository pointsAccountRepository;
+    private final PointsLedgerRepository pointsLedgerRepository;
+
+    /**
+     * 포인트 업데이트
+     */
+    @Override
+    @Transactional
+    public RewardUpdateResponse updateReward(RewardUpdateRequest request, Long userId) {
+        // 1. source 및 refType 유효성 검사
+        PointsLedgerEntity.SourceType sourceType = parseSourceType(request.getSource());
+        PointsLedgerEntity.RefType refType = parseRefType(request.getRefType());
+
+        // 2. 사용자 포인트 계정 조회 또는 생성 (비관적 락 적용)
+        PointsAccountEntity account = getOrCreatePointsAccount(request.getUserId());
+
+        // 3. 포인트 업데이트
+        int newBalance = account.getBalance() + request.getDelta();
+        if (newBalance < 0) {
+            throw new InsufficientPointsException("포인트 잔액이 부족합니다.");
+        }
+
+        // 4. 새로운 레벨 계산
+        PointLevel newLevel = PointLevel.fromPoints(newBalance);
+
+        // 5. 계정 업데이트
+        PointsAccountEntity updatedAccount = PointsAccountEntity.builder()
+                .userId(account.getUserId())
+                .balance(newBalance)
+                .level(newLevel)
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        PointsAccountEntity savedAccount = pointsAccountRepository.save(updatedAccount);
+
+        Map<String, Object> metaData = new HashMap<>();
+        metaData.put("source", request.getSource());
+        metaData.put("refType", request.getRefType());
+        metaData.put("refId", request.getRefId());
+
+        // 6. 포인트 이력 기록
+        PointsLedgerEntity ledger = PointsLedgerEntity.builder()
+                .userId(request.getUserId())
+                .delta(request.getDelta())
+                .source(sourceType)
+                .refType(refType)
+                .refId(request.getRefId())
+                .meta(metaData)
+                .build();
+
+        pointsLedgerRepository.save(ledger);
+
+        return RewardUpdateResponse.builder()
+                .userId(savedAccount.getUserId())
+                .balance(savedAccount.getBalance())
+                .level(savedAccount.getLevel())
+                .updatedAt(savedAccount.getUpdatedAt())
+                .build();
+    }
+
+    // ------------------------------------------------------------
+    // SourceType으로 파싱
+    // ------------------------------------------------------------
+    private PointsLedgerEntity.SourceType parseSourceType(String source) {
+        try {
+            return PointsLedgerEntity.SourceType.valueOf(source.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidSourceTypeException("유효하지 않은 source 타입입니다: " + source);
+        }
+    }
+
+    // ------------------------------------------------------------
+    // RefType으로 파싱
+    // ------------------------------------------------------------
+    private PointsLedgerEntity.RefType parseRefType(String refType) {
+        if (refType == null || refType.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return PointsLedgerEntity.RefType.valueOf(refType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRefTypeException("유효하지 않은 refType 타입입니다: " + refType);
+        }
+    }
+
+    // ------------------------------------------------------------
+    // 사용자 포인트 계정 조회 또는 생성
+    // ------------------------------------------------------------
+    private PointsAccountEntity getOrCreatePointsAccount(Long userId) {
+        return pointsAccountRepository.findByUserIdWithLock(userId)
+                .orElseGet(() -> createNewPointsAccount(userId));
+    }
+
+    // ------------------------------------------------------------
+    // 사용자 포인트 계정 생성
+    // ------------------------------------------------------------
+    private PointsAccountEntity createNewPointsAccount(Long userId) {
+        PointsAccountEntity newAccount = PointsAccountEntity.builder()
+                .userId(userId)
+                .balance(0)
+                .level(PointLevel.BRONZE)
+                .build();
+
+        return pointsAccountRepository.save(newAccount);
+    }
+}
