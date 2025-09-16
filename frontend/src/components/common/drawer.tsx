@@ -17,6 +17,7 @@ export default function Drawer({ open, setOpen }: { open: boolean, setOpen: (ope
   const handleLogout = () => {
     logout();
     setOpen(false);
+    window.location.reload();
   };
   return (
     <Dialog open={open} onClose={setOpen} className="relative z-50">
