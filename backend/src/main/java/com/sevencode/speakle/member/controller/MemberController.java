@@ -3,10 +3,15 @@ package com.sevencode.speakle.member.controller;
 import com.sevencode.speakle.common.dto.ResponseWrapper;
 import com.sevencode.speakle.config.security.UserPrincipal;
 import com.sevencode.speakle.member.domain.Member;
+import com.sevencode.speakle.member.dto.request.EmailRequest;
 import com.sevencode.speakle.member.dto.request.MemberRegisterRequest;
 import com.sevencode.speakle.member.dto.request.MemberUpdateRequest;
+import com.sevencode.speakle.member.dto.request.MemberVerifyEmailRequest;
+import com.sevencode.speakle.member.dto.request.PasswordUpdateRequest;
 import com.sevencode.speakle.member.dto.response.MemberResponse;
 import com.sevencode.speakle.member.service.MemberService;
+import com.sevencode.speakle.member.service.MemberVerifyService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -30,6 +35,7 @@ import java.net.URI;
 public class MemberController {
 
     private final MemberService memberService;
+    private final MemberVerifyService memberVerifyService;
 
     /** 회원 가입 */
     @Operation(
@@ -143,17 +149,98 @@ public class MemberController {
         return ResponseEntity.ok(ResponseWrapper.success(200, "탈퇴 처리되었습니다.", null));
     }
 
-	// /** 비밀번호 변경 */
-	// @PatchMapping("/password")
+    /** 
+     * 임시 비밀번호 발급 
+     * 입력 : 이메일 
+     * 임시 비밀번호 생성 및 변경 저장 후 이메일 발송
+     */
+    @Operation(
+        summary = "임시 비밀번호 전송",
+        description = "이메일로 임시 비밀번호를 발송합니다.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "발송 성공", content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                { "status": 200, "message": "임시 비밀번호가 이메일로 발송되었습니다.", "data": null }
+                """)
+            )),
+            @ApiResponse(responseCode = "404", description = "이메일 계정 없음")
+        }
+    )
+    @PostMapping("/temp-password")
+    public ResponseEntity<ResponseWrapper<Void>> sendTempPassword(@Valid @RequestBody EmailRequest request) {
+        memberService.sendTemporaryPassword(request.getEmail());
+        return ResponseEntity.ok(ResponseWrapper.success(200, "임시 비밀번호가 이메일로 발송되었습니다.", null));
+    }
 
-	// /** 임시 비밀번호 발급 */
-	// @PostMapping("/temp-password")
 
-	// /** 이메일 인증번호 발송 */
-	// @PostMapping("/email/verify/send")
+  /** 이메일 인증번호 발송 */
+    @Operation(
+        summary = "이메일 인증 코드 발송",
+        description = "입력된 이메일로 인증 코드를 전송합니다.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "발송 성공", content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                { "status": 200, "message": "인증 코드가 이메일로 발송되었습니다.", "data": null }
+                """)
+            )),
+            @ApiResponse(responseCode = "409", description = "이미 인증된 이메일")
+        }
+    )
+    @PostMapping("/verify-email/send")
+    public ResponseEntity<ResponseWrapper<Void>> sendVerificationCode(@Valid @RequestBody EmailRequest request) {
+        memberVerifyService.sendVerificationCode(request.getEmail());
+        return ResponseEntity.ok(ResponseWrapper.success(200, "인증 코드가 이메일로 발송되었습니다.", null));
+    }
+   /** 이메일 인증번호 검증 */
+    @Operation(
+        summary = "이메일 인증 코드 확인",
+        description = "이메일로 받은 인증 코드를 검증합니다.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "검증 성공", content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                { "status": 200, "message": "이메일 인증이 완료되었습니다.", "data": null }
+                """)
+            )),
+            @ApiResponse(responseCode = "400", description = "코드 불일치 또는 만료됨")
+        }
+    )
+    @PostMapping("/verify-email")
+    public ResponseEntity<ResponseWrapper<Void>> verifyEmailCode(@Valid @RequestBody MemberVerifyEmailRequest request) {
+        memberVerifyService.verifyEmail(request);
+        return ResponseEntity.ok(ResponseWrapper.success(200, "이메일 인증이 완료되었습니다.", null));
+    }
 
-	// /** 이메일 인증번호 검증 */
-	// @PostMapping("/email/verify")
+    /** 비밀번호 변경 */
+    @Operation(
+        summary = "비밀번호 변경",
+        description = "기존 비밀번호를 검증하고 새 비밀번호로 변경합니다.",
+        security = @SecurityRequirement(name = "bearerAuth"),
+        responses = {
+            @ApiResponse(responseCode = "200", description = "변경 성공", content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                { "status": 200, "message": "비밀번호가 변경되었습니다.", "data": null }
+                """)
+            )),
+            @ApiResponse(responseCode = "400", description = "입력값 오류"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "기존 비밀번호 불일치")
+        }
+    )
+    @PatchMapping("/update-password")
+    public ResponseEntity<ResponseWrapper<Void>> updatePassword(
+            @AuthenticationPrincipal UserPrincipal me,
+            @Valid @RequestBody PasswordUpdateRequest request
+    ) {
+        memberService.updatePassword(me, request); // ← me.userId() 대신 me 그대로 전달
+        return ResponseEntity.ok(ResponseWrapper.success(200, "비밀번호가 변경되었습니다.", null));
+    }
+
+}
+
 
 	// /** 프로필 이미지 등록 */
 	// @PostMapping("/profile-image")
@@ -164,4 +251,3 @@ public class MemberController {
 	// /** 프로필 이미지 삭제 */
 	// @DeleteMapping("/profile-image")
 
-}
