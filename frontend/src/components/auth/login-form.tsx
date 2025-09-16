@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useState } from "react"
 import { useAuthStore } from "@/store/auth"
 import { loginAPI } from "@/services/auth"
@@ -16,6 +16,7 @@ export function LoginForm({
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const login = useAuthStore((state) => state.login);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -33,7 +34,10 @@ export function LoginForm({
                 console.log('Tokens to save:', tokens);
                 login(tokens);
                 console.log('After login - auth state:', useAuthStore.getState());
-                navigate('/');
+
+                // redirect 파라미터가 있으면 해당 경로로, 없으면 메인 페이지로
+                const redirectTo = searchParams.get('redirect') || '/';
+                navigate(redirectTo);
             }
         } catch (err: any) {
             if (err.response) {

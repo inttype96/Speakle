@@ -1,88 +1,31 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuthStore, isAuthenticated, getAccessToken } from '@/store/auth'
 
 function SpotifyTest() {
-    const [isLoggedIn, setIsLoggedIn] = useState(false)
+    const navigate = useNavigate()
+    const logout = useAuthStore((state) => state.logout)
     const [loading, setLoading] = useState(false)
-    const [loginLoading, setLoginLoading] = useState(false)
-    const [response] = useState<any>(null)
-    const [error] = useState<string | null>(null)
-    const [loginError, setLoginError] = useState<string | null>(null)
-    const [loginForm, setLoginForm] = useState({ email: '', password: '' })
+    const [isLoggedIn, setIsLoggedIn] = useState(false)
 
-    // localStorage에서 토큰 확인해서 로그인 상태 복원
+    // 기존 인증 상태 확인
     useEffect(() => {
-        const token = localStorage.getItem('authToken');
-        if (token && token !== 'null' && token !== 'undefined') {
-            setIsLoggedIn(true);
-            console.log('저장된 토큰으로 로그인 상태 복원:', token.substring(0, 20) + '...');
+        const authenticated = isAuthenticated()
+        setIsLoggedIn(authenticated)
+
+        // 로그인되지 않은 경우 로그인 페이지로 리다이렉트
+        if (!authenticated) {
+            navigate('/login?redirect=/spotify-test')
         }
-    }, []);
-
-    const handleLogin = async () => {
-        if (!loginForm.email || !loginForm.password) {
-            setLoginError('이메일과 비밀번호를 입력해주세요.')
-            return
-        }
-
-        setLoginLoading(true)
-        setLoginError(null)
-
-        try {
-            const result = await fetch('https://j13c104.p.ssafy.io/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                    email: loginForm.email,
-                    password: loginForm.password
-                })
-            })
-
-            const data = await result.json()
-
-            console.log('로그인 응답 전체:', JSON.stringify(data, null, 2));
-            console.log('data.accessToken:', data.accessToken);
-            console.log('data.access_token:', data.access_token);
-            console.log('data.token:', data.token);
-
-            if (result.ok) {
-                setIsLoggedIn(true)
-                setLoginForm({ email: '', password: '' })
-
-                // 여러 가능한 토큰 필드명 확인
-                const token = data.accessToken || data.access_token || data.token || data.jwt;
-                console.log('추출된 토큰:', token);
-
-                if (token && token !== 'null' && token !== 'undefined') {
-                    localStorage.setItem('authToken', token);
-                    console.log('JWT 토큰 localStorage에 저장됨:', token.substring(0, 20) + '...')
-
-                    // 저장 후 바로 확인
-                    const savedToken = localStorage.getItem('authToken');
-                    console.log('저장 후 확인:', savedToken ? savedToken.substring(0, 20) + '...' : 'null');
-                } else {
-                    console.log('응답에 유효한 토큰이 없습니다.')
-                    localStorage.removeItem('authToken');
-                }
-            } else {
-                setLoginError(`로그인 실패: ${data.message || 'Unknown error'}`)
-            }
-        } catch (err) {
-            setLoginError(`네트워크 에러: ${err instanceof Error ? err.message : 'Unknown error'}`)
-        } finally {
-            setLoginLoading(false)
-        }
-    }
+    }, [navigate])
 
     const handleSpotifyConnect = async () => {
         if (!isLoggedIn) {
-            alert('먼저 로그인해주세요!')
+            navigate('/login?redirect=/spotify-test')
             return
         }
 
-        const token = localStorage.getItem('authToken');
+        const token = getAccessToken()
         console.log('Spotify 연결 시도 - 토큰:', token ? `${token.substring(0, 20)}...` : 'null')
 
         setLoading(true)
@@ -90,7 +33,7 @@ function SpotifyTest() {
         try {
             const headers: HeadersInit = {}
 
-            if (token && token !== 'null' && token !== 'undefined') {
+            if (token) {
                 headers['Authorization'] = `Bearer ${token}`
                 console.log('Authorization 헤더 추가됨')
             } else {
@@ -124,13 +67,28 @@ function SpotifyTest() {
     }
 
     const handleLogout = () => {
-        setIsLoggedIn(false);
-        localStorage.removeItem('authToken');
-        console.log('로그아웃: 토큰이 localStorage에서 제거됨');
+        logout()
+        setIsLoggedIn(false)
+        navigate('/login')
     }
 
     // 현재 토큰 상태 표시
-    const currentToken = localStorage.getItem('authToken');
+    const currentToken = getAccessToken()
+
+    // 로그인되지 않은 경우 로딩 화면 표시 (리다이렉트 중)
+    if (!isLoggedIn) {
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                fontSize: '18px'
+            }}>
+                로그인이 필요합니다. 로그인 페이지로 이동 중...
+            </div>
+        )
+    }
 
     return (
         <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
@@ -149,106 +107,40 @@ function SpotifyTest() {
             </div>
 
             <div style={{ marginBottom: '20px' }}>
-                <h2>1. 로그인</h2>
-                <p>Status: {isLoggedIn ? '✅ 로그인됨' : '❌ 로그인 필요'}</p>
+                <h2>1. 로그인 상태</h2>
+                <p>Status: ✅ 로그인됨</p>
 
-                {!isLoggedIn && (
-                    <div style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '20px', backgroundColor: '#f9f9f9' }}>
-                        <div style={{ marginBottom: '15px' }}>
-                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>이메일:</label>
-                            <input
-                                type="email"
-                                value={loginForm.email}
-                                onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                                placeholder="이메일을 입력하세요"
-                                style={{
-                                    width: '100%',
-                                    padding: '8px 12px',
-                                    border: '1px solid #ccc',
-                                    borderRadius: '4px',
-                                    fontSize: '14px'
-                                }}
-                            />
-                        </div>
-                        <div style={{ marginBottom: '15px' }}>
-                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>비밀번호:</label>
-                            <input
-                                type="password"
-                                value={loginForm.password}
-                                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                                placeholder="비밀번호를 입력하세요"
-                                style={{
-                                    width: '100%',
-                                    padding: '8px 12px',
-                                    border: '1px solid #ccc',
-                                    borderRadius: '4px',
-                                    fontSize: '14px'
-                                }}
-                            />
-                        </div>
-                        {loginError && (
-                            <div style={{
-                                backgroundColor: '#ffebee',
-                                color: '#d32f2f',
-                                padding: '10px',
-                                borderRadius: '4px',
-                                marginBottom: '15px',
-                                fontSize: '14px'
-                            }}>
-                                {loginError}
-                            </div>
-                        )}
-                        <button
-                            onClick={handleLogin}
-                            disabled={loginLoading}
-                            style={{
-                                padding: '10px 20px',
-                                fontSize: '16px',
-                                backgroundColor: loginLoading ? '#ccc' : '#007bff',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: loginLoading ? 'not-allowed' : 'pointer'
-                            }}
-                        >
-                            {loginLoading ? '로그인 중...' : '로그인'}
-                        </button>
-                    </div>
-                )}
-
-                {isLoggedIn && (
-                    <div style={{ marginBottom: '15px' }}>
-                        <button
-                            onClick={handleLogout}
-                            style={{
-                                padding: '8px 16px',
-                                fontSize: '14px',
-                                backgroundColor: '#dc3545',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                marginRight: '10px'
-                            }}
-                        >
-                            로그아웃
-                        </button>
-                        <a
-                            href="/spotify-dashboard"
-                            style={{
-                                padding: '8px 16px',
-                                fontSize: '14px',
-                                backgroundColor: '#1db954',
-                                color: 'white',
-                                textDecoration: 'none',
-                                borderRadius: '4px',
-                                display: 'inline-block'
-                            }}
-                        >
-                            🎵 Spotify 대시보드
-                        </a>
-                    </div>
-                )}
+                <div style={{ marginBottom: '15px' }}>
+                    <button
+                        onClick={handleLogout}
+                        style={{
+                            padding: '8px 16px',
+                            fontSize: '14px',
+                            backgroundColor: '#dc3545',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            marginRight: '10px'
+                        }}
+                    >
+                        로그아웃
+                    </button>
+                    <a
+                        href="/spotify-dashboard"
+                        style={{
+                            padding: '8px 16px',
+                            fontSize: '14px',
+                            backgroundColor: '#1db954',
+                            color: 'white',
+                            textDecoration: 'none',
+                            borderRadius: '4px',
+                            display: 'inline-block'
+                        }}
+                    >
+                        🎵 Spotify 대시보드
+                    </a>
+                </div>
             </div>
 
             <div style={{ marginBottom: '20px' }}>
@@ -271,39 +163,19 @@ function SpotifyTest() {
                 </button>
             </div>
 
-            {error && (
-                <div style={{
-                    backgroundColor: '#ffebee',
-                    border: '1px solid #f44336',
-                    borderRadius: '4px',
-                    padding: '15px',
-                    marginBottom: '20px'
-                }}>
-                    <h3 style={{ color: '#f44336', margin: '0 0 10px 0' }}>에러 발생</h3>
-                    <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{error}</pre>
-                </div>
-            )}
-
-            {response && (
-                <div style={{
-                    backgroundColor: '#e8f5e8',
-                    border: '1px solid #4caf50',
-                    borderRadius: '4px',
-                    padding: '15px'
-                }}>
-                    <h3 style={{ color: '#2e7d32', margin: '0 0 10px 0' }}>응답 성공</h3>
-                    <pre style={{
-                        margin: 0,
-                        whiteSpace: 'pre-wrap',
-                        backgroundColor: '#f5f5f5',
-                        padding: '10px',
-                        borderRadius: '4px',
-                        overflow: 'auto'
-                    }}>
-                        {JSON.stringify(response, null, 2)}
-                    </pre>
-                </div>
-            )}
+            <div style={{
+                backgroundColor: '#e3f2fd',
+                border: '1px solid #2196f3',
+                borderRadius: '4px',
+                padding: '15px',
+                marginTop: '20px'
+            }}>
+                <h3 style={{ color: '#1976d2', margin: '0 0 10px 0' }}>안내</h3>
+                <p style={{ margin: 0, fontSize: '14px' }}>
+                    이 페이지는 기존 로그인 시스템과 통합되어 있습니다.
+                    메인 페이지에서 로그인하면 여기서도 자동으로 인증됩니다.
+                </p>
+            </div>
         </div>
     )
 }

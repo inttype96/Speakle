@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { isAuthenticated, getAccessToken } from '@/store/auth';
 
 interface SpotifyProfile {
     id: string;
@@ -19,6 +21,7 @@ interface CurrentPlayback {
 }
 
 const SpotifyTestDashboard = () => {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState<string | null>(null);
     const [profile, setProfile] = useState<SpotifyProfile | null>(null);
     const [currentPlayback, setCurrentPlayback] = useState<CurrentPlayback | null>(null);
@@ -26,12 +29,19 @@ const SpotifyTestDashboard = () => {
     const [status, setStatus] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
 
-    const getAuthHeaders = (): Record<string, string> => {
-        const token = localStorage.getItem('authToken');
-        console.log('localStorage에서 가져온 토큰:', token); // 디버깅용
+    // 인증 상태 확인
+    useEffect(() => {
+        if (!isAuthenticated()) {
+            navigate('/login?redirect=/spotify-dashboard');
+        }
+    }, [navigate]);
 
-        if (!token || token === 'null' || token === 'undefined') {
-            console.warn('유효하지 않은 토큰:', token);
+    const getAuthHeaders = (): Record<string, string> => {
+        const token = getAccessToken();
+        console.log('인증 스토어에서 가져온 토큰:', token ? `${token.substring(0, 20)}...` : 'null');
+
+        if (!token) {
+            console.warn('유효하지 않은 토큰');
             return {
                 'Content-Type': 'application/json'
             };
@@ -145,8 +155,8 @@ const SpotifyTestDashboard = () => {
                 {/* 토큰 상태 표시 */}
                 <div style={{ marginTop: '15px', fontSize: '12px', opacity: 0.8 }}>
                     {(() => {
-                        const token = localStorage.getItem('authToken');
-                        if (!token || token === 'null') {
+                        const token = getAccessToken();
+                        if (!token) {
                             return '❌ JWT 토큰이 없습니다. 먼저 로그인해주세요.';
                         }
                         return `✅ JWT 토큰: ${token.substring(0, 20)}...`;
