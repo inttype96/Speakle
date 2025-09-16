@@ -1,15 +1,15 @@
 package com.sevencode.speakle.reward.service;
 
+import com.sevencode.speakle.member.domain.entity.JpaMemberEntity;
+import com.sevencode.speakle.member.repository.SpringDataMemberJpa;
 import com.sevencode.speakle.reward.domain.entity.PointsAccountEntity;
 import com.sevencode.speakle.reward.domain.entity.PointsLedgerEntity;
 import com.sevencode.speakle.reward.domain.enums.PointLevel;
 import com.sevencode.speakle.reward.dto.request.RewardUpdateRequest;
 import com.sevencode.speakle.reward.dto.response.RewardProfileResponse;
+import com.sevencode.speakle.reward.dto.response.RewardRankingResponse;
 import com.sevencode.speakle.reward.dto.response.RewardUpdateResponse;
-import com.sevencode.speakle.reward.exception.InsufficientPointsException;
-import com.sevencode.speakle.reward.exception.InvalidRefTypeException;
-import com.sevencode.speakle.reward.exception.InvalidSourceTypeException;
-import com.sevencode.speakle.reward.exception.UserNotFoundException;
+import com.sevencode.speakle.reward.exception.*;
 import com.sevencode.speakle.reward.repository.PointsAccountRepository;
 import com.sevencode.speakle.reward.repository.PointsLedgerRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +33,7 @@ public class RewardServiceImpl implements RewardService{
 
     private final PointsAccountRepository pointsAccountRepository;
     private final PointsLedgerRepository pointsLedgerRepository;
+    private final SpringDataMemberJpa userRepository;
 
     /**
      * 포인트 업데이트
@@ -150,5 +155,55 @@ public class RewardServiceImpl implements RewardService{
                 .balance(pointsAccount.getBalance())
                 .level(pointsAccount.getLevel())
                 .build();
+    }
+
+    /**
+     * 포인트 랭킹 조회
+     */
+    @Override
+    public List<RewardRankingResponse> getTop5PointRanking() {
+        try {
+            // 1. 상위 5명 포인트 계정 조회
+            List<PointsAccountEntity> result = pointsAccountRepository.getTop5NonDeletedUsersRanking();
+
+            if (result.isEmpty() || result.size() < 5) {
+                throw new InsufficientRankingDataException("현재 랭킹 목록의 사이즈가 "+result.size()+"입니다.(5명이 되지 않습니다.)");
+            }
+
+            // 2. 사용자 ID 추출
+            List<Long> userIds = result.stream()
+                    .map(PointsAccountEntity::getUserId)
+                    .collect(Collectors.toList());
+
+            // 3. 사용자 정보 한번에 조회
+            List<JpaMemberEntity> users = userRepository.findByIdIn(userIds);
+            Map<Long, JpaMemberEntity> userMap = users.stream()
+                    .collect(Collectors.toMap(
+                            JpaMemberEntity::getId,
+                            Function.identity(),
+                            (existing, replacement) -> existing  // 중복 키 처리
+                    ));
+
+            // 4. Builder를 사용해서 DTO로 변환
+            return IntStream.range(0, result.size())
+                    .mapToObj(i -> {
+                        PointsAccountEntity account = result.get(i);
+                        JpaMemberEntity user = userMap.get(account.getUserId());
+
+                        return RewardRankingResponse.builder()
+                                .rank(i + 1)                                              // 순위 (1부터 시작)
+                                .userId(account.getUserId())                              // 사용자 ID
+                                .username(user != null ? user.getUsername() : "알 수 없는 사용자") // 사용자명
+                                .profileImageUrl(user != null ? user.getProfileImageUrl() : null) // 프로필 이미지
+                                .points(account.getBalance())                             // 포인트
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+
+        } catch (InsufficientRankingDataException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PointRankingException("상위 5명 랭킹 조회 중 오류 발생");
+        }
     }
 }

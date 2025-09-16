@@ -62,6 +62,28 @@ public class RewardExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
+    @ExceptionHandler(InsufficientRankingDataException.class)
+    public ResponseEntity<ApiErrorResponse> handleInsufficientRankingData(
+            InsufficientRankingDataException ex, WebRequest request) {
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "INSUFFICIENT_RANKING_DATA",
+                "충분한 랭킹 데이터가 없습니다."
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(PointRankingException.class)
+    public ResponseEntity<ApiErrorResponse> handlePointRankingException(
+            PointRankingException ex, WebRequest request) {
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "POINT_RANKING_ERROR",
+                "랭킹 조회 중 오류 발생"
+        );
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneral(
             Exception ex, WebRequest request) {
