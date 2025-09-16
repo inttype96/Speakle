@@ -21,19 +21,17 @@ export type User = {
   profileImageUrl?: string;
 };
 
-export type Tokens = {
+export type AuthTokens = {
+  tokenType: string;   // "Bearer"
   accessToken: string;
   refreshToken: string;
-  expiresAt: string; // ISO UTC
+  expiresIn: number;   // 3600 (seconds)
 };
 
 export type LoginRes = {
   status: number;      // 200
   message: string;     // "로그인에 성공했습니다."
-  data: {
-    user: User;
-    tokens: Tokens;
-  };
+  data: AuthTokens;
 };
 
 export type SignupRes = {

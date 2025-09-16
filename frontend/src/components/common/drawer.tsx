@@ -5,8 +5,15 @@ import { XMarkIcon, LockClosedIcon, StarIcon, TrophyIcon, UserIcon, InformationC
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from '@/components/mode-toggle'
 import { Link } from 'react-router-dom'
+import { useAuthStore } from '@/store/auth'
 
 export default function Drawer({ open, setOpen }: { open: boolean, setOpen: (open: boolean) => void }) {
+  const { isAuthed, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    setOpen(false);
+  };
   return (
     <Dialog open={open} onClose={setOpen} className="relative z-50">
       <DialogBackdrop
@@ -38,13 +45,19 @@ export default function Drawer({ open, setOpen }: { open: boolean, setOpen: (ope
                 <div className="px-4 sm:px-6">
                   <DialogTitle className="text-base font-semibold text-foreground">메뉴</DialogTitle>
                 </div>
-                {/* 로그인 상태에 따른 조건문 추가 */}
                 <div className="relative mt-6 flex-1 px-4 sm:px-6">
-                  <Button asChild variant="outline" size="lg" className="w-full mb-2">
-                    <Link to="/login" className="flex items-center justify-center">
-                      <LockClosedIcon className="h-6 w-6 mr-2" /> 로그인
-                    </Link>
-                  </Button>
+                  {/* 로그인 상태에 따른 조건부 렌더링 */}
+                  {!isAuthed() ? (
+                    <Button asChild variant="outline" size="lg" className="w-full mb-2">
+                      <Link to="/login" className="flex items-center justify-center">
+                        <LockClosedIcon className="h-6 w-6 mr-2" /> 로그인
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="lg" className="w-full mb-2" onClick={handleLogout}>
+                      <LockClosedIcon className="h-6 w-6 mr-2" /> 로그아웃
+                    </Button>
+                  )}
                   <Button variant="outline" size="lg" className="w-full mb-2">
                     <Link to="/leaderboard" className="flex items-center justify-center">
                       <StarIcon className="h-6 w-6 mr-2" /> 노래 추천 받기
@@ -65,9 +78,6 @@ export default function Drawer({ open, setOpen }: { open: boolean, setOpen: (ope
                       <InformationCircleIcon className="h-6 w-6 mr-2" /> 소개
                     </Link>
                   </Button>
-                  {/* <Button variant="outline" size="lg" className="w-full">
-                    <LockClosedIcon className="h-6 w-6 mr-2" /> 로그아웃
-                  </Button> */}
                 </div>
                 <div className="relative mt-6 flex-1 px-4 sm:px-6 flex flex-col justify-end">
                   <ModeToggle />

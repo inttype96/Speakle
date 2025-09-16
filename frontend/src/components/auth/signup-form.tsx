@@ -8,7 +8,6 @@ import { useState } from "react"
 import { signupAPI } from "@/services/auth"
 import type { SignupReq } from "@/types/auth"
 import { AxiosError } from "axios"
-import { toast } from "sonner"
 
 export function SignupForm({
     className,
@@ -84,8 +83,8 @@ export function SignupForm({
             const response = await signupAPI(formData);
 
             if (response.data.status === 200) {
-                toast.success(response.data.message);
-                navigate('/login');
+                alert(response.data.message);
+                navigate('/');
             }
         } catch (error) {
             if (error instanceof AxiosError && error.response) {
@@ -99,20 +98,20 @@ export function SignupForm({
                         } else if (message.includes("비밀번호")) {
                             setErrors({ password: message });
                         } else {
-                            toast.error(message);
+                            alert(message);
                         }
                         break;
                     case 409:
-                        setErrors({ email: message });
+                        alert(message);
                         break;
                     case 500:
-                        toast.error(message);
+                        alert(message);
                         break;
                     default:
-                        toast.error("회원가입 중 오류가 발생했습니다.");
+                        alert("회원가입 중 오류가 발생했습니다.");
                 }
             } else {
-                toast.error("네트워크 오류가 발생했습니다.");
+                alert("네트워크 오류가 발생했습니다.");
             }
         } finally {
             setIsLoading(false);
