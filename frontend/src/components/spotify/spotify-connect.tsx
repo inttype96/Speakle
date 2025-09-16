@@ -37,9 +37,9 @@ export function SpotifyConnect({ onSuccess, onError, className }: SpotifyConnect
 
       console.log('Spotify 연결 응답:', response);
 
-      if (response.data?.data?.redirectUrl) {
+      if (response.data?.redirectUrl) {
         // Spotify 인증 페이지로 리다이렉트
-        window.location.href = response.data.data.redirectUrl;
+        window.location.href = response.data.redirectUrl;
         onSuccess?.();
       } else {
         const errorMsg = '리다이렉트 URL을 받지 못했습니다.';
