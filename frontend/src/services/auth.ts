@@ -1,9 +1,17 @@
 import { http } from "./http";
-import type { LoginReq, LoginRes } from "@/types/auth";
+import type { LoginReq, LoginRes, SignupReq, SignupRes } from "@/types/auth";
 
 export async function loginAPI(payload: LoginReq) {
   // POST /api/auth/login
-  const res = await http.post<LoginRes>("/api/auth/login", payload, {
+  const res = await http.post<LoginRes>("/auth/login", payload, {
+    headers: { "Content-Type": "application/json" },
+  });
+  return res;
+}
+
+export async function signupAPI(payload: SignupReq) {
+  // POST /api/user
+  const res = await http.post<SignupRes>("/user", payload, {
     headers: { "Content-Type": "application/json" },
   });
   return res;
@@ -16,11 +24,10 @@ export async function refreshAPI(refreshToken: string) {
     status: number;
     message: string;
     data: {
-      tokens: {
-        accessToken: string;
-        refreshToken: string;
-        expiresAt: string;
-      };
+      tokenType: string;
+      accessToken: string;
+      refreshToken: string;
+      expiresIn: number;
     };
   }>("/auth/refresh", { refreshToken });
   return res;

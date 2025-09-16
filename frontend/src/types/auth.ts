@@ -3,24 +3,47 @@ export type LoginReq = {
   password: string;
 };
 
-export type User = {
-  userId: number;
+export type SignupReq = {
   email: string;
+  password: string;
   username: string;
-  profileImageUrl: string;
+  gender?: string;
+  birth?: string;
+  profileImageUrl?: string;
 };
 
-export type Tokens = {
+export type User = {
+  id: number;
+  email: string;
+  username: string;
+  gender?: string;
+  birth?: string;
+  profileImageUrl?: string;
+  deleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AuthTokens = {
+  tokenType: string;   // "Bearer"
   accessToken: string;
   refreshToken: string;
-  expiresAt: string; // ISO UTC
+  expiresIn: number;   // 3600 (seconds)
 };
 
 export type LoginRes = {
   status: number;      // 200
   message: string;     // "로그인에 성공했습니다."
-  data: {
-    user: User;
-    tokens: Tokens;
-  };
+  data: AuthTokens;
+};
+
+export type SignupRes = {
+  status: number;      // 201
+  message: string;     // "회원이 생성되었습니다."
+  data: User;
+};
+
+export type ApiError = {
+  status: number;
+  message: string;
 };

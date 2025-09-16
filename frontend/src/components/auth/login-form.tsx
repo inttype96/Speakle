@@ -25,8 +25,8 @@ export function LoginForm({
         try {
             const response = await loginAPI({ email, password });
             if (response.status === 200) {
-                const { user, tokens } = response.data.data;
-                login(user, tokens);
+                const tokens = response.data.data;
+                login(tokens);
                 navigate('/');
             }
         } catch (err: any) {

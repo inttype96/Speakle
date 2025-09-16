@@ -1,14 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { User, Tokens } from "@/types/auth";
+import type { AuthTokens } from "@/types/auth";
 import { refreshAPI } from "@/services/auth";
 
 type AuthState = {
-  user: User | null;
-  tokens: Tokens | null;
-  login: (user: User, tokens: Tokens) => void;
+  tokens: AuthTokens | null;
+  login: (tokens: AuthTokens) => void;
   logout: () => void;
-  setTokens: (tokens: Tokens | null) => void;
+  setTokens: (tokens: AuthTokens | null) => void;
 
   // 편의 getter
   isAuthed: () => boolean;
@@ -22,14 +21,13 @@ type AuthState = {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      user: null,
       tokens: null,
 
-      login: (user, tokens) => set({ user, tokens }),
-      logout: () => set({ user: null, tokens: null }),
+      login: (tokens) => set({ tokens }),
+      logout: () => set({ tokens: null }),
       setTokens: (tokens) => set({ tokens }),
 
-      isAuthed: () => !!get().tokens?.accessToken && !!get().user,
+      isAuthed: () => !!get().tokens?.accessToken,
       get accessToken() {
         return get().tokens?.accessToken ?? null;
       },
@@ -42,7 +40,7 @@ export const useAuthStore = create<AuthState>()(
         if (!rt) return false;
         try {
           const res = await refreshAPI(rt);
-          const newTokens = res.data.data.tokens;
+          const newTokens = res.data.data;
           set({ tokens: newTokens });
           return true;
         } catch {
@@ -53,7 +51,6 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "auth-storage", // localStorage key
       partialize: (state) => ({
-        user: state.user,
         tokens: state.tokens,
       }),
     }
