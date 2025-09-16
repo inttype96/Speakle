@@ -41,7 +41,7 @@ export function SpotifyConnect({ onSuccess, onError, className }: SpotifyConnect
       console.log('response.data:', response.data);
       console.log('response.data.data:', response.data?.data);
 
-      const redirectUrl = response.data?.redirectUrl;
+      const redirectUrl = response.data?.data?.redirectUrl;
 
       if (redirectUrl) {
         console.log('리다이렉트 URL 찾음:', redirectUrl);
