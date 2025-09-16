@@ -15,4 +15,5 @@ public interface PointsAccountRepository extends JpaRepository<PointsAccountEnti
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM PointsAccountEntity p WHERE p.userId = :userId")
     Optional<PointsAccountEntity> findByUserIdWithLock(@Param("userId") Long userId);
+    Optional<Object> findByUserId(Long userId);
 }

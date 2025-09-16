@@ -4,10 +4,12 @@ import com.sevencode.speakle.reward.domain.entity.PointsAccountEntity;
 import com.sevencode.speakle.reward.domain.entity.PointsLedgerEntity;
 import com.sevencode.speakle.reward.domain.enums.PointLevel;
 import com.sevencode.speakle.reward.dto.request.RewardUpdateRequest;
+import com.sevencode.speakle.reward.dto.response.RewardProfileResponse;
 import com.sevencode.speakle.reward.dto.response.RewardUpdateResponse;
 import com.sevencode.speakle.reward.exception.InsufficientPointsException;
 import com.sevencode.speakle.reward.exception.InvalidRefTypeException;
 import com.sevencode.speakle.reward.exception.InvalidSourceTypeException;
+import com.sevencode.speakle.reward.exception.UserNotFoundException;
 import com.sevencode.speakle.reward.repository.PointsAccountRepository;
 import com.sevencode.speakle.reward.repository.PointsLedgerRepository;
 import lombok.RequiredArgsConstructor;
@@ -129,5 +131,24 @@ public class RewardServiceImpl implements RewardService{
                 .build();
 
         return pointsAccountRepository.save(newAccount);
+    }
+
+    /**
+     * 포인트 조회
+     */
+    @Override
+    public RewardProfileResponse getPointProfile(Long userId) {
+        log.info("포인트 프로필 조회 요청 - userId: {}", userId);
+
+        PointsAccountEntity pointsAccount = (PointsAccountEntity) pointsAccountRepository.findByUserId(userId)
+                .orElseThrow(() -> {
+                    return new UserNotFoundException("사용자를 찾을 수 없습니다.");
+                });
+
+        return RewardProfileResponse.builder()
+                .userId(pointsAccount.getUserId())
+                .balance(pointsAccount.getBalance())
+                .level(pointsAccount.getLevel())
+                .build();
     }
 }
