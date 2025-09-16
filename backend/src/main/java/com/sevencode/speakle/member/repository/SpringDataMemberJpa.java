@@ -9,7 +9,6 @@ package com.sevencode.speakle.member.repository;
 
 import com.sevencode.speakle.member.domain.entity.JpaMemberEntity;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
