@@ -9,7 +9,6 @@ import SpotifySetupPage from "@/pages/spotify/spotify-setup";
 import SpotifyCallbackPage from "@/pages/spotify/spotify-callback";
 import NotFoundPage from "@/pages/common/notFoundPage";
 import SpotifyTestDashboard from "./pages/test/SpotifyTestDashboard";
-import SpotifyTest from "./pages/test/SpotifyTest";
 
 const router = createBrowserRouter([
     {
@@ -41,11 +40,7 @@ const router = createBrowserRouter([
         element: <SpotifyCallbackPage />,
     },
     {
-        path: "/spotify-test",
-        element: <SpotifyTest />,
-    },
-    {
-        path: "/spotify-dashboard",
+        path: "/test",
         element: <SpotifyTestDashboard />,
     },
     {

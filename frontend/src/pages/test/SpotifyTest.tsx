@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import './App.css'
 
 function SpotifyTest() {
     const [isLoggedIn, setIsLoggedIn] = useState(false)
