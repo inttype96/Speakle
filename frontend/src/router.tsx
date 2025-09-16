@@ -8,6 +8,7 @@ import SignupPage from "@/pages/auth/signupPage";
 import SpotifySetupPage from "@/pages/spotify/spotify-setup";
 import SpotifyCallbackPage from "@/pages/spotify/spotify-callback";
 import SpotifySettingsPage from "@/pages/spotify/spotify-settings";
+import MyPage from "@/pages/user/myPage";
 import NotFoundPage from "@/pages/common/notFoundPage";
 
 const router = createBrowserRouter([
@@ -42,6 +43,10 @@ const router = createBrowserRouter([
     {
         path: "/spotify-settings",
         element: <SpotifySettingsPage />,
+    },
+    {
+        path: "/mypage",
+        element: <MyPage />,
     },
     {
         path: "*",
