@@ -84,6 +84,19 @@ public class RewardExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
+    @ExceptionHandler(PointsAccountNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handlePointsAccountNotFound(
+            PointsAccountNotFoundException ex, WebRequest request) {
+        log.warn("포인트 계정을 찾을 수 없음 - 경로: {}", getRequestPath(request));
+
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "POINTS_ACCOUNT_NOT_FOUND",
+                "포인트 계정을 찾을 수 없습니다."
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneral(
             Exception ex, WebRequest request) {

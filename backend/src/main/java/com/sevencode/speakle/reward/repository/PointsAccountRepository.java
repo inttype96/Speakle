@@ -17,6 +17,7 @@ public interface PointsAccountRepository extends JpaRepository<PointsAccountEnti
     @Query("SELECT p FROM PointsAccountEntity p WHERE p.userId = :userId")
     Optional<PointsAccountEntity> findByUserIdWithLock(@Param("userId") Long userId);
     Optional<Object> findByUserId(Long userId);
+    boolean existsByUserId(Long userId);
 
     @Query(value = """
         SELECT pa.*

@@ -1,5 +1,6 @@
 package com.sevencode.speakle.reward.service;
 
+import com.sevencode.speakle.learn.exception.UnauthorizedAccessException;
 import com.sevencode.speakle.member.domain.entity.JpaMemberEntity;
 import com.sevencode.speakle.member.repository.SpringDataMemberJpa;
 import com.sevencode.speakle.reward.domain.entity.PointsAccountEntity;
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -33,6 +35,7 @@ public class RewardServiceImpl implements RewardService{
 
     private final PointsAccountRepository pointsAccountRepository;
     private final PointsLedgerRepository pointsLedgerRepository;
+    private final PointsAccountHelper pointsAccountHelper;
     private final SpringDataMemberJpa userRepository;
 
     /**
@@ -41,23 +44,28 @@ public class RewardServiceImpl implements RewardService{
     @Override
     @Transactional
     public RewardUpdateResponse updateReward(RewardUpdateRequest request, Long userId) {
-        // 1. source 및 refType 유효성 검사
+        // 1. 사용자 권한 검사
+        if (!Objects.equals(request.getUserId(), userId)) {
+            throw new UnauthorizedAccessException("접근할 수 있는 권한이 없습니다.");
+        }
+
+        // 2. source 및 refType 유효성 검사
         PointsLedgerEntity.SourceType sourceType = parseSourceType(request.getSource());
         PointsLedgerEntity.RefType refType = parseRefType(request.getRefType());
 
-        // 2. 사용자 포인트 계정 조회 또는 생성 (비관적 락 적용)
-        PointsAccountEntity account = getOrCreatePointsAccount(request.getUserId());
+        // 3. 사용자 포인트 계정 조회 또는 생성 (비관적 락 적용)
+        PointsAccountEntity account = pointsAccountHelper.getPointsAccountWithLock(request.getUserId());
 
-        // 3. 포인트 업데이트
+        // 4. 포인트 업데이트
         int newBalance = account.getBalance() + request.getDelta();
         if (newBalance < 0) {
             throw new InsufficientPointsException("포인트 잔액이 부족합니다.");
         }
 
-        // 4. 새로운 레벨 계산
+        // 5. 새로운 레벨 계산
         PointLevel newLevel = PointLevel.fromPoints(newBalance);
 
-        // 5. 계정 업데이트
+        // 6. 계정 업데이트
         PointsAccountEntity updatedAccount = PointsAccountEntity.builder()
                 .userId(account.getUserId())
                 .balance(newBalance)
@@ -72,9 +80,9 @@ public class RewardServiceImpl implements RewardService{
         metaData.put("refType", request.getRefType());
         metaData.put("refId", request.getRefId());
 
-        // 6. 포인트 이력 기록
+        // 7. 포인트 이력 기록
         PointsLedgerEntity ledger = PointsLedgerEntity.builder()
-                .userId(request.getUserId())
+                .userId(userId)
                 .delta(request.getDelta())
                 .source(sourceType)
                 .refType(refType)
@@ -117,38 +125,16 @@ public class RewardServiceImpl implements RewardService{
         }
     }
 
-    // ------------------------------------------------------------
-    // 사용자 포인트 계정 조회 또는 생성
-    // ------------------------------------------------------------
-    private PointsAccountEntity getOrCreatePointsAccount(Long userId) {
-        return pointsAccountRepository.findByUserIdWithLock(userId)
-                .orElseGet(() -> createNewPointsAccount(userId));
-    }
-
-    // ------------------------------------------------------------
-    // 사용자 포인트 계정 생성
-    // ------------------------------------------------------------
-    private PointsAccountEntity createNewPointsAccount(Long userId) {
-        PointsAccountEntity newAccount = PointsAccountEntity.builder()
-                .userId(userId)
-                .balance(0)
-                .level(PointLevel.BRONZE)
-                .build();
-
-        return pointsAccountRepository.save(newAccount);
-    }
-
     /**
      * 포인트 조회
      */
     @Override
-    public RewardProfileResponse getPointProfile(Long userId) {
-        log.info("포인트 프로필 조회 요청 - userId: {}", userId);
+    public RewardProfileResponse getPointProfile(Long userId, Long userIdByAuth) {
+        if (!Objects.equals(userId, userIdByAuth)) {
+            throw new UnauthorizedAccessException("접근할 수 있는 권한이 없습니다.");
+        }
 
-        PointsAccountEntity pointsAccount = (PointsAccountEntity) pointsAccountRepository.findByUserId(userId)
-                .orElseThrow(() -> {
-                    return new UserNotFoundException("사용자를 찾을 수 없습니다.");
-                });
+        PointsAccountEntity pointsAccount = pointsAccountHelper.getPointsAccount(userId);
 
         return RewardProfileResponse.builder()
                 .userId(pointsAccount.getUserId())
@@ -161,21 +147,24 @@ public class RewardServiceImpl implements RewardService{
      * 포인트 랭킹 조회
      */
     @Override
-    public List<RewardRankingResponse> getTop5PointRanking() {
+    public List<RewardRankingResponse> getTop5PointRanking(Long userId) {
         try {
-            // 1. 상위 5명 포인트 계정 조회
+            // 1. 사용자 포인트 계정 조회 또는 생성 : 0점인 본인 데이터도 넣고 랭킹 조회하기 위해
+            pointsAccountHelper.getPointsAccount(userId);
+
+            // 2. 상위 5명 포인트 계정 조회
             List<PointsAccountEntity> result = pointsAccountRepository.getTop5NonDeletedUsersRanking();
 
             if (result.isEmpty() || result.size() < 5) {
                 throw new InsufficientRankingDataException("현재 랭킹 목록의 사이즈가 "+result.size()+"입니다.(5명이 되지 않습니다.)");
             }
 
-            // 2. 사용자 ID 추출
+            // 3. 사용자 ID 추출
             List<Long> userIds = result.stream()
                     .map(PointsAccountEntity::getUserId)
                     .collect(Collectors.toList());
 
-            // 3. 사용자 정보 한번에 조회
+            // 4. 사용자 정보 한번에 조회
             List<JpaMemberEntity> users = userRepository.findByIdIn(userIds);
             Map<Long, JpaMemberEntity> userMap = users.stream()
                     .collect(Collectors.toMap(
@@ -184,7 +173,7 @@ public class RewardServiceImpl implements RewardService{
                             (existing, replacement) -> existing  // 중복 키 처리
                     ));
 
-            // 4. Builder를 사용해서 DTO로 변환
+            // 5. Builder를 사용해서 DTO로 변환
             return IntStream.range(0, result.size())
                     .mapToObj(i -> {
                         PointsAccountEntity account = result.get(i);

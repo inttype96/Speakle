@@ -38,8 +38,10 @@ public class RewardController {
      */
     @GetMapping("/profile")
     public ResponseEntity<ApiResponse<RewardProfileResponse>> getPointProfile(
-            @RequestParam Long userId) {
-        RewardProfileResponse response = rewardService.getPointProfile(userId);
+            @RequestParam Long userId,
+            @AuthenticationPrincipal UserPrincipal me) {
+        Long userIdByAuth = me.userId();
+        RewardProfileResponse response = rewardService.getPointProfile(userId, userIdByAuth);
         return ResponseEntity.ok(ApiResponse.success(200, "포인트 프로필 조회에 성공했습니다.", response));
     }
 
@@ -47,8 +49,10 @@ public class RewardController {
      * 포인트 랭킹 조회
      */
     @GetMapping("/ranking")
-    public ResponseEntity<ApiResponse<List<RewardRankingResponse>>> getPointRanking() {
-        List<RewardRankingResponse> response = rewardService.getTop5PointRanking();
+    public ResponseEntity<ApiResponse<List<RewardRankingResponse>>> getPointRanking(
+            @AuthenticationPrincipal UserPrincipal me) {
+        Long userId = me.userId();
+        List<RewardRankingResponse> response = rewardService.getTop5PointRanking(userId);
         return ResponseEntity.ok(ApiResponse.success(200, "포인트 랭킹 조회에 성공했습니다.", response));
     }
 }
