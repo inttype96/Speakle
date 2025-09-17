@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Mic, MicOff, Volume2, Timer, SkipForward } from "lucide-react";
+import { ChevronLeft, Mic, MicOff, Volume2, Timer } from "lucide-react";
 
 import { evaluateSpeaking, submitSpeakingResult, blobToPCM16kBase64RAW } from "@/services/speakingService";
 import type { SpeakingEvalRes } from "@/types/speaking";
@@ -60,7 +60,8 @@ export default function SpeakingPage() {
 
   // 요약 모달(전체)
   const [openSummary, setOpenSummary] = useState(false);
-  const [finishing, setFinishing] = useState(false);
+  // const [finishing, setFinishing] = useState(false);
+  const [finishing] = useState(false);
 
   // 누적 결과(프론트 계산용)
   type OneResult = { q: number; speakingId: number; sentence: string; isCorrect: boolean; score: number; rawScore?: string };
@@ -223,23 +224,23 @@ const onSubmit = useCallback(async () => {
     if (ok && qNum < TOTAL_QUESTIONS) setQNum(n => n + 1);
   }, [commitCurrentResult, qNum]);
 
-  // 스킵(오답 처리) → 다음
-  const onSkip = useCallback(() => {
-    if (!evalData) return;
-    if (committedQSetRef.current.has(qNum)) return; // 이미 커밋됐다면 무시
-    setResults(prev => [
-      ...prev,
-      {
-        q: qNum,
-        speakingId: evalData.speakingId,
-        sentence: evalData.coreSentence,
-        isCorrect: false,
-        score: 0,
-      },
-    ]);
-    committedQSetRef.current.add(qNum);
-    if (qNum < TOTAL_QUESTIONS) setQNum(n => n + 1);
-  }, [evalData, qNum]);
+  // // 스킵(오답 처리) → 다음
+  // const onSkip = useCallback(() => {
+  //   if (!evalData) return;
+  //   if (committedQSetRef.current.has(qNum)) return; // 이미 커밋됐다면 무시
+  //   setResults(prev => [
+  //     ...prev,
+  //     {
+  //       q: qNum,
+  //       speakingId: evalData.speakingId,
+  //       sentence: evalData.coreSentence,
+  //       isCorrect: false,
+  //       score: 0,
+  //     },
+  //   ]);
+  //   committedQSetRef.current.add(qNum);
+  //   if (qNum < TOTAL_QUESTIONS) setQNum(n => n + 1);
+  // }, [evalData, qNum]);
 
   // 마지막 문제에서 종료(모달 버튼)
   const finishFromModal = useCallback(async () => {
