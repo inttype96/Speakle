@@ -39,7 +39,7 @@ public class RecommendService {
         QueryRequest queryRequest = QueryRequest.builder()
                 .words(keywords.getWords())
                 .phrases(keywords.getPhrases())
-                .topK(keywords.getTop_k())
+                .topK(request.getLimit() > 0 ? request.getLimit() : 50)  // limit 사용 또는 기본값 50
                 .build();
 
         QueryResponse queryResponse = fastApiClient.getRecommendations(queryRequest);

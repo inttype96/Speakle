@@ -1,13 +1,13 @@
 package com.sevencode.speakle.song.service;
 
-import com.sevencode.speakle.song.domain.LearnedSong;
+//import com.sevencode.speakle.song.domain.LearnedSong;
 import com.sevencode.speakle.song.domain.Song;
 import com.sevencode.speakle.song.dto.request.SaveLearnedSongRequest;
 import com.sevencode.speakle.song.dto.response.LyricChunkResponse;
 import com.sevencode.speakle.song.dto.response.SaveLearnedSongResponse;
 import com.sevencode.speakle.song.dto.response.SongDetailResponse;
 import com.sevencode.speakle.song.dto.response.SongResponse;
-import com.sevencode.speakle.song.repository.LearnedSongRepository;
+//import com.sevencode.speakle.song.repository.LearnedSongRepository;
 import com.sevencode.speakle.song.repository.LyricChunkRepository;
 import com.sevencode.speakle.song.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class SongService {
 
     private final SongRepository songRepository;
     private final LyricChunkRepository lyricChunkRepository;
-    private final LearnedSongRepository learnedSongRepository;
+//    private final LearnedSongRepository learnedSongRepository;
 
     // 노래 리스트 (페이징)
     public Page<SongResponse> getSongs(Pageable pageable) {
@@ -70,27 +70,27 @@ public class SongService {
     }
 
     // 학습하기 버튼 클릭 시 저장
-    public SaveLearnedSongResponse saveLearnedSong(Long userId, SaveLearnedSongRequest request) {
-        log.info("[SongService] 학습곡 저장 요청 userId={}, songId={}", userId, request.getSongId());
-
-        LearnedSong learnedSong = LearnedSong.builder()
-                .userId(userId)
-                .songId(request.getSongId())
-                .situation(request.getSituation())
-                .location(request.getLocation())
-                .build();
-
-        LearnedSong saved = learnedSongRepository.save(learnedSong);
-
-        log.info("[SongService] 학습곡 저장 성공 learnedSongId={}, songId={}", saved.getLearnedSongId(), saved.getSongId());
-
-        return SaveLearnedSongResponse.builder()
-                .learnedSongId(saved.getLearnedSongId())
-                .songId(saved.getSongId())
-                .situation(saved.getSituation())
-                .location(saved.getLocation())
-                .build();
-    }
+//    public SaveLearnedSongResponse saveLearnedSong(Long userId, SaveLearnedSongRequest request) {
+//        log.info("[SongService] 학습곡 저장 요청 userId={}, songId={}", userId, request.getSongId());
+//
+//        LearnedSong learnedSong = LearnedSong.builder()
+//                .userId(userId)
+//                .songId(request.getSongId())
+//                .situation(request.getSituation())
+//                .location(request.getLocation())
+//                .build();
+//
+//        LearnedSong saved = learnedSongRepository.save(learnedSong);
+//
+//        log.info("[SongService] 학습곡 저장 성공 learnedSongId={}, songId={}", saved.getLearnedSongId(), saved.getSongId());
+//
+//        return SaveLearnedSongResponse.builder()
+//                .learnedSongId(saved.getLearnedSongId())
+//                .songId(saved.getSongId())
+//                .situation(saved.getSituation())
+//                .location(saved.getLocation())
+//                .build();
+//    }
 
     private SongResponse toSongResponse(Song song) {
         return SongResponse.builder()
