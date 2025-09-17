@@ -3,6 +3,7 @@ package com.sevencode.speakle.learn.controller;
 import com.sevencode.speakle.config.security.UserPrincipal;
 import com.sevencode.speakle.learn.dto.request.*;
 import com.sevencode.speakle.learn.dto.response.*;
+import com.sevencode.speakle.learn.exception.LearnedSongNotFoundException;
 import com.sevencode.speakle.learn.service.BlankService;
 
 import com.sevencode.speakle.learn.service.DictationService;
@@ -60,6 +61,10 @@ public class LearnController {
     public ResponseEntity<ApiResponse<BlankCompleteResponse>> getQuizComplete(
             @RequestParam("learnedSongId") Long learnedSongId,
             @AuthenticationPrincipal UserPrincipal me) {
+        // 입력 유효성 검증
+        if (learnedSongId == null || learnedSongId <= 0) {
+            throw new LearnedSongNotFoundException("유효하지 않은 학습곡 ID입니다.");
+        }
 
         Long userId = me.userId();
         BlankCompleteResponse response = blankService.getBlankComplete(learnedSongId, userId);
