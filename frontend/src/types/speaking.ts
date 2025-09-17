@@ -20,7 +20,8 @@ export type SpeakingEvalRes = {
 export type SpeakingSubmitReq = {
   speakingId: number;
   script: string;       // 코어 문장
-  audioBase64: string;  // 파일 BASE64 (dataURL prefix 제거한 순수 base64)
+  audio?: string;        // base64 (dataURL prefix 제거)
+  audioBase64?: string;  // 둘 중 하나만 있어도 됨
 };
 
 export type SpeakingSubmitResData = {

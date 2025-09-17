@@ -8,11 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Mic, MicOff, Volume2, Timer, SkipForward } from "lucide-react";
 
-import {
-  evaluateSpeaking,
-  submitSpeakingResult,
-  blobToBase64String,
-} from "@/services/speakingService";
+import { evaluateSpeaking, submitSpeakingResult, blobToPCM16kBase64RAW } from "@/services/speakingService";
 import type { SpeakingEvalRes } from "@/types/speaking";
 
 // 우측 상단 표시(예시)
@@ -166,25 +162,40 @@ export default function SpeakingPage() {
     }
   }, [recording]);
 
-  // 제출 → 채점
-  const onSubmit = useCallback(async () => {
-    if (!evalData) return;
-    if (!recBlob) {
-      alert("먼저 마이크로 발음을 녹음해주세요!");
-      return;
-    }
-    const base64 = await blobToBase64String(recBlob);
+// 제출 → 채점
+const onSubmit = useCallback(async () => {
+  if (!evalData) return;
+  if (!recBlob) { alert("먼저 마이크로 발음을 녹음해주세요!"); return; }
+
+  try {
+    // 🔁 webm/mp4/wav → RAW PCM(S16LE, 16k, mono) base64
+    const base64RAW = await blobToPCM16kBase64RAW(recBlob);
+
     const res = await submitSpeakingResult({
       speakingId: evalData.speakingId,
       script: evalData.coreSentence,
-      audioBase64: base64,
+      audioBase64: base64RAW,   // speakingService가 payload.audio로 매핑
     });
 
     setLastIsCorrect(res.data.isCorrect);
     setLastScore(res.data.score);
-    setLastRawScore(res.data.meta?.score ?? null);
+    const raw = (res.data as any)?.meta?.score; // 서버가 점수 세부를 meta에 담는다면
+    setLastRawScore(typeof raw === "string" ? raw : null);
     setOpenResult(true);
-  }, [evalData, recBlob]);
+  } catch (err: any) {
+    const status = err?.response?.status;
+    if (status === 415) {
+      alert("서버가 JSON이 아닌 다른 형식을 기대하고 있습니다. (415)\n백엔드의 @PostMapping consumes/컨트롤러 시그니처를 확인해주세요.");
+    } else if (status === 400) {
+      alert("요청 형식이 올바르지 않습니다. (400)\n필수 필드: speakingId, script, audio");
+    } else if (status === 500) {
+      alert("서버 내부 오류가 발생했습니다. (500)\n서버 로그를 확인해주세요.");
+    } else {
+      alert(`요청 실패: ${status ?? "네트워크/알 수 없음"}`);
+    }
+    console.error(err);
+  }
+}, [evalData, recBlob]);
 
   // 현재 문항 결과를 누적 목록에 1회만 커밋
   const commitCurrentResult = useCallback(() => {
