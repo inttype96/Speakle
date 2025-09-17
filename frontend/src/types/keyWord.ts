@@ -6,22 +6,11 @@ export type RecommendHybridReq = {
   };
 
   export type RecommendHybridRes = {
-    status: number;
-    message: string;
-    data: [{
-      songId: number;
-      title: string;
-      artists: string[];
-      albumImgUrl: string;
-      score: number;
-      recommendationSentences: [{
-        coreSentence: string;
-        order: number;
-      }];
-    }];
-    llm: {
-      keywords: string[];
-      idioms: string[];
+    songIds: string[];
+    keywords: {
+      words: string[];
+      phrases: string[];
+      top_k: number;
     };
   };
 
@@ -38,6 +27,7 @@ export type RecommendHybridReq = {
   };
 
   export type RecommendRandomReq = {
+    
   };
 
   export type RecommendRandomRes = {
