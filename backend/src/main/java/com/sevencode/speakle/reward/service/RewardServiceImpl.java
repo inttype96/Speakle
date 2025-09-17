@@ -44,23 +44,28 @@ public class RewardServiceImpl implements RewardService{
     @Override
     @Transactional
     public RewardUpdateResponse updateReward(RewardUpdateRequest request, Long userId) {
-        // 1. source 및 refType 유효성 검사
+        // 1. 사용자 권한 검사
+        if (!Objects.equals(request.getUserId(), userId)) {
+            throw new UnauthorizedAccessException("접근할 수 있는 권한이 없습니다.");
+        }
+
+        // 2. source 및 refType 유효성 검사
         PointsLedgerEntity.SourceType sourceType = parseSourceType(request.getSource());
         PointsLedgerEntity.RefType refType = parseRefType(request.getRefType());
 
-        // 2. 사용자 포인트 계정 조회 또는 생성 (비관적 락 적용)
+        // 3. 사용자 포인트 계정 조회 또는 생성 (비관적 락 적용)
         PointsAccountEntity account = pointsAccountHelper.getPointsAccountWithLock(request.getUserId());
 
-        // 3. 포인트 업데이트
+        // 4. 포인트 업데이트
         int newBalance = account.getBalance() + request.getDelta();
         if (newBalance < 0) {
             throw new InsufficientPointsException("포인트 잔액이 부족합니다.");
         }
 
-        // 4. 새로운 레벨 계산
+        // 5. 새로운 레벨 계산
         PointLevel newLevel = PointLevel.fromPoints(newBalance);
 
-        // 5. 계정 업데이트
+        // 6. 계정 업데이트
         PointsAccountEntity updatedAccount = PointsAccountEntity.builder()
                 .userId(account.getUserId())
                 .balance(newBalance)
@@ -75,9 +80,9 @@ public class RewardServiceImpl implements RewardService{
         metaData.put("refType", request.getRefType());
         metaData.put("refId", request.getRefId());
 
-        // 6. 포인트 이력 기록
+        // 7. 포인트 이력 기록
         PointsLedgerEntity ledger = PointsLedgerEntity.builder()
-                .userId(request.getUserId())
+                .userId(userId)
                 .delta(request.getDelta())
                 .source(sourceType)
                 .refType(refType)
