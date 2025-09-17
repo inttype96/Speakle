@@ -125,12 +125,17 @@ public class SpeakingServiceImpl implements SpeakingService{
     }
 
     public SpeakingEvaluationResponse evaluateSpeaking(Long userId, SpeakingEvaluationRequest request) {
-        // 1. 스피킹 문제 존재 여부 확인
+        // 1. 입력값 추가 검증
+        if (!request.isValidAudioData()) {
+            throw new InvalidAudioDataException("유효하지 않은 오디오 데이터입니다.");
+        }
+
+        // 2. 스피킹 문제 존재 여부 확인
         SpeakingEntity speaking = speakingRepository.findById(request.getSpeakingId())
                 .orElseThrow(() -> new SpeakingNotFoundException("해당 스피킹 문제를 찾을 수 없습니다."));
 
 
-        // 2. ETRI API 호출
+        // 3. ETRI API 호출
         EtriPronunciationResponse etriResponse;
         try{
             etriResponse = etriClient
@@ -145,7 +150,7 @@ public class SpeakingServiceImpl implements SpeakingService{
         }
 
 
-        // 3. 결과 분석
+        // 4. 결과 분석
         EtriPronunciationResponse.EtriReturnObject returnObject = etriResponse.getReturnObject();
         String recognized = returnObject.getRecognized();
         String scoreStr = returnObject.getScore();
@@ -162,7 +167,7 @@ public class SpeakingServiceImpl implements SpeakingService{
                 "score", scoreStr   // 원본 점수 저장
         );
 
-        // 4. 기존 결과 확인 및 저장/업데이트
+        // 5. 기존 결과 확인 및 저장/업데이트
         Optional<SpeakingResultEntity> existingResult = speakingResultRepository
                 .findBySpeakingIdAndUserId(request.getSpeakingId(), userId);
 
@@ -190,12 +195,12 @@ public class SpeakingServiceImpl implements SpeakingService{
             savedResult = speakingResultRepository.save(result);
         }
 
-        // 5. 포인트 업데이트
+        // 6. 포인트 업데이트
         if(isCorrect){
             // TODO : 문제를 맞은 경우 포인트 업데이트 해주기
         }
 
-        // 6. 응답 생성
+        // 7. 응답 생성
         return SpeakingEvaluationResponse.builder()
                 .speakingResultId(savedResult.getSpeakingResultId())
                 .speakingId(savedResult.getSpeakingId())
