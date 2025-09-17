@@ -1,4 +1,4 @@
-﻿package com.sevencode.speakle.recommend.dto;
+package com.sevencode.speakle.recommend.dto;
 
 public class LLMKeywords {
 }
