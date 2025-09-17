@@ -10,6 +10,6 @@ import java.util.List;
 
 public interface RewardService {
     RewardUpdateResponse updateReward(@Valid RewardUpdateRequest request, Long userId);
-    RewardProfileResponse getPointProfile(Long userId);
-    List<RewardRankingResponse> getTop5PointRanking();
+    RewardProfileResponse getPointProfile(Long userId, Long userIdByAuth);
+    List<RewardRankingResponse> getTop5PointRanking(Long userId);
 }
