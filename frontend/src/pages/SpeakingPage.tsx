@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Mic, MicOff, Volume2, Timer } from "lucide-react";
+import { ChevronLeft, Mic, MicOff, Volume2, Timer, SkipForward } from "lucide-react";
 
 import {
   evaluateSpeaking,
@@ -17,17 +17,33 @@ import type { SpeakingEvalRes } from "@/types/speaking";
 
 // 우측 상단 표시(예시)
 const TOP_RIGHT_SONG = "Blinding Lights - The Weeknd";
-const TOP_RIGHT_MODE = "빈칸 퀴즈"; // 상단 박스 디자인을 맞추기 위함(원한다면 '스피킹'으로 교체)
+const TOP_RIGHT_MODE = "스피킹";
 
 // 기본 파라미터
 const DEFAULT_LEARNED_SONG_ID = 1;
 const TOTAL_QUESTIONS = 3;
 const POINTS_PER_Q = 100;
 
-export default function SpeakingPage() {
-  const [qNum, setQNum] = useState(1);
+// 진행 저장 키
+const STORAGE_KEY = `speaking-progress:${DEFAULT_LEARNED_SONG_ID}`;
 
-  // 문제
+// 초기 qNum 결정: 1) URL ?q= → 2) localStorage → 3) 1
+function getInitialQ(): number {
+  const sp = new URLSearchParams(window.location.search);
+  const fromUrl = Number(sp.get("q"));
+  if (Number.isFinite(fromUrl) && fromUrl >= 1 && fromUrl <= TOTAL_QUESTIONS) return fromUrl;
+  const saved = Number(localStorage.getItem(STORAGE_KEY));
+  if (Number.isFinite(saved) && saved >= 1 && saved <= TOTAL_QUESTIONS) return saved;
+  return 1;
+}
+
+// 00:00 포맷
+const mmss = (sec: number) =>
+  `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+
+export default function SpeakingPage() {
+  // 진행/문항
+  const [qNum, setQNum] = useState<number>(getInitialQ());
   const [evalData, setEvalData] = useState<SpeakingEvalRes["data"] | null>(null);
 
   // 녹음 상태
@@ -40,17 +56,49 @@ export default function SpeakingPage() {
   // 타이머(문제 경과)
   const [elapsed, setElapsed] = useState(0);
 
-  // 결과 모달
+  // 결과 모달(한 문항)
   const [openResult, setOpenResult] = useState(false);
   const [lastIsCorrect, setLastIsCorrect] = useState<boolean | null>(null);
   const [lastScore, setLastScore] = useState<number | null>(null);
   const [lastRawScore, setLastRawScore] = useState<string | null>(null);
 
-  // 진행율은 빈칸퀴즈와 동일 방정식 사용
+  // 요약 모달(전체)
+  const [openSummary, setOpenSummary] = useState(false);
+  const [finishing, setFinishing] = useState(false);
+
+  // 누적 결과(프론트 계산용)
+  type OneResult = { q: number; speakingId: number; sentence: string; isCorrect: boolean; score: number; rawScore?: string };
+  const [results, setResults] = useState<OneResult[]>([]);
+  const committedQSetRef = useRef<Set<number>>(new Set()); // 중복 커밋 방지
+
+  // StrictMode 중복요청 가드
+  const lastFetchedQRef = useRef<number | null>(null);
+
+  // 진행율
   const progressPct = Math.round(((qNum - 1) / TOTAL_QUESTIONS) * 100);
+  const isLastQuestion = qNum >= TOTAL_QUESTIONS;
+  const title = useMemo(() => `문제 ${qNum}`, [qNum]);
+
+  // qNum 동기화 (URL ?q=, localStorage)
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, String(qNum));
+    const sp = new URLSearchParams(window.location.search);
+    sp.set("q", String(qNum));
+    const newUrl = `${window.location.pathname}?${sp.toString()}`;
+    window.history.replaceState(null, "", newUrl);
+  }, [qNum]);
 
   // 문제 로드
   useEffect(() => {
+    if (qNum < 1 || qNum > TOTAL_QUESTIONS) {
+      setQNum(1);
+      return;
+    }
+
+    // StrictMode 가드: 같은 qNum 재호출 방지
+    if (lastFetchedQRef.current === qNum) return;
+    lastFetchedQRef.current = qNum;
+
     (async () => {
       const res = await evaluateSpeaking({
         learnedSongId: DEFAULT_LEARNED_SONG_ID,
@@ -64,21 +112,23 @@ export default function SpeakingPage() {
         if (prev) URL.revokeObjectURL(prev);
         return null;
       });
+      setLastIsCorrect(null);
+      setLastScore(null);
+      setLastRawScore(null);
     })();
   }, [qNum]);
 
   // 타이머
   useEffect(() => {
-    if (!evalData) return;
+    if (!evalData || openSummary) return;
     const id = setInterval(() => setElapsed((s) => s + 1), 1000);
     return () => clearInterval(id);
-  }, [evalData]);
+  }, [evalData, openSummary]);
 
-  // TTS (원어민 발음 듣기) — Web Speech API
+  // TTS (원어민 발음 듣기)
   const speak = useCallback(() => {
     if (!evalData?.coreSentence) return;
     const u = new SpeechSynthesisUtterance(evalData.coreSentence);
-    // 음성 선택(가능하다면 en-US 우선)
     const voices = speechSynthesis.getVoices();
     const en = voices.find(v => /en(-|_)?(US|GB)/i.test(v.lang));
     if (en) u.voice = en;
@@ -91,28 +141,20 @@ export default function SpeakingPage() {
   // 녹음 시작/종료
   const toggleRecord = useCallback(async () => {
     if (recording) {
-      // stop
       mediaRef.current?.stop();
       setRecording(false);
       return;
     }
-    // start
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream);
       chunksRef.current = [];
-      mr.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
-      };
+      mr.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data); };
       mr.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         setRecBlob(blob);
         const url = URL.createObjectURL(blob);
-        setRecUrl((prev) => {
-          if (prev) URL.revokeObjectURL(prev);
-          return url;
-        });
-        // 트랙 정리
+        setRecUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url; });
         stream.getTracks().forEach(t => t.stop());
       };
       mediaRef.current = mr;
@@ -144,10 +186,65 @@ export default function SpeakingPage() {
     setOpenResult(true);
   }, [evalData, recBlob]);
 
-  const mmss = (sec: number) =>
-    `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+  // 현재 문항 결과를 누적 목록에 1회만 커밋
+  const commitCurrentResult = useCallback(() => {
+    if (!evalData || lastIsCorrect === null || lastScore === null) return false;
+    if (committedQSetRef.current.has(qNum)) return false;
+    setResults(prev => [
+      ...prev,
+      {
+        q: qNum,
+        speakingId: evalData.speakingId,
+        sentence: evalData.coreSentence,
+        isCorrect: lastIsCorrect,
+        score: lastScore,
+        rawScore: lastRawScore ?? undefined,
+      },
+    ]);
+    committedQSetRef.current.add(qNum);
+    return true;
+  }, [evalData, lastIsCorrect, lastScore, lastRawScore, qNum]);
 
-  const title = useMemo(() => `문제 ${qNum}`, [qNum]);
+  // 다음 문제
+  const onNextQuestion = useCallback(() => {
+    const ok = commitCurrentResult(); // 중복방지 내부처리
+    setOpenResult(false);
+    if (ok && qNum < TOTAL_QUESTIONS) setQNum(n => n + 1);
+  }, [commitCurrentResult, qNum]);
+
+  // 스킵(오답 처리) → 다음
+  const onSkip = useCallback(() => {
+    if (!evalData) return;
+    if (committedQSetRef.current.has(qNum)) return; // 이미 커밋됐다면 무시
+    setResults(prev => [
+      ...prev,
+      {
+        q: qNum,
+        speakingId: evalData.speakingId,
+        sentence: evalData.coreSentence,
+        isCorrect: false,
+        score: 0,
+      },
+    ]);
+    committedQSetRef.current.add(qNum);
+    if (qNum < TOTAL_QUESTIONS) setQNum(n => n + 1);
+  }, [evalData, qNum]);
+
+  // 마지막 문제에서 종료(모달 버튼)
+  const finishFromModal = useCallback(async () => {
+    commitCurrentResult();
+    setOpenResult(false);
+    setOpenSummary(true);
+    localStorage.removeItem(STORAGE_KEY);
+  }, [commitCurrentResult]);
+
+  // 요약 계산(프론트)
+  const summary = useMemo(() => {
+    const totalQuestions = TOTAL_QUESTIONS;
+    const correctAnswers = results.filter(r => r.isCorrect).length;
+    const totalScore = results.reduce((acc, r) => acc + (r.score || 0), 0);
+    return { totalQuestions, correctAnswers, totalScore, results };
+  }, [results]);
 
   return (
     <div className="bg-background text-foreground">
@@ -255,7 +352,7 @@ export default function SpeakingPage() {
               </Button>
             </div>
 
-            {/* 하단 현재 점수 (원하면 누적 로직로 교체 가능) */}
+            {/* 하단 현재 점수(이 문항 점수) */}
             <div className="mt-2 text-center text-xs">
               현재 점수: {lastScore ?? 0} / 4
             </div>
@@ -263,7 +360,7 @@ export default function SpeakingPage() {
         </Card>
       </div>
 
-      {/* 결과 모달 */}
+      {/* 결과 모달(한 문항) */}
       <Dialog open={openResult} onOpenChange={setOpenResult}>
         <DialogContent>
           <DialogHeader>
@@ -273,10 +370,7 @@ export default function SpeakingPage() {
             <DialogDescription className="space-y-2">
               {evalData && (
                 <>
-                  <div>
-                    <span>문장: </span>
-                    {evalData.coreSentence}
-                  </div>
+                  <div><span>문장: </span>{evalData.coreSentence}</div>
                   <div>
                     <span>점수: </span>
                     {lastScore} {lastRawScore ? `(raw: ${Number(lastRawScore).toFixed(2)})` : ""}
@@ -294,17 +388,77 @@ export default function SpeakingPage() {
             >
               닫기
             </Button>
+
+            {/* 마지막 문제에선 '다음 문제' 대신 '스피킹 종료' */}
+            {!isLastQuestion ? (
+              <Button
+                type="button"
+                className="w-full sm:w-auto"
+                onClick={onNextQuestion}
+              >
+                다음 문제
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                className="w-full sm:w-auto"
+                onClick={finishFromModal}
+                disabled={finishing}
+              >
+                {finishing ? "종료 중..." : "스피킹 종료"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 종료 요약 모달(전체) */}
+      <Dialog open={openSummary} onOpenChange={setOpenSummary}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>스피킹 결과 요약</DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3 pt-2">
+                <div className="text-sm">
+                  총 문제 {summary.totalQuestions}개 · 정답 {summary.correctAnswers}개 · 총점 {summary.totalScore}점
+                </div>
+                <div className="space-y-3 max-h-[50vh] overflow-auto pr-1">
+                  {summary.results
+                    .sort((a, b) => a.q - b.q)
+                    .map((r) => (
+                    <div key={r.q} className="rounded-xl border p-3 text-sm">
+                      <div className="font-medium">문제 {r.q}</div>
+                      <div className="mt-1">{r.sentence}</div>
+                      <div className="mt-1">
+                        결과:{" "}
+                        <span className={r.isCorrect ? "text-green-500" : "text-rose-500"}>
+                          {r.isCorrect ? "정답" : "오답"}
+                        </span>{" "}
+                        | 점수 {r.score}
+                        {typeof r.rawScore !== "undefined" ? ` (raw: ${Number(r.rawScore).toFixed(2)})` : ""}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 flex-col sm:flex-row">
             <Button
-              type="button"
-              className="w-full sm:w-auto"
+              variant="secondary"
               onClick={() => {
-                setOpenResult(false);
-                if (qNum < TOTAL_QUESTIONS) setQNum((n) => n + 1);
+                setOpenSummary(false);
+                setQNum(1);
+                setResults([]);
+                committedQSetRef.current.clear();
+                lastFetchedQRef.current = null;
+                localStorage.removeItem(STORAGE_KEY);
+                window.history.replaceState(null, "", window.location.pathname);
               }}
-              disabled={qNum >= TOTAL_QUESTIONS}
             >
-              다음 문제
+              처음으로
             </Button>
+            <Button onClick={() => (window.location.href = "/")}>홈으로</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
