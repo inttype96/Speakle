@@ -3,17 +3,16 @@ package com.sevencode.speakle.common.service;
 import java.time.Duration;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import com.sevencode.speakle.common.exception.StateStoreException;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class StateStore {
 
 	private static final String KEY_PREFIX = "oauth:state:";
@@ -21,11 +20,23 @@ public class StateStore {
 	private static final int MAX_RETRY_ATTEMPTS = 3;
 	private static final String STATE_PREFIX = "SPOTIFY_";
 
-	private final RedisTemplate<String, Object> redisTemplate;
+	// 필드와 생성자 파라미터 타입 일치시켜야 함
+	@SuppressWarnings("rawtypes")
+	private final RedisTemplate redisTemplate;
+
+	/**
+	 * 명시적으로 Redis용 RedisTemplate 주입
+	 * 기본 템플릿과 충돌 방지
+	 */
+	@SuppressWarnings("rawtypes")
+	public StateStore(@Qualifier("redisTemplate") RedisTemplate redisTemplate) {
+		this.redisTemplate = redisTemplate;
+	}
 
 	/**
 	 * state와 userId 매핑을 저장
 	 */
+	@SuppressWarnings("unchecked")
 	public void save(String state, Long userId) {
 		if (state == null || state.trim().isEmpty()) {
 			throw StateStoreException.emptyInput("OAuth state 값이 비어있습니다.");
@@ -47,6 +58,7 @@ public class StateStore {
 	/**
 	 * state를 검증하고 userId를 반환한 후 삭제 (1회성)
 	 */
+	@SuppressWarnings("unchecked")
 	public Optional<Long> consume(String state) {
 		if (state == null || state.trim().isEmpty()) {
 			log.warn("잘못된 OAuth state 요청 - 빈 값");
@@ -80,6 +92,7 @@ public class StateStore {
 	/**
 	 * 특정 state 존재 여부 확인
 	 */
+	@SuppressWarnings("unchecked")
 	public boolean exists(String state) {
 		if (state == null || state.trim().isEmpty()) {
 			return false;
@@ -97,6 +110,7 @@ public class StateStore {
 	/**
 	 * 특정 state 삭제
 	 */
+	@SuppressWarnings("unchecked")
 	public void delete(String state) {
 		if (state == null || state.trim().isEmpty()) {
 			return;
@@ -127,18 +141,23 @@ public class StateStore {
 	 * userId 파싱 헬퍼 메서드
 	 */
 	private Long parseUserId(Object userId) {
-		if (userId instanceof Long) {
-			return (Long) userId;
-		} else if (userId instanceof Integer) {
-			return ((Integer) userId).longValue();
-		} else if (userId instanceof String) {
+		if (userId instanceof Long longValue) {
+			return longValue;
+		} else if (userId instanceof Integer intValue) {
+			return intValue.longValue();
+		} else if (userId instanceof String stringValue) {
 			try {
-				return Long.parseLong((String) userId);
+				return Long.parseLong(stringValue);
 			} catch (NumberFormatException e) {
 				log.warn("문자열 형태의 userId 파싱 실패: {}", userId);
 				return null;
 			}
+		} else if (userId instanceof Number numberValue) {
+			return numberValue.longValue();
 		}
+
+		log.warn("지원하지 않는 userId 타입: {} (값: {})",
+			userId != null ? userId.getClass().getSimpleName() : "null", userId);
 		return null;
 	}
 }

@@ -9,6 +9,7 @@ package com.sevencode.speakle.member.repository;
 
 import com.sevencode.speakle.member.domain.entity.JpaMemberEntity;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,4 +26,5 @@ public interface SpringDataMemberJpa extends JpaRepository<JpaMemberEntity, Long
 
 	boolean existsByUsernameAndDeletedFalse(String username);
 
+	List<JpaMemberEntity> findByIdIn(List<Long> userIds);
 }

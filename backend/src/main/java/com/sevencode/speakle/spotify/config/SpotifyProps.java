@@ -15,5 +15,5 @@ public class SpotifyProps {
 	private String clientId;
 	private String clientSecret;
 	private String redirectUri;
-	private String scopes = "user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative user-library-read";
+	private String scopes = "user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative user-library-read user-top-read user-read-recently-played";
 }

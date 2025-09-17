@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import type { AuthTokens } from "@/types/auth";
 import { refreshAPI } from "@/services/auth";
 
@@ -8,11 +8,6 @@ type AuthState = {
   login: (tokens: AuthTokens) => void;
   logout: () => void;
   setTokens: (tokens: AuthTokens | null) => void;
-
-  // 편의 getter
-  isAuthed: () => boolean;
-  accessToken: string | null;
-  refreshToken: string | null;
 
   // (선택) refresh 시도
   tryRefreshToken: () => Promise<boolean>;
@@ -26,14 +21,6 @@ export const useAuthStore = create<AuthState>()(
       login: (tokens) => set({ tokens }),
       logout: () => set({ tokens: null }),
       setTokens: (tokens) => set({ tokens }),
-
-      isAuthed: () => !!get().tokens?.accessToken,
-      get accessToken() {
-        return get().tokens?.accessToken ?? null;
-      },
-      get refreshToken() {
-        return get().tokens?.refreshToken ?? null;
-      },
 
       tryRefreshToken: async () => {
         const rt = get().tokens?.refreshToken;
@@ -50,9 +37,23 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage", // localStorage key
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         tokens: state.tokens,
       }),
     }
   )
 );
+
+// 편의 함수들 - 컴포넌트에서 사용
+export const isAuthenticated = () => {
+  return !!useAuthStore.getState().tokens?.accessToken;
+};
+
+export const getAccessToken = () => {
+  return useAuthStore.getState().tokens?.accessToken ?? null;
+};
+
+export const getRefreshToken = () => {
+  return useAuthStore.getState().tokens?.refreshToken ?? null;
+};

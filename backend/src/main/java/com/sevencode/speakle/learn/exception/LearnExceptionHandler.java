@@ -67,7 +67,7 @@ public class LearnExceptionHandler {
                 "빈칸으로 만들 적절한 단어를 찾을 수 없습니다."
         );
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorResponse);
     }
 
     @ExceptionHandler(BlankNotFoundException.class)
@@ -91,6 +91,84 @@ public class LearnExceptionHandler {
         ApiErrorResponse errorResponse = createErrorResponse(
                 "BLANK_RESULT_NOT_FOUND",
                 "해당 퀴즈 결과를 찾을 수 없습니다."
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(DictationNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleDictationNotFound(
+            DictationNotFoundException ex, WebRequest request) {
+        log.warn("받아쓰기 퀴즈를 찾을 수 없음 - 경로: {}", getRequestPath(request));
+
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "DICTATION_NOT_FOUND",
+                "해당 받아쓰기 퀴즈를 찾을 수 없습니다."
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(DictationResultNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleDictationResultNotFound(
+            DictationResultNotFoundException ex, WebRequest request) {
+        log.warn("받아쓰기 퀴즈 결과를 찾을 수 없음 - 경로: {}", getRequestPath(request));
+
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "DICTATION_RESULT_NOT_FOUND",
+                "해당 받아쓰기 퀴즈 결과를 찾을 수 없습니다."
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(InvalidPronunciationResponseException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidPronunciationResponse(
+            InvalidPronunciationResponseException ex, WebRequest request) {
+        log.warn("발음 평가 응답 오류 - 경로: {}", getRequestPath(request));
+
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "INVALID_PRONUNCIATION_RESPONSE",
+                "발음 평가 결과를 처리할 수 없습니다."
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(PronunciationServerException.class)
+    public ResponseEntity<ApiErrorResponse> handlePronunciationServer(
+            PronunciationServerException ex, WebRequest request) {
+        log.error("발음 평가 서버 오류 - 경로: {}", getRequestPath(request));
+
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "PRONUNCIATION_SERVER_ERROR",
+                "발음 평가 서비스에 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+        );
+
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(errorResponse);
+    }
+
+    @ExceptionHandler(SpeakingNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleSpeakingNotFound(
+            SpeakingNotFoundException ex, WebRequest request) {
+        log.warn("스피킹 퀴즈를 찾을 수 없음 - 경로: {}", getRequestPath(request));
+
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "SPEAKING_NOT_FOUND",
+                "해당 스피킹 퀴즈를 찾을 수 없습니다."
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(SpeakingResultNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleSpeakingResultNotFound(
+            SpeakingResultNotFoundException ex, WebRequest request) {
+        log.warn("스피킹 퀴즈 결과를 찾을 수 없음 - 경로: {}", getRequestPath(request));
+
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "SPEAKING_RESULT_NOT_FOUND",
+                "해당 스피킹 퀴즈 결과를 찾을 수 없습니다."
         );
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);

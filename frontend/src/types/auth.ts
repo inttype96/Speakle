@@ -24,6 +24,22 @@ export type User = {
   updatedAt: string;
 };
 
+export type UserProfile = {
+  userId: number;
+  email: string;
+  username: string;
+  gender?: string;
+  birth?: string;
+  profileImageUrl?: string;
+  createdAt: string;
+};
+
+export type UserProfileRes = {
+  status: number;
+  message: string;
+  data: UserProfile;
+};
+
 export type AuthTokens = {
   tokenType: string;   // "Bearer"
   accessToken: string;

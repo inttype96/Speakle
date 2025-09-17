@@ -6,7 +6,7 @@ import type {
 } from "@/types/speaking";
 
 // 필요할 때 개발용 목업 On/Off
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 export async function evaluateSpeaking(
   body: SpeakingEvalReq,

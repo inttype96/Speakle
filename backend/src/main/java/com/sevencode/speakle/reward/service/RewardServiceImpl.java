@@ -1,0 +1,198 @@
+package com.sevencode.speakle.reward.service;
+
+import com.sevencode.speakle.learn.exception.UnauthorizedAccessException;
+import com.sevencode.speakle.member.domain.entity.JpaMemberEntity;
+import com.sevencode.speakle.member.repository.SpringDataMemberJpa;
+import com.sevencode.speakle.reward.domain.entity.PointsAccountEntity;
+import com.sevencode.speakle.reward.domain.entity.PointsLedgerEntity;
+import com.sevencode.speakle.reward.domain.enums.PointLevel;
+import com.sevencode.speakle.reward.dto.request.RewardUpdateRequest;
+import com.sevencode.speakle.reward.dto.response.RewardProfileResponse;
+import com.sevencode.speakle.reward.dto.response.RewardRankingResponse;
+import com.sevencode.speakle.reward.dto.response.RewardUpdateResponse;
+import com.sevencode.speakle.reward.exception.*;
+import com.sevencode.speakle.reward.repository.PointsAccountRepository;
+import com.sevencode.speakle.reward.repository.PointsLedgerRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+@Slf4j
+public class RewardServiceImpl implements RewardService{
+
+    private final PointsAccountRepository pointsAccountRepository;
+    private final PointsLedgerRepository pointsLedgerRepository;
+    private final PointsAccountHelper pointsAccountHelper;
+    private final SpringDataMemberJpa userRepository;
+
+    /**
+     * 포인트 업데이트
+     */
+    @Override
+    @Transactional
+    public RewardUpdateResponse updateReward(RewardUpdateRequest request, Long userId) {
+        // 1. 사용자 권한 검사
+        if (!Objects.equals(request.getUserId(), userId)) {
+            throw new UnauthorizedAccessException("접근할 수 있는 권한이 없습니다.");
+        }
+
+        // 2. source 및 refType 유효성 검사
+        PointsLedgerEntity.SourceType sourceType = parseSourceType(request.getSource());
+        PointsLedgerEntity.RefType refType = parseRefType(request.getRefType());
+
+        // 3. 사용자 포인트 계정 조회 또는 생성 (비관적 락 적용)
+        PointsAccountEntity account = pointsAccountHelper.getPointsAccountWithLock(request.getUserId());
+
+        // 4. 포인트 업데이트
+        int newBalance = account.getBalance() + request.getDelta();
+        if (newBalance < 0) {
+            throw new InsufficientPointsException("포인트 잔액이 부족합니다.");
+        }
+
+        // 5. 새로운 레벨 계산
+        PointLevel newLevel = PointLevel.fromPoints(newBalance);
+
+        // 6. 계정 업데이트
+        PointsAccountEntity updatedAccount = PointsAccountEntity.builder()
+                .userId(account.getUserId())
+                .balance(newBalance)
+                .level(newLevel)
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        PointsAccountEntity savedAccount = pointsAccountRepository.save(updatedAccount);
+
+        Map<String, Object> metaData = new HashMap<>();
+        metaData.put("source", request.getSource());
+        metaData.put("refType", request.getRefType());
+        metaData.put("refId", request.getRefId());
+
+        // 7. 포인트 이력 기록
+        PointsLedgerEntity ledger = PointsLedgerEntity.builder()
+                .userId(userId)
+                .delta(request.getDelta())
+                .source(sourceType)
+                .refType(refType)
+                .refId(request.getRefId())
+                .meta(metaData)
+                .build();
+
+        pointsLedgerRepository.save(ledger);
+
+        return RewardUpdateResponse.builder()
+                .userId(savedAccount.getUserId())
+                .balance(savedAccount.getBalance())
+                .level(savedAccount.getLevel())
+                .updatedAt(savedAccount.getUpdatedAt())
+                .build();
+    }
+
+    // ------------------------------------------------------------
+    // SourceType으로 파싱
+    // ------------------------------------------------------------
+    private PointsLedgerEntity.SourceType parseSourceType(String source) {
+        try {
+            return PointsLedgerEntity.SourceType.valueOf(source.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidSourceTypeException("유효하지 않은 source 타입입니다: " + source);
+        }
+    }
+
+    // ------------------------------------------------------------
+    // RefType으로 파싱
+    // ------------------------------------------------------------
+    private PointsLedgerEntity.RefType parseRefType(String refType) {
+        if (refType == null || refType.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return PointsLedgerEntity.RefType.valueOf(refType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRefTypeException("유효하지 않은 refType 타입입니다: " + refType);
+        }
+    }
+
+    /**
+     * 포인트 조회
+     */
+    @Override
+    public RewardProfileResponse getPointProfile(Long userId, Long userIdByAuth) {
+        if (!Objects.equals(userId, userIdByAuth)) {
+            throw new UnauthorizedAccessException("접근할 수 있는 권한이 없습니다.");
+        }
+
+        PointsAccountEntity pointsAccount = pointsAccountHelper.getPointsAccount(userId);
+
+        return RewardProfileResponse.builder()
+                .userId(pointsAccount.getUserId())
+                .balance(pointsAccount.getBalance())
+                .level(pointsAccount.getLevel())
+                .build();
+    }
+
+    /**
+     * 포인트 랭킹 조회
+     */
+    @Override
+    public List<RewardRankingResponse> getTop5PointRanking(Long userId) {
+        try {
+            // 1. 사용자 포인트 계정 조회 또는 생성 : 0점인 본인 데이터도 넣고 랭킹 조회하기 위해
+            pointsAccountHelper.getPointsAccount(userId);
+
+            // 2. 상위 5명 포인트 계정 조회
+            List<PointsAccountEntity> result = pointsAccountRepository.getTop5NonDeletedUsersRanking();
+
+            if (result.isEmpty() || result.size() < 5) {
+                throw new InsufficientRankingDataException("현재 랭킹 목록의 사이즈가 "+result.size()+"입니다.(5명이 되지 않습니다.)");
+            }
+
+            // 3. 사용자 ID 추출
+            List<Long> userIds = result.stream()
+                    .map(PointsAccountEntity::getUserId)
+                    .collect(Collectors.toList());
+
+            // 4. 사용자 정보 한번에 조회
+            List<JpaMemberEntity> users = userRepository.findByIdIn(userIds);
+            Map<Long, JpaMemberEntity> userMap = users.stream()
+                    .collect(Collectors.toMap(
+                            JpaMemberEntity::getId,
+                            Function.identity(),
+                            (existing, replacement) -> existing  // 중복 키 처리
+                    ));
+
+            // 5. Builder를 사용해서 DTO로 변환
+            return IntStream.range(0, result.size())
+                    .mapToObj(i -> {
+                        PointsAccountEntity account = result.get(i);
+                        JpaMemberEntity user = userMap.get(account.getUserId());
+
+                        return RewardRankingResponse.builder()
+                                .rank(i + 1)                                              // 순위 (1부터 시작)
+                                .userId(account.getUserId())                              // 사용자 ID
+                                .username(user != null ? user.getUsername() : "알 수 없는 사용자") // 사용자명
+                                .profileImageUrl(user != null ? user.getProfileImageUrl() : null) // 프로필 이미지
+                                .points(account.getBalance())                             // 포인트
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+
+        } catch (InsufficientRankingDataException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PointRankingException("상위 5명 랭킹 조회 중 오류 발생");
+        }
+    }
+}

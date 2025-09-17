@@ -90,7 +90,8 @@ public class GlobalExceptionHandler {
 		HttpMessageNotReadableException.class,
 		MethodArgumentTypeMismatchException.class,
 		MissingServletRequestParameterException.class,
-		IllegalArgumentException.class
+		IllegalArgumentException.class,
+		InvalidVerificationCodeException.class
 	})
 	public ResponseEntity<ResponseWrapper<Void>> badFormat(Exception ex) {
 		log.warn("Bad request: {}", ex.getMessage());
