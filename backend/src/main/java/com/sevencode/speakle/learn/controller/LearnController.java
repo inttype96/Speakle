@@ -58,11 +58,11 @@ public class LearnController {
      */
     @GetMapping("/quiz/complete")
     public ResponseEntity<ApiResponse<BlankCompleteResponse>> getQuizComplete(
-            @RequestBody BlankCompleteRequest request,
+            @RequestParam("learnedSongId") Long learnedSongId,
             @AuthenticationPrincipal UserPrincipal me) {
 
         Long userId = me.userId();
-        BlankCompleteResponse response = blankService.getBlankComplete(request.getLearnedSongId(), userId);
+        BlankCompleteResponse response = blankService.getBlankComplete(learnedSongId, userId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(200, "퀴즈가 완료되었습니다.", response)
