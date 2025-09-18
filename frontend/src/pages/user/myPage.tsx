@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore, isAuthenticated } from '@/store/auth'
 import { Card, CardContent, } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -48,7 +48,6 @@ import { toast } from 'sonner'
 
 export default function MyPage() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { logout, setUserId } = useAuthStore()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [pointProfile, setPointProfile] = useState<PointProfile | null>(null)
@@ -245,7 +244,7 @@ export default function MyPage() {
 
   const loadSpotifyData = async (showSuccessToast = false) => {
     try {
-      const [statusResult, profileResult] = await Promise.allSettled([
+      const [statusResult] = await Promise.allSettled([
         loadSpotifyStatus(),
         loadSpotifyProfile()
       ])
