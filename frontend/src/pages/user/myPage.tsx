@@ -375,7 +375,7 @@ export default function MyPage() {
     <div className="bg-background text-foreground">
       <Navbar />
       <div className="relative isolate px-6 pt-14 lg:px-8">
-        <div className="container mx-auto py-6 max-w-6xl">
+        <div className="mx-auto py-6 max-w-6xl px-6 lg:px-8">
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">마이페이지</h1>
@@ -386,14 +386,6 @@ export default function MyPage() {
             <div className="flex items-center gap-2">
               <Button onClick={openEditModal} variant="outline" size="sm">
                 프로필 수정
-              </Button>
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                size="sm"
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                로그아웃
               </Button>
             </div>
           </div>
@@ -477,23 +469,115 @@ export default function MyPage() {
               </TabsContent>
 
               <TabsContent value="learning" className="space-y-6">
-                <RecentSongsCard recentSongs={recentSongs} error={apiErrors.recentSongs} />
+                <div className="grid gap-6 md:grid-cols-2">
+                  <RecentSongsCard recentSongs={recentSongs} error={apiErrors.recentSongs} />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <span>📈</span>
+                        학습 통계
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="text-center p-4 rounded-lg bg-muted/30">
+                          <div className="text-2xl font-bold text-primary">{recentSongs.length}</div>
+                          <div className="text-sm text-muted-foreground">학습 완료</div>
+                        </div>
+                        <Separator />
+                        <div className="text-sm text-muted-foreground text-center">
+                          최근 학습한 곡들을 통해 실력을 향상시키세요!
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
 
               <TabsContent value="playlists" className="space-y-6">
-                <PlaylistCard playlists={playlists} error={apiErrors.playlists} />
+                <div className="grid gap-6 md:grid-cols-2">
+                  <PlaylistCard playlists={playlists} error={apiErrors.playlists} />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <span>🎯</span>
+                        플레이리스트 관리
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="text-center p-4 rounded-lg bg-muted/30">
+                          <div className="text-2xl font-bold text-primary">{playlists.length}</div>
+                          <div className="text-sm text-muted-foreground">내 플레이리스트</div>
+                        </div>
+                        <Separator />
+                        <div className="text-sm text-muted-foreground text-center">
+                          좋아하는 곡들을 모아서 체계적으로 학습하세요.
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
 
               <TabsContent value="spotify" className="space-y-6">
-                <SpotifyCard
-                  spotifyStatus={spotifyStatus}
-                  spotifyProfile={spotifyProfile}
-                  onManageClick={() => setSpotifyModalOpen(true)}
-                />
+                <div className="grid gap-6 md:grid-cols-2">
+                  <SpotifyCard
+                    spotifyStatus={spotifyStatus}
+                    spotifyProfile={spotifyProfile}
+                    onManageClick={() => setSpotifyModalOpen(true)}
+                  />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <span>🎵</span>
+                        음악 스트리밍
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="text-center p-4 rounded-lg bg-muted/30">
+                          <div className="text-lg font-bold text-primary">
+                            {spotifyStatus?.connected ? '연동됨' : '미연동'}
+                          </div>
+                          <div className="text-sm text-muted-foreground">연동 상태</div>
+                        </div>
+                        <Separator />
+                        <div className="text-sm text-muted-foreground text-center">
+                          Spotify와 연동하여 더 많은 음악으로 학습하세요.
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
 
               <TabsContent value="ranking" className="space-y-6">
-                <PointRankingCard ranking={ranking} error={apiErrors.ranking} />
+                <div className="grid gap-6 md:grid-cols-2">
+                  <PointRankingCard ranking={ranking} error={apiErrors.ranking} />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <span>🏅</span>
+                        내 순위 정보
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="text-center p-4 rounded-lg bg-muted/30">
+                          <div className="text-2xl font-bold text-primary">
+                            {pointProfile ? pointProfile.balance : '0'}P
+                          </div>
+                          <div className="text-sm text-muted-foreground">내 포인트</div>
+                        </div>
+                        <Separator />
+                        <div className="text-sm text-muted-foreground text-center">
+                          더 많이 학습하고 상위 랭킹에 도전하세요!
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
             </Tabs>
           )}

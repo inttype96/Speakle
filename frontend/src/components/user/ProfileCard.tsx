@@ -17,11 +17,9 @@ export default function ProfileCard({
   pointProfile,
   checkinInfo,
   checkinError,
+  onEditClick,
   onCheckinClick
 }: ProfileCardProps) {
-  const getUserInitials = (username: string) => {
-    return username.charAt(0).toUpperCase()
-  }
 
   return (
     <Card>
@@ -31,6 +29,9 @@ export default function ProfileCard({
             <span>👤</span>
             프로필 정보
           </div>
+          <Button onClick={onEditClick} variant="outline" size="sm">
+            수정
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -40,6 +41,18 @@ export default function ProfileCard({
               <div>
                 <label className="text-sm font-medium text-muted-foreground">이름</label>
                 <p className="text-lg font-semibold">{profile.username}</p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">이메일</label>
+                <p className="text-lg">{profile.email}</p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">포인트</label>
+                <p className="text-lg font-semibold text-yellow-600">
+                  {pointProfile ? `${pointProfile.balance}P (${pointProfile.level})` : '로딩 중...'}
+                </p>
               </div>
             </div>
 
