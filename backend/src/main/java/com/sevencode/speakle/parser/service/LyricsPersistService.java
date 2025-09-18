@@ -33,7 +33,7 @@ public class LyricsPersistService {
 	private final ObjectMapper objectMapper; // DB→JSON 역직렬화용
 
 	/** 해당 곡에 어떤 카테고리든 기 저장 여부 빠른 확인 */
-	public boolean existsAny(Long songId) {
+	public boolean existsAny(String songId) {
 		return wordRepo.existsByLearnedSongId(songId)
 			|| exprRepo.existsByLearnedSongId(songId)
 			|| idiomRepo.existsByLearnedSongId(songId)
@@ -41,7 +41,7 @@ public class LyricsPersistService {
 	}
 
 	/** DB → 파싱 스키마(JSON) 형태로 재구성하여 반환 (검수/재사용용) */
-	public ObjectNode loadAsJson(Long songId) {
+	public ObjectNode loadAsJson(String songId) {
 		ObjectNode root = objectMapper.createObjectNode();
 
 		var words = objectMapper.createArrayNode();
@@ -103,7 +103,7 @@ public class LyricsPersistService {
 
 	/** 트랜잭션 1회로 4개 카테고리를 일괄 저장 (이미 있으면 skip) */
 	@Transactional
-	public void saveAll(Long learnedSongId, ObjectNode parsed) {
+	public void saveAll(String learnedSongId, ObjectNode parsed) {
 		saveWords(learnedSongId, parsed.withArray("words"));
 		saveExpressions(learnedSongId, parsed.withArray("expressions"));
 		saveIdioms(learnedSongId, parsed.withArray("idioms"));
@@ -111,7 +111,7 @@ public class LyricsPersistService {
 	}
 
 	/** key: (songId + word, 대소문자 무시). meaning 없으면 저장 안 함. */
-	private void saveWords(Long songId, ArrayNode arr) {
+	private void saveWords(String songId, ArrayNode arr) {
 		for (JsonNode n : arr) {
 			String word = text(n, "word");
 			if (isBlank(word))
@@ -134,7 +134,7 @@ public class LyricsPersistService {
 	}
 
 	/** key: (songId + expression). meaning 없으면 저장 안 함. */
-	private void saveExpressions(Long songId, ArrayNode arr) {
+	private void saveExpressions(String songId, ArrayNode arr) {
 		for (JsonNode n : arr) {
 			String exp = text(n, "expression");
 			if (isBlank(exp))
@@ -156,7 +156,7 @@ public class LyricsPersistService {
 	}
 
 	/** key: (songId + phrase). meaning 없으면 저장 안 함. */
-	private void saveIdioms(Long songId, ArrayNode arr) {
+	private void saveIdioms(String songId, ArrayNode arr) {
 		for (JsonNode n : arr) {
 			String phrase = text(n, "phrase");
 			if (isBlank(phrase))
@@ -177,7 +177,7 @@ public class LyricsPersistService {
 	}
 
 	/** key: (songId + sentence). translation 없으면 저장 안 함. */
-	private void saveSentences(Long songId, ArrayNode arr) {
+	private void saveSentences(String songId, ArrayNode arr) {
 		for (JsonNode n : arr) {
 			String sentence = text(n, "sentence");
 			if (isBlank(sentence))

@@ -79,7 +79,7 @@ public class SpotifyController {
 		@RequestParam String state,
 		HttpServletResponse response) throws IOException {
 		spotifyService.handleCallback(code, state);
-		response.sendRedirect(frontendBaseUrl + "/spotify-dashboard");
+		response.sendRedirect(frontendBaseUrl + "/mypage");
 		return ResponseEntity.ok("연결 완료");
 	}
 

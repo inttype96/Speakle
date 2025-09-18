@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import Drawer from "@/components/common/drawer"
 import { Bars3Icon } from '@heroicons/react/24/solid'
 import { SearchForm } from "@/components/common/search-form"
@@ -17,14 +18,14 @@ export default function Navbar() {
                     <div className="mx-auto max-w-6xl flex items-center justify-between p-6 lg:px-8">
                         {/* 로고 */}
                         <div className="flex lg:flex-1">
-                            <a href="/" className="-m-1.5 p-1.5">
+                            <Link to="/" className="-m-1.5 p-1.5">
                                 <span className="sr-only">Speakle</span>
                                 <img
                                     alt=""
                                     src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
                                     className="h-8 w-auto"
                                 />
-                            </a>
+                            </Link>
                         </div>
 
                         {/* 검색창 */}

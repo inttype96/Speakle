@@ -22,7 +22,7 @@ public class SentenceEntity {
 	private Long id;
 
 	@Column(name = "learned_song_id", nullable = false)
-	private Long learnedSongId;
+	private String learnedSongId;
 
 	// TEXT 컬럼을 문자열(STRING)로 다루도록 지정 → IgnoreCase 파생 메서드 정상 작동
 	@JdbcTypeCode(SqlTypes.LONGVARCHAR)

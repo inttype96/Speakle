@@ -4,6 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.sevencode.speakle.parser.repository.ExpressionRepository;
+import com.sevencode.speakle.parser.repository.IdiomRepository;
+import com.sevencode.speakle.parser.repository.SentenceRepository;
+import com.sevencode.speakle.parser.repository.SongParsingRepository;
+import com.sevencode.speakle.parser.repository.WordRepository;
 import com.sevencode.speakle.parser.service.gms.config.GmsProperties;
 import com.sevencode.speakle.parser.service.gms.config.PromptManager;
 import com.sevencode.speakle.parser.service.gms.service.GmsClient;
@@ -11,7 +16,9 @@ import com.sevencode.speakle.parser.service.gms.service.GmsClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -42,6 +49,12 @@ public class LyricsParsingService {
 	private final GmsProperties props;                  // 모델/토큰/스키마 설정
 	private final PromptManager promptManager;          // 프롬프트 버전 로더
 	private final LyricsPersistService lyricsPersistService; // DB 존재/저장
+	// JPA Repositories (정렬 메서드는 예시 - 프로젝트 네이밍에 맞춰 수정)
+	private final WordRepository wordRepository;
+	private final ExpressionRepository expressionRepository;
+	private final IdiomRepository idiomRepository;
+	private final SentenceRepository sentenceRepository;
+	private final SongParsingRepository songParsingRepository;
 
 	private static final int TRACE_MAX = 4000;          // 로그 프리뷰 최대 길이(성능/보안 절충)
 
@@ -114,7 +127,7 @@ public class LyricsParsingService {
 	}
 
 	/** parse() + 저장. 기존 데이터 있으면 LLM 스킵 후 DB→JSON 반환. */
-	public Mono<ObjectNode> parseAndSave(Long learnedSongId, String rawLyrics) {
+	public Mono<ObjectNode> parseAndSave(String learnedSongId, String rawLyrics) {
 		// JPA I/O는 boundedElastic로 작업분리
 		return Mono.fromCallable(() -> lyricsPersistService.existsAny(learnedSongId))
 			.subscribeOn(Schedulers.boundedElastic())
@@ -132,6 +145,74 @@ public class LyricsParsingService {
 							.thenReturn(parsed)
 					);
 			});
+	}
+
+	public Mono<ObjectNode> parseAndSaveBySongId(String learnedSongId) {
+		if (learnedSongId == null || learnedSongId.isBlank()) {
+			return Mono.error(new IllegalArgumentException("songId 값이 비어 있습니다."));
+		}
+
+		// 0) 가사 로딩 (없으면 404)
+		Mono<String> lyricsMono = Mono.fromCallable(() ->
+				songParsingRepository.findLyricsBySongId(learnedSongId))
+			.subscribeOn(Schedulers.boundedElastic())
+			.flatMap(opt -> opt.map(Mono::just)
+				.orElseGet(() -> Mono.error(
+					new ResponseStatusException(HttpStatus.NOT_FOUND,
+						"해당 songId에 대한 가사가 존재하지 않습니다."))));
+		// 1) 이미 파싱/저장 데이터가 있는지 체크
+		Mono<Boolean> existsMono = Mono.fromCallable(() ->
+				lyricsPersistService.existsAny(learnedSongId))
+			.subscribeOn(Schedulers.boundedElastic());
+
+		return existsMono.flatMap(exists -> {
+			if (exists) {
+				log.info("songId={} 이미 파싱 데이터 존재 → LLM 스킵, JPA 재조회 후 조립", learnedSongId);
+				return assembleFromJpa(learnedSongId); // ← JPA에서 재조회해 조립
+			}
+
+			// 신규: 가사 로딩 → 파싱 → 저장 → JPA 재조회/조립
+			return lyricsMono
+				.flatMap(rawLyrics -> {
+					if (rawLyrics.isBlank()) {
+						return Mono.error(new ResponseStatusException(
+							HttpStatus.BAD_REQUEST, "해당 songId의 가사가 비어 있습니다."));
+					}
+					return parse(rawLyrics); // Mono<ObjectNode> (LLM 파싱 결과)
+				})
+				.flatMap(parsed ->
+					Mono.fromRunnable(() -> lyricsPersistService.saveAll(learnedSongId, parsed))
+						.subscribeOn(Schedulers.boundedElastic())
+						.then(assembleFromJpa(learnedSongId)) // 저장 후 JPA로 재조회
+				);
+		});
+	}
+
+	/**
+	 * 단일 책임: words/expressions/idioms/sentences 테이블을 JPA로 조회해 JSON으로 조립.
+	 * 정렬 기준은 ID(생성순) 또는 created_at을 권장.
+	 */
+	private Mono<ObjectNode> assembleFromJpa(String learnedSongId) {
+		return Mono.fromCallable(() -> {
+				ObjectNode root = objectMapper.createObjectNode();
+
+				// 정렬 메서드는 Repository에 아래 시그니처를 만들어 두세요.
+				root.set("words", objectMapper.valueToTree(
+					wordRepository.findAllByLearnedSongId(learnedSongId)));
+
+				root.set("expressions", objectMapper.valueToTree(
+					expressionRepository.findAllByLearnedSongId(learnedSongId)));
+
+				root.set("idioms", objectMapper.valueToTree(
+					idiomRepository.findAllByLearnedSongId(learnedSongId)));
+
+				root.set("sentences", objectMapper.valueToTree(
+					sentenceRepository.findAllByLearnedSongId(learnedSongId)));
+				// ↑ 컬럼/필드명 오탈자 주의: sentences_id / expressions_id 등 프로젝트에 맞게 수정
+
+				return root;
+			})
+			.subscribeOn(Schedulers.boundedElastic());
 	}
 
 	// ===== 코어 헬퍼 =====
