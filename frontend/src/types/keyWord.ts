@@ -1,22 +1,33 @@
 export type RecommendHybridReq = {
     situation: string;
     location: string;    
-    genre: string;      
-    limit: number;
+    // genre: string; // 요청 x       
+    limit: 50; // 50 고정 
   };
 
   export type RecommendHybridRes = {
-    songIds: string[];
+    recommendedSongs: {
+      songId: string;
+      title: string;
+      artists: string;
+      albumName: string;
+      albumImgUrl: string;
+      difficulty: "LOW" | "MEDIUM" | "HIGH";
+      durationMs: number;
+      popularity: number;
+      recommendScore: number;
+      learnCount: number;
+    }[];
     keywords: {
       words: string[];
       phrases: string[];
-      top_k: number;
     };
+    totalCount: number;
   };
 
   export type RecommendLevelReq = {
     level: string;
-    limit: number;
+    // limit: number; // 요청 x 
   };
 
   export type RecommendLevelRes = {

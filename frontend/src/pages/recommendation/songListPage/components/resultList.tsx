@@ -28,7 +28,7 @@ const ResultList: React.FC = () => {
   ];
 
   return (
-    <div className="result border border-gray-500 rounded-lg p-4 mb-8 flex h-96 w-full max-w-none">
+    <div className="result border border-gray-500 rounded-lg p-4 mb-8 flex h-96 w-full">
         <div className="first w-1/3 pr-4">
             <h2 className="text-2xl font-bold text-foreground mb-6">상위 결과</h2>
             <div className="bg-card border border-border rounded-lg p-4 h-72">

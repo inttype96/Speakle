@@ -14,7 +14,7 @@ import type {
     RecommendLevelRes,
     RecommendRandomReq,
     RecommendRandomRes,
-} from "@/types/recommend";
+} from "@/types/keyWord";
 
 // 실제 API 연결 전까지는 목업으로 프론트만 돌릴 수 있게 플래그 제공
 const USE_MOCK = false;
@@ -22,6 +22,69 @@ const USE_MOCK = false;
 // ──────────────────────────────────────────────────────────────────────────────
 // 목업 데이터 (추천 음악 예시)
 // ──────────────────────────────────────────────────────────────────────────────
+const MOCK_HYBRID_SONGS = [
+    {
+        songId: "1001",
+        title: "Hello",
+        artists: "Adele",
+        albumName: "25",
+        albumImgUrl: "https://example.com/hello.jpg",
+        difficulty: "LOW" as const,
+        durationMs: 295000,
+        popularity: 85,
+        recommendScore: 0.92,
+        learnCount: 1250,
+    },
+    {
+        songId: "1002",
+        title: "Shape of You",
+        artists: "Ed Sheeran",
+        albumName: "÷ (Divide)",
+        albumImgUrl: "https://example.com/shape-of-you.jpg",
+        difficulty: "MEDIUM" as const,
+        durationMs: 263000,
+        popularity: 90,
+        recommendScore: 0.88,
+        learnCount: 2100,
+    },
+    {
+        songId: "1003",
+        title: "Anti-Hero",
+        artists: "Taylor Swift",
+        albumName: "Midnights",
+        albumImgUrl: "https://example.com/anti-hero.jpg",
+        difficulty: "HIGH" as const,
+        durationMs: 201000,
+        popularity: 88,
+        recommendScore: 0.95,
+        learnCount: 1800,
+    },
+    {
+        songId: "1004",
+        title: "Blinding Lights",
+        artists: "The Weeknd",
+        albumName: "After Hours",
+        albumImgUrl: "https://example.com/blinding-lights.jpg",
+        difficulty: "MEDIUM" as const,
+        durationMs: 200000,
+        popularity: 92,
+        recommendScore: 0.89,
+        learnCount: 1650,
+    },
+    {
+        songId: "1005",
+        title: "Watermelon Sugar",
+        artists: "Harry Styles",
+        albumName: "Fine Line",
+        albumImgUrl: "https://example.com/watermelon-sugar.jpg",
+        difficulty: "LOW" as const,
+        durationMs: 174000,
+        popularity: 87,
+        recommendScore: 0.85,
+        learnCount: 1400,
+    },
+];
+
 const MOCK_LEVEL_SONGS: RecommendLevelRes[] = [
     {
         songId: 2001,
@@ -65,24 +128,23 @@ const MOCK_RANDOM_SONGS: RecommendRandomRes[] = [
 ];
 
 // ──────────────────────────────────────────────────────────────────────────────
-// 1) 하이브리드 추천 (상황 + 장소 + 장르 기반)
-// - 사용자의 상황, 장소, 선호 장르를 종합적으로 고려한 추천
-// - LLM이 분석한 키워드와 관용구를 포함한 songIds와 keywords 반환
-// - 실제 곡 정보는 별도 API로 조회해야 함
+// 1) 하이브리드 추천 (상황 + 장소 기반)
+// - 사용자의 상황, 장소를 종합적으로 고려한 추천
+// - 상세한 곡 정보와 LLM이 분석한 키워드, 관용구를 포함하여 반환
+// - difficulty, popularity, recommendScore, learnCount 등 상세 정보 포함
 // ──────────────────────────────────────────────────────────────────────────────
 export async function getHybridRecommendation(req: RecommendHybridReq): Promise<RecommendHybridRes> {
     if (USE_MOCK) {
-        // 목업 데이터: songIds와 keywords만 반환
-        const mockSongIds = ["1001", "1002", "1003", "1004", "1005"];
-        const limitedSongIds = mockSongIds.slice(0, req.limit);
+        // 목업 데이터: 상세한 곡 정보와 키워드 반환
+        const limitedSongs = MOCK_HYBRID_SONGS.slice(0, req.limit);
         
         return {
-            songIds: limitedSongIds,
+            recommendedSongs: limitedSongs,
             keywords: {
                 words: ["emotion", "relationship", "self-reflection", "love", "life"],
                 phrases: ["get older", "the problem", "as it was", "shape of you", "heat waves"],
-                top_k: 5,
             },
+            totalCount: MOCK_HYBRID_SONGS.length,
         };
     }
 
@@ -92,7 +154,6 @@ export async function getHybridRecommendation(req: RecommendHybridReq): Promise<
         {
             situation: req.situation,
             location: req.location,
-            genre: req.genre,
             limit: req.limit,
         },
         { headers: { "Content-Type": "application/json" } }
@@ -107,10 +168,8 @@ export async function getHybridRecommendation(req: RecommendHybridReq): Promise<
 // ──────────────────────────────────────────────────────────────────────────────
 export async function getLevelRecommendation(req: RecommendLevelReq): Promise<RecommendLevelRes[]> {
     if (USE_MOCK) {
-        // 요청된 limit만큼 목업 데이터 반환
-        const limitedSongs = MOCK_LEVEL_SONGS.slice(0, req.limit);
-        
-        return limitedSongs;
+        // 목업 데이터 반환 (limit 없음)
+        return MOCK_LEVEL_SONGS;
     }
 
     // 실제 API 호출
@@ -118,7 +177,6 @@ export async function getLevelRecommendation(req: RecommendLevelReq): Promise<Re
         "/recommend/level",
         {
             level: req.level,
-            limit: req.limit,
         },
         { headers: { "Content-Type": "application/json" } }
     );
@@ -131,7 +189,7 @@ export async function getLevelRecommendation(req: RecommendLevelReq): Promise<Re
 // - 새로운 음악 발견이나 다양한 장르 경험을 위한 기능
 // - 곡의 상세 정보(제목, 아티스트, 앨범 이미지)를 포함하여 반환
 // ──────────────────────────────────────────────────────────────────────────────
-export async function getRandomRecommendation(req: RecommendRandomReq = {}): Promise<RecommendRandomRes[]> {
+export async function getRandomRecommendation(_req: RecommendRandomReq = {}): Promise<RecommendRandomRes[]> {
     if (USE_MOCK) {
         // 랜덤하게 섞어서 반환 (실제로는 서버에서 랜덤 처리)
         const shuffledSongs = [...MOCK_RANDOM_SONGS].sort(() => Math.random() - 0.5);
