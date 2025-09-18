@@ -2,6 +2,10 @@ package com.sevencode.speakle.event.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sevencode.speakle.event.dto.UserRegisteredMessage;
+import com.sevencode.speakle.event.exception.EventAcknowledgmentException;
+import com.sevencode.speakle.event.exception.EventProcessingException;
+import com.sevencode.speakle.event.exception.InvalidMessageFormatException;
+import com.sevencode.speakle.event.exception.MessageDeserializationException;
 import com.sevencode.speakle.event.publisher.UserEventPublisher;
 import com.sevencode.speakle.playlist.service.CustomPlaylistService;
 import com.sevencode.speakle.support.FailedMessagePusher;
@@ -34,10 +38,16 @@ public class PlaylistEventConsumer {
 			var map = record.getValue();
 			var json = map.get("data");
 			if (json == null) {
-				throw new IllegalArgumentException("Missing 'data' field in stream message");
+				throw new InvalidMessageFormatException("Missing 'data' field in stream message");
 			}
 
-			var msg = objectMapper.readValue(json, UserRegisteredMessage.class);
+			UserRegisteredMessage msg;
+			try {
+				msg = objectMapper.readValue(json, UserRegisteredMessage.class);
+			} catch (Exception e) {
+				throw new MessageDeserializationException("Failed to deserialize message", e);
+			}
+
 			Long userId = msg.userId();
 			String playlistName = buildDefaultName(msg.username());
 
@@ -48,13 +58,17 @@ public class PlaylistEventConsumer {
 				return;
 			}
 
-			playlistService.createDefaultPlaylist(userId, playlistName, DEFAULT_DESC);
+			try {
+				playlistService.createDefaultPlaylist(userId, playlistName, DEFAULT_DESC);
+			} catch (Exception e) {
+				throw new EventProcessingException("Failed to create default playlist", e);
+			}
 
 			ack(record);
 			log.info("기본 플레이리스트 생성 완료 - userId={}, messageId={}",
 				userId, record.getId().getValue());
 
-		} catch (Exception ex) {
+		} catch (InvalidMessageFormatException | MessageDeserializationException | EventProcessingException ex) {
 			log.error("기본 플레이리스트 생성 실패 - messageId: {}, error: {}",
 				record.getId().getValue(), ex.getMessage());
 			// 실패: DLQ로 복사 후 원본도 ACK (XPENDING 방지)
@@ -75,14 +89,18 @@ public class PlaylistEventConsumer {
 	}
 
 	private void ack(MapRecord<String, String, String> record) {
-		redisTemplate.opsForStream().acknowledge(
-			UserEventPublisher.STREAM_KEY, GROUP, record.getId());
+		try {
+			redisTemplate.opsForStream().acknowledge(
+				UserEventPublisher.STREAM_KEY, GROUP, record.getId());
+		} catch (DataAccessException e) {
+			throw new EventAcknowledgmentException("Failed to acknowledge message", e);
+		}
 	}
 
 	private void safeAck(MapRecord<String, String, String> record) {
 		try {
 			ack(record);
-		} catch (DataAccessException e) {
+		} catch (EventAcknowledgmentException e) {
 			log.error("ACK 실패 - id={}", record.getId().getValue(), e);
 		}
 	}
