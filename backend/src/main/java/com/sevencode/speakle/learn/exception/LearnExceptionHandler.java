@@ -161,6 +161,19 @@ public class LearnExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
+    @ExceptionHandler(ApiTimeoutException.class)
+    public ResponseEntity<ApiErrorResponse> handleApiTimeout(
+            ApiTimeoutException ex, WebRequest request) {
+        log.warn("API 타임아웃 발생 - 경로: {}, 메시지: {}", getRequestPath(request), ex.getMessage());
+
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "SPEAKING_API_TIMEOUT",
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(errorResponse);
+    }
+
     @ExceptionHandler(SpeakingNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleSpeakingNotFound(
             SpeakingNotFoundException ex, WebRequest request) {

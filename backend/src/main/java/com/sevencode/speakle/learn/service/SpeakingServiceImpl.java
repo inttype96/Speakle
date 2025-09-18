@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,6 +36,9 @@ public class SpeakingServiceImpl implements SpeakingService{
     @Value("${speaking.score.threshold}")
     private Double scoreThreshold; // 정답 판정 기준 점수
 
+    /**
+     * 스피킹 평가 문제 생성(조회)
+     */
     @Override
     public SpeakingQuestionResponse getSpeakingQuestion(Long learnedSongId, Integer questionNumber, Long userId) {
         // 1. 학습곡 존재 및 권한 확인
@@ -124,6 +126,9 @@ public class SpeakingServiceImpl implements SpeakingService{
         );
     }
 
+    /**
+     * 스피킹 평가 채점 & 결과 저장
+     */
     public SpeakingEvaluationResponse evaluateSpeaking(Long userId, SpeakingEvaluationRequest request) {
         // 1. 입력값 추가 검증
         if (!request.isValidAudioData()) {
@@ -141,7 +146,11 @@ public class SpeakingServiceImpl implements SpeakingService{
             etriResponse = etriClient
                     .evaluatePronunciation(request.getScript(), request.getAudio())
                     .block();
-        } catch(Exception e) {
+        } catch (ApiTimeoutException e) {   // 타임아웃인 경우 - 사용자에게 영어 발음 안내
+            throw e;
+        } catch (PronunciationServerException e) {  // 서버 오류인 경우
+            throw e;
+        } catch (Exception e) {         // 기타 예외
             throw new PronunciationServerException("발음 평가 서버 호출에 실패했습니다.");
         }
 
@@ -212,7 +221,7 @@ public class SpeakingServiceImpl implements SpeakingService{
     }
 
     /**
-     * 스피킹 테스트 종료
+     * 스피킹 게임 완료 결과 조회
      */
     @Override
     public SpeakingCompleteResponse getSpeakingComplete(Long learnedSongId, Long userId) {
