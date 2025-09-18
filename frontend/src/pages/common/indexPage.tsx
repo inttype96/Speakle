@@ -1,7 +1,6 @@
 import Navbar from "@/components/common/navbar"
 import Footer from "./footer"
 import SplashCursor from '@/lib/splashCursor'
-import Plasma from '@/lib/plasma';
 
 
 export default function IndexPage() {
@@ -9,14 +8,6 @@ export default function IndexPage() {
         <div className="bg-background text-foreground">
             <SplashCursor />
             <Navbar />
-            <Plasma
-                color="#b431e0ce"
-                speed={0.6}
-                direction="forward"
-                scale={1.1}
-                opacity={0.8}
-                mouseInteractive={true}
-            />
             {/* Hero Section */}
             <div className="relative isolate px-6 pt-14 lg:px-8">
                 <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
