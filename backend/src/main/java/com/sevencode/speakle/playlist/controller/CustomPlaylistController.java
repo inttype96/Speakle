@@ -63,7 +63,7 @@ public class CustomPlaylistController {
 		summary = "사용자 플레이리스트 목록 조회",
 		description = "현재 사용자의 자체 플레이리스트 목록을 조회합니다."
 	)
-	@GetMapping("/my-playlists")
+	@GetMapping
 	public ResponseEntity<List<CustomPlaylistResponse>> getUserPlaylists(
 		@AuthenticationPrincipal @Parameter(hidden = true) UserPrincipal auth) {
 
@@ -121,7 +121,7 @@ public class CustomPlaylistController {
 		summary = "플레이리스트 트랙 목록 조회",
 		description = "특정 플레이리스트에 포함된 트랙 목록을 조회합니다."
 	)
-	@GetMapping("/{playlistId}/tracks")
+	@GetMapping("/{playlistId}/songs")
 	public ResponseEntity<CustomPlaylistTracksResponse> getPlaylistTracks(
 		@AuthenticationPrincipal @Parameter(hidden = true) UserPrincipal auth,
 		@Parameter(description = "플레이리스트 ID", required = true)
@@ -143,7 +143,7 @@ public class CustomPlaylistController {
 		summary = "플레이리스트에 트랙 추가",
 		description = "플레이리스트에 하나 이상의 트랙을 추가합니다."
 	)
-	@PostMapping("/{playlistId}/tracks")
+	@PostMapping("/{playlistId}/songs")
 	public ResponseEntity<Object> addTracksToPlaylist(
 		@AuthenticationPrincipal @Parameter(hidden = true) UserPrincipal auth,
 		@Parameter(description = "플레이리스트 ID", required = true)
@@ -158,7 +158,7 @@ public class CustomPlaylistController {
 		summary = "플레이리스트에서 트랙 삭제",
 		description = "플레이리스트에서 하나 이상의 트랙을 삭제합니다."
 	)
-	@DeleteMapping("/{playlistId}/tracks")
+	@DeleteMapping("/{playlistId}/songs/{songId}")
 	public ResponseEntity<Object> removeTracksFromPlaylist(
 		@AuthenticationPrincipal @Parameter(hidden = true) UserPrincipal auth,
 		@Parameter(description = "플레이리스트 ID", required = true)
