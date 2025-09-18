@@ -15,6 +15,9 @@ import com.sevencode.speakle.learn.repository.SpeakingRepository;
 import com.sevencode.speakle.learn.repository.SpeakingResultRepository;
 import com.sevencode.speakle.learn.repository.SpeakingSentenceRepository;
 import com.sevencode.speakle.parser.entity.SentenceEntity;
+import com.sevencode.speakle.reward.dto.request.RewardUpdateRequest;
+import com.sevencode.speakle.reward.dto.response.RewardUpdateResponse;
+import com.sevencode.speakle.reward.service.RewardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +37,7 @@ public class SpeakingServiceImpl implements SpeakingService {
     private final SpeakingRepository speakingRepository;
     private final SpeakingResultRepository speakingResultRepository;
     private final SpeakingSentenceRepository speakingSentenceRepository;
+    private final RewardService rewardService;
     private final EtriPronunciationClient etriClient;
 
     @Value("${speaking.score.threshold}")
@@ -149,8 +153,8 @@ public class SpeakingServiceImpl implements SpeakingService {
         String scoreStr = returnObject.getScore();
         Double score = Double.parseDouble(scoreStr);
 
-        // 정수로 변환 (소수점 반올림)
-        Integer finalScore = (int) Math.round(score);
+        // 정수로 변환 (소수점 버림)
+        Integer finalScore = (int) Math.floor(score);
         Boolean isCorrect = score >= scoreThreshold;
 
         // meta 정보 구성
@@ -190,7 +194,15 @@ public class SpeakingServiceImpl implements SpeakingService {
 
         // 6. 포인트 업데이트
         if (isCorrect) {
-            // TODO : 문제를 맞은 경우 포인트 업데이트 해주기
+            RewardUpdateRequest rewardRequest = RewardUpdateRequest.builder()
+                    .userId(userId)
+                    .delta(finalScore)  // 획득할 포인트
+                    .source("SPEAKING")  // SourceType.SPEAKING
+                    .refType("SPEAKING_RESULT")  // RefType.SPEAKING_RESULT
+                    .refId(savedResult.getSpeakingId())  // 스피킹 결과 ID
+                    .build();
+
+            RewardUpdateResponse rewardResponse = rewardService.updateReward(rewardRequest, userId);
         }
 
         // 7. 응답 생성
