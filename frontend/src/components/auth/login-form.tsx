@@ -35,15 +35,41 @@ export function LoginForm({
 
                 // 토큰 저장
                 login(tokens);
+                console.log('토큰 저장 완료, 저장된 토큰:', tokens);
+
+                // 토큰이 확실히 저장될 때까지 잠시 대기
+                await new Promise(resolve => setTimeout(resolve, 100));
 
                 try {
                     // 사용자 프로필 조회하여 userId 저장
+                    console.log('프로필 API 호출 시작...');
                     const profileResponse = await getUserProfileAPI();
+                    console.log('프로필 API 응답:', profileResponse);
+
                     const profileData = profileResponse.data?.data || profileResponse.data;
+                    console.log('추출된 프로필 데이터:', profileData);
 
                     if (profileData?.userId) {
+                        console.log('userId 저장 시도:', profileData.userId);
                         setUserId(profileData.userId);
-                        console.log('UserId saved:', profileData.userId);
+
+                        // persist 저장이 완료될 때까지 잠시 대기
+                        await new Promise(resolve => setTimeout(resolve, 200));
+
+                        console.log('setUserId 호출 후 - zustand 상태:', useAuthStore.getState());
+
+                        // localStorage에 직접 확인
+                        const stored = localStorage.getItem('auth-storage');
+                        console.log('localStorage auth-storage:', stored);
+
+                        // 파싱해서 userId 확인
+                        if (stored) {
+                            const parsedStorage = JSON.parse(stored);
+                            console.log('파싱된 localStorage:', parsedStorage);
+                            console.log('localStorage의 userId:', parsedStorage.state?.userId);
+                        }
+                    } else {
+                        console.error('profileData에 userId가 없음:', profileData);
                     }
                 } catch (profileErr) {
                     console.error('프로필 조회 실패:', profileErr);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore, isAuthenticated } from '@/store/auth'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -42,6 +42,7 @@ import { toast } from 'sonner'
 
 export default function MyPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { logout, setUserId } = useAuthStore()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [pointProfile, setPointProfile] = useState<PointProfile | null>(null)
@@ -66,6 +67,20 @@ export default function MyPage() {
     }
     loadAllData()
   }, [navigate])
+
+  // Spotify 연동 후 돌아왔을 때 데이터 새로고침
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search)
+    const spotifyConnected = urlParams.get('spotify_connected')
+
+    if (spotifyConnected === 'true') {
+      // URL에서 파라미터 제거
+      navigate('/mypage', { replace: true })
+      // Spotify 데이터만 다시 로드
+      loadSpotifyData()
+      toast.success('Spotify 연동이 완료되었습니다!')
+    }
+  }, [location.search, navigate])
 
   const loadAllData = async () => {
     try {
@@ -187,6 +202,17 @@ export default function MyPage() {
     } catch (err) {
       console.error('Spotify 프로필 로딩 실패:', err)
       setSpotifyProfile(null)
+    }
+  }
+
+  const loadSpotifyData = async () => {
+    try {
+      await Promise.allSettled([
+        loadSpotifyStatus(),
+        loadSpotifyProfile()
+      ])
+    } catch (err) {
+      console.error('Spotify 데이터 로딩 실패:', err)
     }
   }
 

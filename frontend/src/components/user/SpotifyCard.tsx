@@ -32,17 +32,42 @@ export default function SpotifyCard({ spotifyStatus, spotifyProfile, onManageCli
                 </Badge>
               </div>
               {spotifyStatus?.connected && spotifyProfile && (
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">
-                    계정: {spotifyProfile.display_name || spotifyProfile.id}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    이메일: {spotifyProfile.email}
-                  </p>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-1 gap-1 p-3 bg-muted/30 rounded-md">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-muted-foreground">계정명:</span>
+                      <span className="text-sm font-medium">
+                        {spotifyProfile.display_name || spotifyProfile.id}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-muted-foreground">이메일:</span>
+                      <span className="text-sm">{spotifyProfile.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-muted-foreground">국가:</span>
+                      <span className="text-sm">{spotifyProfile.country}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-muted-foreground">사용자 ID:</span>
+                      <span className="text-sm font-mono text-xs">{spotifyProfile.id}</span>
+                    </div>
+                  </div>
                   {spotifyStatus.expiresAtEpochSec && (
-                    <p className="text-sm text-muted-foreground">
-                      토큰 만료: {new Date(spotifyStatus.expiresAtEpochSec * 1000).toLocaleString('ko-KR')}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-muted-foreground">토큰 만료:</span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(spotifyStatus.expiresAtEpochSec * 1000).toLocaleString('ko-KR')}
+                      </span>
+                    </div>
+                  )}
+                  {spotifyStatus.scope && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-muted-foreground">권한:</span>
+                      <span className="text-xs text-muted-foreground">
+                        {spotifyStatus.scope.split(' ').join(', ')}
+                      </span>
+                    </div>
                   )}
                 </div>
               )}
