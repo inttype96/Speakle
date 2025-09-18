@@ -45,3 +45,33 @@ export async function disconnectSpotifyAPI() {
   return res;
 }
 
+export async function getSpotifyPlaylistsAPI() {
+  const res = await http.get("/spotify/playlists");
+  return res;
+}
+
+export async function getCurrentPlaybackAPI() {
+  const res = await http.get("/spotify/player");
+  return res;
+}
+
+export async function pausePlaybackAPI() {
+  const res = await http.post("/spotify/player/pause");
+  return res;
+}
+
+export async function resumePlaybackAPI() {
+  const res = await http.post("/spotify/player/play");
+  return res;
+}
+
+export async function skipToNextAPI() {
+  const res = await http.post("/spotify/player/next");
+  return res;
+}
+
+export async function skipToPreviousAPI() {
+  const res = await http.post("/spotify/player/previous");
+  return res;
+}
+
