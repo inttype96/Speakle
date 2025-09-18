@@ -20,7 +20,7 @@ export default function ProfileCard({
 }: ProfileCardProps) {
 
   return (
-    <Card>
+    <Card className="h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -75,4 +75,5 @@ export default function ProfileCard({
       </CardContent>
     </Card>
   )
+}
 }

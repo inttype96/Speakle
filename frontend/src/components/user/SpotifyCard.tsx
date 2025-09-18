@@ -99,7 +99,7 @@ export default function SpotifyCard({ spotifyStatus, spotifyProfile, onManageCli
           Spotify 연동
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-y-auto">
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 border rounded-lg">
             <div className="flex-1">

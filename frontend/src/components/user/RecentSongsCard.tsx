@@ -16,7 +16,7 @@ export default function RecentSongsCard({ recentSongs, error }: RecentSongsCardP
           최근 학습한 곡
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-y-auto">
         <div className="space-y-3">
           {error ? (
             <div className="text-center text-muted-foreground py-4">

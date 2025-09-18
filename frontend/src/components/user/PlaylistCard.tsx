@@ -8,7 +8,7 @@ interface PlaylistCardProps {
 
 export default function PlaylistCard({ playlists, error }: PlaylistCardProps) {
   return (
-    <Card>
+    <Card className="h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <span>🎵</span>
@@ -49,4 +49,5 @@ export default function PlaylistCard({ playlists, error }: PlaylistCardProps) {
       </CardContent>
     </Card>
   )
+}
 }

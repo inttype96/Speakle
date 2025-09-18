@@ -15,7 +15,7 @@ export default function PointRankingCard({ ranking, error }: PointRankingCardPro
           포인트 랭킹 (TOP 5)
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-y-auto">
         <div className="space-y-3">
           {error ? (
             <div className="text-center text-muted-foreground py-4">
