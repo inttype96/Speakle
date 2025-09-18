@@ -2,6 +2,7 @@ package com.sevencode.speakle.member.service;
 
 import com.sevencode.speakle.auth.service.RefreshTokenService;
 import com.sevencode.speakle.config.security.UserPrincipal;
+import com.sevencode.speakle.event.publisher.UserEventPublisher;
 import com.sevencode.speakle.member.domain.Member;
 import com.sevencode.speakle.member.domain.vo.*;
 import com.sevencode.speakle.member.dto.request.MemberRegisterRequest;
@@ -23,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Optional;
@@ -40,6 +42,8 @@ public class MemberServiceImpl implements MemberService {
 	private final RefreshTokenService refreshTokenService;
 	private final PasswordEncoder passwordEncoder;
 	private final EmailSender emailSender;
+	// Event Publisher 추가 - 25.09.18 JSH
+	private final UserEventPublisher eventPublisher;
 
 	// ------------------------------------------------------------
 	// 회원가입 (일반) + 삭제 계정 복구
@@ -92,6 +96,11 @@ public class MemberServiceImpl implements MemberService {
 			existing.setUpdatedAt(OffsetDateTime.now());
 
 			JpaMemberEntity saved = memberJpa.save(existing);
+
+			// 계정 복구 시에도 이벤트 발행 - 25.09.18 JSH
+			Member restoredMember = memberMapper.toDomain(saved);
+			publishUserRegisteredEvent(restoredMember);
+
 			return memberMapper.toDomain(saved);
 		}
 
@@ -103,6 +112,10 @@ public class MemberServiceImpl implements MemberService {
 
 		JpaMemberEntity entity = memberMapper.toEntity(member);
 		JpaMemberEntity saved = memberJpa.save(entity);
+
+		// 신규 회원가입 시 이벤트 발행 - 25.09.18 JSH
+		Member savedMember = memberMapper.toDomain(saved);
+		publishUserRegisteredEvent(savedMember);
 
 		return memberMapper.toDomain(saved);
 	}
@@ -229,5 +242,31 @@ public class MemberServiceImpl implements MemberService {
 		// 4) 세션/리프레시 토큰 무효화 (auth 모듈)
 		refreshTokenService.revokeAll(me.userId());
 
+	}
+
+	/**
+	 * 사용자 등록 이벤트 발행 (별도 트랜잭션) - 25.09.18 JSH
+	 */
+	private void publishUserRegisteredEvent(Member member) {
+		try {
+			Instant joinedAt = member.getCreatedAt() != null
+				? member.getCreatedAt().toInstant()                       // 엔티티 생성 시각
+				: Instant.now();
+
+			eventPublisher.publishUserRegistered(
+				member.getId(),
+				member.getEmail().getValue(),
+				member.getUsername().getValue(),
+				joinedAt
+			);
+
+			log.info("사용자 등록 이벤트 발행 완료 - memberId: {}, username: {}",
+				member.getId(), member.getUsername().getValue());
+
+		} catch (Exception e) {
+			log.error("사용자 등록 이벤트 발행 실패 - memberId: {}, username: {}",
+				member.getId(), member.getUsername().getValue(), e);
+			// 이벤트 발행 실패가 회원가입을 실패시키지 않도록 예외를 삼킴
+		}
 	}
 }
