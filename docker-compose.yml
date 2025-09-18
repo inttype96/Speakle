@@ -90,19 +90,19 @@ services:
     networks:
       - proxy
 
-  # fastapi:
-  #   container_name: fastapi
-  #   build: ./data-service
-  #   # ports:
-  #   #   - '8081:8081'
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - ./data-service/data:/app/data
-  #   depends_on:
-  #     - weaviate
-  #   networks:
-  #     - proxy
+  fastapi:
+    container_name: fastapi
+    build: ./data-service
+    # ports:
+    #   - '8081:8081'
+    env_file:
+      - .env
+    volumes:
+      - ./data-service/data:/app/data
+    depends_on:
+      - weaviate
+    networks:
+      - proxy
 
 networks:
   proxy:
