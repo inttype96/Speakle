@@ -203,14 +203,14 @@ export default function QuizPage() {
     if (qNum < TOTAL_QUESTIONS) setQNum((n) => n + 1);
   }, [question, qNum]);
 
-  // 종료 (페이지 상단의 종료 버튼)
-  const onComplete = useCallback(async () => {
-    const res = await completeQuiz({ learnedSongId: DEFAULT_LEARNED_SONG_ID });
-    setComplete(res.data);
+  // // 종료 (페이지 상단의 종료 버튼)
+  // const onComplete = useCallback(async () => {
+  //   const res = await completeQuiz({ learnedSongId: DEFAULT_LEARNED_SONG_ID });
+  //   setComplete(res.data);
 
-    // ✅ 종료하면 진행 저장 삭제(다음 입장 시 1번부터 시작)
-    localStorage.removeItem(STORAGE_KEY);
-  }, []);
+  //   // ✅ 종료하면 진행 저장 삭제(다음 입장 시 1번부터 시작)
+  //   localStorage.removeItem(STORAGE_KEY);
+  // }, []);
 
   const isCompleted = !!complete;
 
@@ -395,7 +395,7 @@ export default function QuizPage() {
       <Dialog open={openResult} onOpenChange={setOpenResult}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isCorrect ? "정답입니다! 🎉" : "오답입니다 😢"}</DialogTitle>
+            <DialogTitle className="text-gray-900 dark:text-gray-700 mb-3">{isCorrect ? "정답입니다! 🎉" : "오답입니다! 😢"}</DialogTitle>
             <DialogDescription className="space-y-2">
               {question && (
                 <>

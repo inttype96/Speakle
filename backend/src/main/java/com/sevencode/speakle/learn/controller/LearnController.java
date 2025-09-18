@@ -11,7 +11,6 @@ import com.sevencode.speakle.learn.service.SpeakingService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,10 +29,10 @@ public class LearnController {
      * 빈칸 문제 생성(조회)
      */
     @PostMapping("/quiz/generate")
-    public ResponseEntity<ApiResponse<BlankQuestionResponse>> generateQuiz(@Valid @RequestBody BlankQuestionRequest req,
-                                                              @AuthenticationPrincipal UserPrincipal me) {
+    public ResponseEntity<ApiResponse<BlankQuestionResponse>> generateQuiz(
+            @Valid @RequestBody BlankQuestionRequest req,
+            @AuthenticationPrincipal UserPrincipal me) {
         Long userId = me.userId();
-
         BlankQuestionResponse res = blankService.getBlankQuestion(req, userId);
         return ResponseEntity.ok(ApiResponse.success(200, "스피킹 평가 문장을 조회했습니다.", res));
     }
@@ -46,9 +45,7 @@ public class LearnController {
             @Valid @RequestBody BlankResultRequest request,
             @AuthenticationPrincipal UserPrincipal me) {
         Long userId = me.userId();
-
         BlankResultResponse response = blankService.saveBlankResult(request, userId);
-
         return ResponseEntity.ok(
                 ApiResponse.success(200, "퀴즈 결과가 저장되었습니다.", response)
         );
@@ -66,10 +63,8 @@ public class LearnController {
         if (learnedSongId == null || learnedSongId <= 0) {
             throw new LearnedSongNotFoundException("유효하지 않은 학습곡 ID입니다.");
         }
-
         Long userId = me.userId();
         BlankCompleteResponse response = blankService.getBlankComplete(learnedSongId, userId);
-
         return ResponseEntity.ok(
                 ApiResponse.success(200, "퀴즈가 완료되었습니다.", response)
         );
@@ -113,7 +108,6 @@ public class LearnController {
             @AuthenticationPrincipal UserPrincipal me) {
         Long userId = me.userId();
         DictationCompleteResponse response = dictationService.getDictationComplete(learnedSongId, userId);
-
         return ResponseEntity.ok(
                 ApiResponse.success(200, "딕테이션 테스트가 완료 되었습니다.", response)
         );
@@ -128,41 +122,22 @@ public class LearnController {
             @AuthenticationPrincipal UserPrincipal me) {
         Long userId = me.userId();
         SpeakingQuestionResponse res = speakingService.getSpeakingQuestion(req.getLearnedSongId(), req.getQuestionNumber(), userId);
-
         return ResponseEntity.ok(ApiResponse.success(200, "스피킹 평가 문장을 조회했습니다.", res));
     }
 
+
+    /**
+     * 스피킹 평가 채점 & 결과 저장
+     */
     @PostMapping(value = "/speaking/result", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<SpeakingEvaluationResponse>> evaluateSpeaking(
             @Valid @RequestBody SpeakingEvaluationRequest request,
             @AuthenticationPrincipal UserPrincipal me) {
-
-        try {
-            Long userId = me.userId();
-            SpeakingEvaluationResponse response = speakingService.evaluateSpeaking(userId, request);
-            return ResponseEntity.ok(
-                    ApiResponse.success(200, "스피킹 결과가 저장되었습니다.", response)
-            );
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(
-                    ApiResponse.success(400, "요청 값이 올바르지 않습니다.", null)
-            );
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("인증키")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                        ApiResponse.success(401, e.getMessage(), null)
-                );
-            } else if (e.getMessage().contains("찾을 수 없습니다")) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                        ApiResponse.success(404, e.getMessage(), null)
-                );
-            } else {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                        ApiResponse.success(500, e.getMessage(), null)
-                );
-            }
-        }
+        Long userId = me.userId();
+        SpeakingEvaluationResponse response = speakingService.evaluateSpeaking(userId, request);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "스피킹 결과가 저장되었습니다.", response)
+        );
     }
 
     /**
@@ -172,11 +147,8 @@ public class LearnController {
     public ResponseEntity<ApiResponse<SpeakingCompleteResponse>> getSpeakingComplete(
             @RequestParam("learnedSongId") Long learnedSongId,
             @AuthenticationPrincipal UserPrincipal me) {
-
         Long userId = me.userId();
-
         SpeakingCompleteResponse response = speakingService.getSpeakingComplete(learnedSongId, userId);
-
         return ResponseEntity.ok(
                 ApiResponse.success(200, "스피킹 테스트가 완료 되었습니다.", response)
         );

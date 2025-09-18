@@ -16,6 +16,9 @@ export const http = axios.create({
 // 요청 인터셉터: accessToken 자동 부착
 http.interceptors.request.use((config) => {
   const token = getAccessToken();
+  const isFormData =
+    typeof FormData !== "undefined" && config.data instanceof FormData;
+
   if (token) {
     config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
@@ -23,7 +26,17 @@ http.interceptors.request.use((config) => {
   } else {
     console.log(`[HTTP] ${config.method?.toUpperCase()} ${config.url} - 토큰 없음`);
   }
-  return config;
+  
+  if (isFormData) {
+      // FormData면 Content-Type 제거 (브라우저가 boundary 포함 자동 설정)
+      if (config.headers) delete (config.headers as any)["Content-Type"];
+    } else {
+      // JSON이면 Content-Type을 application/json으로
+      if (config.headers && !config.headers["Content-Type"]) {
+        (config.headers as any)["Content-Type"] = "application/json";
+      }
+    }
+    return config;
 });
 
 // 응답 인터셉터: 401 처리 (refresh API가 있을 때만 작동)
