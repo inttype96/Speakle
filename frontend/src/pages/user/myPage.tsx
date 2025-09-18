@@ -445,7 +445,6 @@ export default function MyPage() {
                   onEditClick={openEditModal}
                   onCheckinClick={handleCheckin}
                   recentSongs={recentSongs}
-                  playlists={playlists}
                   pointProfile={pointProfile}
                   recentSongsError={apiErrors.recentSongs}
                 />
