@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore, isAuthenticated, getUserId } from '@/store/auth'
+import { useAuthStore, isAuthenticated } from '@/store/auth'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Navbar from '@/components/common/navbar'
