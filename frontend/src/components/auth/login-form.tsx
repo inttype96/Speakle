@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useState } from "react"
 import { useAuthStore } from "@/store/auth"
-import { loginAPI } from "@/services/auth"
+import { loginAPI, getUserProfileAPI } from "@/services/auth"
 
 export function LoginForm({
     className,
@@ -17,7 +17,7 @@ export function LoginForm({
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const login = useAuthStore((state) => state.login);
+    const { login, setUserId } = useAuthStore();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -32,7 +32,24 @@ export function LoginForm({
             if (response.status === 200) {
                 const tokens = response.data.data;
                 console.log('Tokens to save:', tokens);
+
+                // 토큰 저장
                 login(tokens);
+
+                try {
+                    // 사용자 프로필 조회하여 userId 저장
+                    const profileResponse = await getUserProfileAPI();
+                    const profileData = profileResponse.data?.data || profileResponse.data;
+
+                    if (profileData?.userId) {
+                        setUserId(profileData.userId);
+                        console.log('UserId saved:', profileData.userId);
+                    }
+                } catch (profileErr) {
+                    console.error('프로필 조회 실패:', profileErr);
+                    // 프로필 조회 실패해도 로그인은 성공으로 처리
+                }
+
                 console.log('After login - auth state:', useAuthStore.getState());
 
                 // redirect 파라미터가 있으면 해당 경로로, 없으면 메인 페이지로
