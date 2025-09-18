@@ -113,6 +113,11 @@ public class CustomPlaylistService {
 	 * 사용자 플레이리스트 목록 조회 (자체 + Spotify 플레이리스트 통합)
 	 */
 	public List<CustomPlaylistResponse> getUserPlaylists(UserPrincipal auth) {
+		if (auth == null) {
+			log.warn("사용자 인증 정보가 null입니다");
+			throw new IllegalArgumentException("사용자 인증이 필요합니다");
+		}
+
 		log.info("사용자 플레이리스트 목록 조회 - userId: {}", auth.userId());
 
 		List<CustomPlaylist> customPlaylists = playlistRepository.findByUserIdOrderByCreatedAtDesc(auth.userId());

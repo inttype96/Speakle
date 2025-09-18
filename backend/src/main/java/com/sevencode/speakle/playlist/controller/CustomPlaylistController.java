@@ -67,6 +67,10 @@ public class CustomPlaylistController {
 	public ResponseEntity<List<CustomPlaylistResponse>> getUserPlaylists(
 		@AuthenticationPrincipal @Parameter(hidden = true) UserPrincipal auth) {
 
+		if (auth == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+
 		List<CustomPlaylistResponse> playlists = customPlaylistService.getUserPlaylists(auth);
 		return ResponseEntity.ok(playlists);
 	}
