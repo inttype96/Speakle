@@ -17,7 +17,7 @@ export default function Navbar() {
                     <div className="mx-auto max-w-6xl flex items-center justify-between p-6 lg:px-8">
                         {/* 로고 */}
                         <div className="flex lg:flex-1">
-                            <a href="#" className="-m-1.5 p-1.5">
+                            <a href="/" className="-m-1.5 p-1.5">
                                 <span className="sr-only">Speakle</span>
                                 <img
                                     alt=""
