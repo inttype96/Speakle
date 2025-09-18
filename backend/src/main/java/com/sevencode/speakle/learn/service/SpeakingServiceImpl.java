@@ -13,6 +13,8 @@ import com.sevencode.speakle.learn.exception.*;
 import com.sevencode.speakle.learn.repository.LearnedSongRepository;
 import com.sevencode.speakle.learn.repository.SpeakingRepository;
 import com.sevencode.speakle.learn.repository.SpeakingResultRepository;
+import com.sevencode.speakle.learn.repository.SpeakingSentenceRepository;
+import com.sevencode.speakle.parser.entity.SentenceEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,10 +29,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
-public class SpeakingServiceImpl implements SpeakingService{
+public class SpeakingServiceImpl implements SpeakingService {
     private final LearnedSongRepository learnedSongRepository;
     private final SpeakingRepository speakingRepository;
     private final SpeakingResultRepository speakingResultRepository;
+    private final SpeakingSentenceRepository speakingSentenceRepository;
     private final EtriPronunciationClient etriClient;
 
     @Value("${speaking.score.threshold}")
@@ -65,45 +68,26 @@ public class SpeakingServiceImpl implements SpeakingService{
         }
 
         // 3. 기존 데이터가 없으면 새로운 speaking 문제 생성
-        // 3-1. 해당 학습곡의 문장 개수 확인
-        // TODO : Sentence 테이블에서 learnedSongId인 데이터 개수 계산하기
-        // long sentenceCount = sentenceRepository.countByLearnedSongId(learnedSongId);
-        // 테스트용 더미 값
-        long sentenceCount = 6;
-        //
+        // 3-1. 문장 조회 (학습한 sentence에서 가져오기)
+        List<SentenceEntity> sentences = speakingSentenceRepository.findByLearnedSongIdOrderByIdAsc(String.valueOf(learnedSongId));
 
-        if (sentenceCount == 0) {
+        // 3-2. 해당 학습곡의 문장 개수 확인
+        if (sentences.size() == 0) {
             throw new NoSentenceAvailableException("해당 학습 곡에서 추출할 문장이 없습니다.");
         }
 
-        // 3-2. 문장 조회 (학습한 sentence에서 가져오기)
-        // TODO : Sentence 테이블에서 Sentence 객체 기져오기
-        //  List<SentencesEntity> sentences = sentencesRepository.findByLearnedSongIdOrderBySentencesIdAsc(learnedSongId);
-        // 테스트용 더미 값
-        List<String> sentences = new ArrayList<>(Arrays.asList(
-                "The club isn't the best place to find a lover",
-                "I've been tryna call",
-                "Sin City's cold and empty",
-                "I said ooh I'm blinede by the lights",
-                "I'm running out of time",
-                "So I hit the road in overdrive"));
-        //
-
         int index;
-        if(sentenceCount == 6){
+        if (sentences.size() >= 6) {
             index = (questionNumber - 1) * 2;   // 스피킹 게임에 1, 3, 5번 문장 가져오기
-        }else{
+        } else {
             index = questionNumber - 1;         // 스피킹 게임에 1, 2, 3번 문장 가져오기
         }
 
-        if(index >= sentences.size()){
+        if (index >= sentences.size()) {
             throw new IllegalArgumentException("해당 questionNumber에 맞는 문장이 존재하지 않습니다.");
         }
 
-//        String coreSentence = sentences.get(index).getSentence();
-        // 테스트용 코드
-        String coreSentence =  sentences.get(index);
-        //
+        String coreSentence = sentences.get(index).getSentence();
 
         // 3-3. Speaking 엔티티 생성
         SpeakingEntity speaking = SpeakingEntity.builder()
@@ -142,7 +126,7 @@ public class SpeakingServiceImpl implements SpeakingService{
 
         // 3. ETRI API 호출
         EtriPronunciationResponse etriResponse;
-        try{
+        try {
             etriResponse = etriClient
                     .evaluatePronunciation(request.getScript(), request.getAudio())
                     .block();
@@ -205,7 +189,7 @@ public class SpeakingServiceImpl implements SpeakingService{
         }
 
         // 6. 포인트 업데이트
-        if(isCorrect){
+        if (isCorrect) {
             // TODO : 문제를 맞은 경우 포인트 업데이트 해주기
         }
 
