@@ -73,12 +73,28 @@ export default function MyPage() {
       setError(null)
 
       const profileResponse = await getUserProfileAPI()
-      const profileData = profileResponse.data?.data || profileResponse.data
+
+      // API 응답 구조 확인하고 데이터 추출
+      let profileData
+      if (profileResponse.data?.data) {
+        profileData = profileResponse.data.data
+      } else if (profileResponse.data?.userId) {
+        profileData = profileResponse.data
+      } else {
+        throw new Error('사용자 프로필 데이터를 찾을 수 없습니다.')
+      }
+
       setProfile(profileData)
 
       // userId를 스토어에 저장
       if (profileData.userId) {
         setUserId(profileData.userId)
+      }
+
+      // userId가 없으면 에러 처리
+      if (!profileData.userId) {
+        setError('사용자 정보를 불러올 수 없습니다. 다시 로그인해주세요.')
+        return
       }
 
       // 병렬로 데이터 로드
@@ -104,6 +120,10 @@ export default function MyPage() {
 
   const loadPointProfile = async (userId: number) => {
     try {
+      if (!userId) {
+        console.error('loadPointProfile: userId is missing')
+        return
+      }
       const response = await getPointProfileAPI(userId)
       setPointProfile(response.data.data)
     } catch (err) {
@@ -140,6 +160,10 @@ export default function MyPage() {
 
   const loadCheckinInfo = async (userId: number, date: string) => {
     try {
+      if (!userId) {
+        console.error('loadCheckinInfo: userId is missing')
+        return
+      }
       const response = await getCheckinInfoAPI(userId, date)
       setCheckinInfo(response.data.data)
     } catch (err) {

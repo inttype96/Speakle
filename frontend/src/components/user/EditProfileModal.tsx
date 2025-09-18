@@ -1,8 +1,7 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 
 interface EditProfileModalProps {
   open: boolean
@@ -25,57 +24,47 @@ export default function EditProfileModal({
 }: EditProfileModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-background border-border shadow-lg">
-        <DialogHeader className="pb-4">
-          <DialogTitle className="text-foreground text-lg font-semibold">프로필 수정</DialogTitle>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>프로필 수정</DialogTitle>
+          <DialogDescription>
+            사용자 이름을 변경할 수 있습니다. 변경사항은 즉시 반영됩니다.
+          </DialogDescription>
         </DialogHeader>
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <Label
-              htmlFor="username"
-              className="text-sm font-medium text-foreground"
-            >
+
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="username" className="text-right">
               이름
             </Label>
             <Input
               id="username"
               value={editForm.username}
               onChange={(e) => onFormChange({ ...editForm, username: e.target.value })}
-              className="bg-background border-input text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="이름을 입력하세요"
+              className="col-span-3"
             />
           </div>
-
-          <Separator className="bg-border" />
-
-          <div className="flex justify-between items-center pt-2">
-            <Button
-              onClick={onDeleteAccount}
-              variant="destructive"
-              size="sm"
-              className="text-destructive-foreground hover:bg-destructive/90"
-            >
-              회원 탈퇴
-            </Button>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                className="border-input text-foreground hover:bg-accent hover:text-accent-foreground"
-                size="sm"
-              >
-                취소
-              </Button>
-              <Button
-                onClick={onSave}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                size="sm"
-              >
-                저장
-              </Button>
-            </div>
-          </div>
         </div>
+
+        <DialogFooter className="sm:justify-between">
+          <Button
+            onClick={onDeleteAccount}
+            variant="destructive"
+            size="sm"
+            className="sm:order-first"
+          >
+            회원 탈퇴
+          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              취소
+            </Button>
+            <Button onClick={onSave}>
+              저장
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
