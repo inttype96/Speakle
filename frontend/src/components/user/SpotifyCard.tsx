@@ -75,12 +75,6 @@ export default function SpotifyCard({
                   <span className="text-sm font-medium text-muted-foreground">사용자 ID:</span>
                   <span className="text-sm font-mono">{spotifyProfile.id}</span>
                 </div>
-                {spotifyProfile.followers && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-muted-foreground">팔로워:</span>
-                    <span className="text-sm">{spotifyProfile.followers.total}명</span>
-                  </div>
-                )}
               </div>
             </div>
           </div>
