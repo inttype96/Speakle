@@ -82,13 +82,13 @@ public class LyricsController {
 	 */
 	@PostMapping("/parse-and-save")
 	public Mono<ResponseEntity<ObjectNode>> parseAndSave(
-		@RequestParam(value = "learnedSongId", required = false) Long learnedSongId,
+		@RequestParam(value = "learnedSongId", required = false) String learnedSongId,
 		@RequestBody Map<String, String> body) {
 
 		// Body에만 들어온 경우 보정
 		if (learnedSongId == null) {
 			String idStr = body.get("learnedSongId");
-			learnedSongId = (idStr != null && !idStr.isBlank()) ? Long.valueOf(idStr) : null;
+			learnedSongId = (idStr != null && !idStr.isBlank()) ? idStr : null;
 		}
 		String lyrics = body.get("lyrics");
 

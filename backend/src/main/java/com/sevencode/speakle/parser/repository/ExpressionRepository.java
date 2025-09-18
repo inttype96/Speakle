@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ExpressionRepository extends JpaRepository<ExpressionEntity, Long> {
-	boolean existsByLearnedSongId(Long learnedSongId);
+	boolean existsByLearnedSongId(String learnedSongId);
 
-	List<ExpressionEntity> findAllByLearnedSongId(Long learnedSongId);
+	List<ExpressionEntity> findAllByLearnedSongId(String learnedSongId);
 
-	Optional<ExpressionEntity> findByLearnedSongIdAndExpressionIgnoreCase(Long learnedSongId, String expression);
+	Optional<ExpressionEntity> findByLearnedSongIdAndExpressionIgnoreCase(String learnedSongId, String expression);
 }
