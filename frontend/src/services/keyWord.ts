@@ -150,7 +150,7 @@ export async function getHybridRecommendation(req: RecommendHybridReq): Promise<
 
     // 실제 API 호출
     const res = await http.post<RecommendHybridRes>(
-        "/recommend/hybrid",
+        "/recommend/hybrid/enhanced",
         {
             situation: req.situation,
             location: req.location,

@@ -1,7 +1,6 @@
 export type RecommendHybridReq = {
     situation: string;
-    location: string;    
-    // genre: string; // 요청 x       
+    location: string;          
     limit: 50; // 50 고정 
   };
 

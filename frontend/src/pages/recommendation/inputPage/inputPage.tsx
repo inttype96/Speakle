@@ -3,7 +3,6 @@ import Navbar from "@/components/common/navbar";
 import FindMusic from "./components/findMusic";
 import SituationListen from "./components/situationListen";
 import WhereListen from "./components/whereListen";
-import FavoriteGenre from "./components/favoriteGenre";
 import StartButton from "./components/startButton";
 import RecomTip from "./components/recomTip";
 
@@ -17,7 +16,6 @@ const InputPage: React.FC = () => {
         <FindMusic />
         <SituationListen />
         <WhereListen />
-        <FavoriteGenre />
         <StartButton />
         <RecomTip />
       </div>
