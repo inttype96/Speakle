@@ -12,4 +12,4 @@ RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8081
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
