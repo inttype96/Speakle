@@ -5,7 +5,6 @@ import { Separator } from '@/components/ui/separator'
 import type { UserProfile } from '@/types/auth'
 import type {
   PointProfile,
-  Playlist,
   LearnedSong,
   CheckinResponse
 } from '@/services/mypage'
@@ -18,7 +17,6 @@ interface OverviewTabProps {
   onEditClick: () => void
   onCheckinClick: () => void
   recentSongs: LearnedSong[]
-  playlists: Playlist[]
   pointProfile: PointProfile | null
   recentSongsError: boolean
 }
@@ -30,7 +28,6 @@ export default function OverviewTab({
   onEditClick,
   onCheckinClick,
   recentSongs,
-  playlists,
   pointProfile,
   recentSongsError
 }: OverviewTabProps) {
