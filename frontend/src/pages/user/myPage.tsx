@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore, isAuthenticated, getUserId } from '@/store/auth'
+import { useAuthStore, isAuthenticated } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Progress } from '@/components/ui/progress'
 import { getUserProfileAPI } from '@/services/auth'
 import {
   getPointProfileAPI,
@@ -224,25 +223,6 @@ export default function MyPage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
-
-  const getGenderText = (gender?: string) => {
-    switch (gender) {
-      case 'male':
-        return '남성'
-      case 'female':
-        return '여성'
-      default:
-        return '미설정'
-    }
-  }
 
   const getUserInitials = (username: string) => {
     return username.charAt(0).toUpperCase()
