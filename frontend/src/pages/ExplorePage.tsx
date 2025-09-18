@@ -102,7 +102,7 @@ export default function ExplorePage() {
       {/* 상황 */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-lg">어떤 상황에서 듣고 싶으신가요?</CardTitle>
+          <CardTitle className="text-lg">어떤 상황에서 사용할 표현을 팝송으로 배우고 싶으신가요?</CardTitle>
         </CardHeader>
         <CardContent>
           <ToggleGroup
@@ -121,7 +121,7 @@ export default function ExplorePage() {
       {/* 장소 */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-lg">어디에서 듣고 있나요?</CardTitle>
+          <CardTitle className="text-lg">어떤 장소에서 사용할 표현을 팝송으로 배우고 싶으신가요?</CardTitle>
         </CardHeader>
         <CardContent>
           <ToggleGroup
@@ -140,7 +140,7 @@ export default function ExplorePage() {
       {/* 장르 */}
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle className="text-lg">선호하는 장르를 선택해주세요</CardTitle>
+          <CardTitle className="text-lg">선호하는 장르를 선택해주세요.</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
