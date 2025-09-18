@@ -4,9 +4,10 @@ import type { LearnedSong } from '@/services/mypage'
 
 interface RecentSongsCardProps {
   recentSongs: LearnedSong[]
+  error?: boolean
 }
 
-export default function RecentSongsCard({ recentSongs }: RecentSongsCardProps) {
+export default function RecentSongsCard({ recentSongs, error }: RecentSongsCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -17,7 +18,12 @@ export default function RecentSongsCard({ recentSongs }: RecentSongsCardProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {recentSongs.length > 0 ? (
+          {error ? (
+            <div className="text-center text-muted-foreground py-4">
+              <p>최근 학습 곡을 불러올 수 없습니다.</p>
+              <p className="text-sm">서버에 일시적인 문제가 있을 수 있습니다.</p>
+            </div>
+          ) : recentSongs.length > 0 ? (
             recentSongs.map((song) => (
               <div
                 key={song.learnedSongId}

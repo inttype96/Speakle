@@ -3,9 +3,10 @@ import type { Playlist } from '@/services/mypage'
 
 interface PlaylistCardProps {
   playlists: Playlist[]
+  error?: boolean
 }
 
-export default function PlaylistCard({ playlists }: PlaylistCardProps) {
+export default function PlaylistCard({ playlists, error }: PlaylistCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -16,7 +17,12 @@ export default function PlaylistCard({ playlists }: PlaylistCardProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {playlists.length > 0 ? (
+          {error ? (
+            <div className="text-center text-muted-foreground py-4">
+              <p>플레이리스트를 불러올 수 없습니다.</p>
+              <p className="text-sm">서버에 일시적인 문제가 있을 수 있습니다.</p>
+            </div>
+          ) : playlists.length > 0 ? (
             playlists.map((playlist) => (
               <div key={playlist.playlistId} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                 <div className="w-12 h-12 rounded bg-gray-200 flex items-center justify-center">

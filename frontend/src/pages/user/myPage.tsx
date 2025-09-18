@@ -54,6 +54,12 @@ export default function MyPage() {
   const [spotifyProfile, setSpotifyProfile] = useState<SpotifyProfileResponse['data'] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [apiErrors, setApiErrors] = useState({
+    playlists: false,
+    recentSongs: false,
+    ranking: false,
+    checkin: false
+  })
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [spotifyModalOpen, setSpotifyModalOpen] = useState(false)
   const [editForm, setEditForm] = useState({
@@ -150,8 +156,10 @@ export default function MyPage() {
     try {
       const response = await getPointRankingAPI()
       setRanking(response.data.data)
+      setApiErrors(prev => ({ ...prev, ranking: false }))
     } catch (err) {
       console.error('랭킹 정보 로딩 실패:', err)
+      setApiErrors(prev => ({ ...prev, ranking: true }))
     }
   }
 
@@ -159,8 +167,10 @@ export default function MyPage() {
     try {
       const response = await getUserPlaylistsAPI()
       setPlaylists(response.data.data)
+      setApiErrors(prev => ({ ...prev, playlists: false }))
     } catch (err) {
       console.error('플레이리스트 로딩 실패:', err)
+      setApiErrors(prev => ({ ...prev, playlists: true }))
     }
   }
 
@@ -168,8 +178,10 @@ export default function MyPage() {
     try {
       const response = await getRecentLearnedSongsAPI(1, 5)
       setRecentSongs(response.data.data.learnedSongs)
+      setApiErrors(prev => ({ ...prev, recentSongs: false }))
     } catch (err) {
       console.error('최근 학습 곡 로딩 실패:', err)
+      setApiErrors(prev => ({ ...prev, recentSongs: true }))
     }
   }
 
@@ -177,12 +189,15 @@ export default function MyPage() {
     try {
       if (!userId) {
         console.error('loadCheckinInfo: userId is missing')
+        setApiErrors(prev => ({ ...prev, checkin: true }))
         return
       }
       const response = await getCheckinInfoAPI(userId, date)
       setCheckinInfo(response.data.data)
+      setApiErrors(prev => ({ ...prev, checkin: false }))
     } catch (err) {
       console.error('출석 정보 로딩 실패:', err)
+      setApiErrors(prev => ({ ...prev, checkin: true }))
     }
   }
 
@@ -402,18 +417,19 @@ export default function MyPage() {
             profile={profile}
             pointProfile={pointProfile}
             checkinInfo={checkinInfo}
+            checkinError={apiErrors.checkin}
             onEditClick={openEditModal}
             onCheckinClick={handleCheckin}
           />
 
           {/* 포인트 랭킹 */}
-          <PointRankingCard ranking={ranking} />
+          <PointRankingCard ranking={ranking} error={apiErrors.ranking} />
 
           {/* 내 플레이리스트 */}
-          <PlaylistCard playlists={playlists} />
+          <PlaylistCard playlists={playlists} error={apiErrors.playlists} />
 
           {/* 최근 학습한 곡 */}
-          <RecentSongsCard recentSongs={recentSongs} />
+          <RecentSongsCard recentSongs={recentSongs} error={apiErrors.recentSongs} />
 
           {/* Spotify 연동 상태 카드 */}
           <SpotifyCard

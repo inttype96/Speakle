@@ -7,6 +7,7 @@ interface ProfileCardProps {
   profile: UserProfile
   pointProfile: PointProfile | null
   checkinInfo: CheckinResponse['data'] | null
+  checkinError?: boolean
   onEditClick: () => void
   onCheckinClick: () => void
 }
@@ -15,6 +16,7 @@ export default function ProfileCard({
   profile,
   pointProfile,
   checkinInfo,
+  checkinError,
   onEditClick,
   onCheckinClick
 }: ProfileCardProps) {
@@ -65,19 +67,23 @@ export default function ProfileCard({
               <div>
                 <label className="text-sm font-medium text-muted-foreground">연속 출석일</label>
                 <p className="text-lg">
-                  {checkinInfo ? `${checkinInfo.currentStreak}일` : '로딩 중...'}
+                  {checkinError ? '오류' : checkinInfo ? `${checkinInfo.currentStreak}일` : '로딩 중...'}
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
-                <Button onClick={onCheckinClick} size="sm">
+                <Button onClick={onCheckinClick} size="sm" disabled={checkinError}>
                   출석 체크
                 </Button>
-                {checkinInfo && (
+                {checkinError ? (
+                  <span className="text-xs text-muted-foreground">
+                    출석 정보 오류
+                  </span>
+                ) : checkinInfo ? (
                   <span className="text-sm text-muted-foreground">
                     총 {checkinInfo.totalDays}일 출석
                   </span>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
