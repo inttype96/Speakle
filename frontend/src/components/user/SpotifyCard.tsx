@@ -92,7 +92,7 @@ export default function SpotifyCard({ spotifyStatus, spotifyProfile, onManageCli
     }
   }
   return (
-    <Card>
+    <Card className="h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <span>🎵</span>

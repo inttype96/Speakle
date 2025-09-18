@@ -9,7 +9,7 @@ interface RecentSongsCardProps {
 
 export default function RecentSongsCard({ recentSongs, error }: RecentSongsCardProps) {
   return (
-    <Card>
+    <Card className="h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <span>📚</span>

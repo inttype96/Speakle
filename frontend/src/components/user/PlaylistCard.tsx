@@ -50,4 +50,3 @@ export default function PlaylistCard({ playlists, error }: PlaylistCardProps) {
     </Card>
   )
 }
-}

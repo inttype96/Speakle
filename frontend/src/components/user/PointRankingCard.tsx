@@ -8,7 +8,7 @@ interface PointRankingCardProps {
 
 export default function PointRankingCard({ ranking, error }: PointRankingCardProps) {
   return (
-    <Card>
+    <Card className="h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <span>🏆</span>
