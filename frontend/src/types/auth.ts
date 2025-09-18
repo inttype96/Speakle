@@ -25,13 +25,15 @@ export type User = {
 };
 
 export type UserProfile = {
-  userId: number;
+  id: number;  // 백엔드 응답에 맞춰 id로 변경
   email: string;
   username: string;
   gender?: string;
   birth?: string;
   profileImageUrl?: string;
+  deleted: boolean;
   createdAt: string;
+  updatedAt: string;
 };
 
 export type UserProfileRes = {

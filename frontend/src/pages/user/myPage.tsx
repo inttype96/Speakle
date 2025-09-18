@@ -93,7 +93,7 @@ export default function MyPage() {
       let profileData: UserProfile
       if (profileResponse.data?.data) {
         profileData = profileResponse.data.data
-      } else if (profileResponse.data && 'userId' in profileResponse.data) {
+      } else if (profileResponse.data && 'id' in profileResponse.data) {
         profileData = profileResponse.data as unknown as UserProfile
       } else {
         throw new Error('사용자 프로필 데이터를 찾을 수 없습니다.')
@@ -102,18 +102,18 @@ export default function MyPage() {
       setProfile(profileData)
 
       // userId를 스토어에 저장
-      if (profileData.userId) {
-        setUserId(profileData.userId)
+      if (profileData.id) {
+        setUserId(profileData.id)
       }
 
       // userId가 없으면 에러 처리
-      if (!profileData.userId) {
+      if (!profileData.id) {
         setError('사용자 정보를 불러올 수 없습니다. 다시 로그인해주세요.')
         return
       }
 
       // 병렬로 데이터 로드
-      const userId = profileData.userId
+      const userId = profileData.id
       const today = new Date().toISOString().split('T')[0]
 
       await Promise.allSettled([
@@ -252,7 +252,7 @@ export default function MyPage() {
     try {
       const today = new Date().toISOString().split('T')[0]
       const response = await checkinAPI({
-        userId: profile.userId,
+        userId: profile.id,
         localDate: today
       })
 

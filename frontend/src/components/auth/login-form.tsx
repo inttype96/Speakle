@@ -49,9 +49,9 @@ export function LoginForm({
                     const profileData = profileResponse.data?.data || profileResponse.data;
                     console.log('추출된 프로필 데이터:', profileData);
 
-                    if (profileData?.userId) {
-                        console.log('userId 저장 시도:', profileData.userId);
-                        setUserId(profileData.userId);
+                    if (profileData?.id) {
+                        console.log('userId 저장 시도 (백엔드 id를 userId로 매핑):', profileData.id);
+                        setUserId(profileData.id);
 
                         // persist 저장이 완료될 때까지 잠시 대기
                         await new Promise(resolve => setTimeout(resolve, 200));
@@ -69,7 +69,7 @@ export function LoginForm({
                             console.log('localStorage의 userId:', parsedStorage.state?.userId);
                         }
                     } else {
-                        console.error('profileData에 userId가 없음:', profileData);
+                        console.error('profileData에 id가 없음:', profileData);
                     }
                 } catch (profileErr) {
                     console.error('프로필 조회 실패:', profileErr);
