@@ -376,7 +376,7 @@ const onSubmit = useCallback(async () => {
       <Dialog open={openResult} onOpenChange={setOpenResult}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-gray-900 dark:text-gray-700, mb-3">
               {lastIsCorrect ? "정답입니다! 🎉" : "오답입니다 😢"}
             </DialogTitle>
             <DialogDescription className="space-y-2">
@@ -428,7 +428,7 @@ const onSubmit = useCallback(async () => {
       <Dialog open={openSummary} onOpenChange={setOpenSummary}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>스피킹 결과 요약</DialogTitle>
+            <DialogTitle className="text-gray-900 dark:text-gray-700, mb-3">스피킹 결과 요약</DialogTitle>
             <DialogDescription asChild>
               <div className="space-y-3 pt-2">
                 <div className="text-sm">

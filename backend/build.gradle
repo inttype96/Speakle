@@ -104,6 +104,7 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    implementation 'com.opencsv:opencsv:5.9'
 
     // === Testing ===
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

@@ -2,16 +2,17 @@ package com.sevencode.speakle.learn.client;
 
 import com.sevencode.speakle.learn.dto.request.EtriPronunciationRequest;
 import com.sevencode.speakle.learn.dto.response.EtriPronunciationResponse;
+import com.sevencode.speakle.learn.exception.ApiTimeoutException;
 import com.sevencode.speakle.learn.exception.PronunciationServerException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.concurrent.TimeoutException;
 
 @Component
 @RequiredArgsConstructor
@@ -24,6 +25,9 @@ public class EtriPronunciationClient {
 
     @Value("${etri.api.key}")
     private String etriApiKey;
+
+    @Value("${etri.api.timeout:20}")
+    private int timeoutSeconds;
 
     /**
      * ETRI 발음 평가 API 호출
@@ -48,13 +52,12 @@ public class EtriPronunciationClient {
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(EtriPronunciationResponse.class)
-                .timeout(Duration.ofSeconds(30))
+                .timeout(Duration.ofSeconds(timeoutSeconds))
                 .doOnSuccess(response -> log.info("ETRI API 호출 성공: result={}", response.getResult()))
                 .doOnError(error -> log.error("ETRI API 호출 실패", error))
-                .onErrorMap(WebClientResponseException.class, ex -> {
-                    log.error("ETRI API 호출 중 HTTP 에러 발생. Status: {}, Body: {}",
-                            ex.getStatusCode(), ex.getResponseBodyAsString());
-                    return new PronunciationServerException("발음 평가 서버 호출 실패");
+                .onErrorMap(TimeoutException.class, ex -> {
+                    log.error("ETRI API 타임아웃 발생: {}초 초과", timeoutSeconds);
+                    return new ApiTimeoutException("한국어가 인식되어 음성 처리 시간이 초과되었습니다. 영어로 명확하게 발음해 주세요.");
                 })
                 .onErrorMap(Exception.class, ex -> {
                     if (!(ex instanceof RuntimeException)) {

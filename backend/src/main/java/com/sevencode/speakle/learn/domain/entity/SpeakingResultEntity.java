@@ -51,4 +51,15 @@ public class SpeakingResultEntity {
             createdAt = LocalDateTime.now();
         }
     }
+
+    /**
+     * 안전한 메타 데이터 접근자
+     */
+    public String getMetaValue(String key) {
+        if (meta == null || key == null) {
+            return null;
+        }
+        Object value = meta.get(key);
+        return value != null ? value.toString() : null;
+    }
 }

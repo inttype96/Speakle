@@ -14,7 +14,7 @@ import java.util.List;
 public class BlankQuestionResponse {
     private Long blankId;
     private Long learnedSongId;
-    private Long songId;
+    private String songId;
     private Long recommendationSentenceId;
     private String originSentence;
     private String korean;

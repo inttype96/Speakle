@@ -34,7 +34,7 @@ public class SpeakingEntity {
     private String location;
 
     @Column(name = "song_id", nullable = false)
-    private Long songId;
+    private String songId;
 
     @Column(name = "origin_sentence", columnDefinition = "TEXT", nullable = false)
     private String originSentence;

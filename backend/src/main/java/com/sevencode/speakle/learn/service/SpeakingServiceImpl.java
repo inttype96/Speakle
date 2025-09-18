@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,6 +36,9 @@ public class SpeakingServiceImpl implements SpeakingService{
     @Value("${speaking.score.threshold}")
     private Double scoreThreshold; // 정답 판정 기준 점수
 
+    /**
+     * 스피킹 평가 문제 생성(조회)
+     */
     @Override
     public SpeakingQuestionResponse getSpeakingQuestion(Long learnedSongId, Integer questionNumber, Long userId) {
         // 1. 학습곡 존재 및 권한 확인
@@ -124,19 +126,31 @@ public class SpeakingServiceImpl implements SpeakingService{
         );
     }
 
+    /**
+     * 스피킹 평가 채점 & 결과 저장
+     */
     public SpeakingEvaluationResponse evaluateSpeaking(Long userId, SpeakingEvaluationRequest request) {
-        // 1. 스피킹 문제 존재 여부 확인
+        // 1. 입력값 추가 검증
+        if (!request.isValidAudioData()) {
+            throw new InvalidAudioDataException("유효하지 않은 오디오 데이터입니다.");
+        }
+
+        // 2. 스피킹 문제 존재 여부 확인
         SpeakingEntity speaking = speakingRepository.findById(request.getSpeakingId())
                 .orElseThrow(() -> new SpeakingNotFoundException("해당 스피킹 문제를 찾을 수 없습니다."));
 
 
-        // 2. ETRI API 호출
+        // 3. ETRI API 호출
         EtriPronunciationResponse etriResponse;
         try{
             etriResponse = etriClient
                     .evaluatePronunciation(request.getScript(), request.getAudio())
                     .block();
-        } catch(Exception e) {
+        } catch (ApiTimeoutException e) {   // 타임아웃인 경우 - 사용자에게 영어 발음 안내
+            throw e;
+        } catch (PronunciationServerException e) {  // 서버 오류인 경우
+            throw e;
+        } catch (Exception e) {         // 기타 예외
             throw new PronunciationServerException("발음 평가 서버 호출에 실패했습니다.");
         }
 
@@ -145,7 +159,7 @@ public class SpeakingServiceImpl implements SpeakingService{
         }
 
 
-        // 3. 결과 분석
+        // 4. 결과 분석
         EtriPronunciationResponse.EtriReturnObject returnObject = etriResponse.getReturnObject();
         String recognized = returnObject.getRecognized();
         String scoreStr = returnObject.getScore();
@@ -162,7 +176,7 @@ public class SpeakingServiceImpl implements SpeakingService{
                 "score", scoreStr   // 원본 점수 저장
         );
 
-        // 4. 기존 결과 확인 및 저장/업데이트
+        // 5. 기존 결과 확인 및 저장/업데이트
         Optional<SpeakingResultEntity> existingResult = speakingResultRepository
                 .findBySpeakingIdAndUserId(request.getSpeakingId(), userId);
 
@@ -190,12 +204,12 @@ public class SpeakingServiceImpl implements SpeakingService{
             savedResult = speakingResultRepository.save(result);
         }
 
-        // 5. 포인트 업데이트
+        // 6. 포인트 업데이트
         if(isCorrect){
             // TODO : 문제를 맞은 경우 포인트 업데이트 해주기
         }
 
-        // 6. 응답 생성
+        // 7. 응답 생성
         return SpeakingEvaluationResponse.builder()
                 .speakingResultId(savedResult.getSpeakingResultId())
                 .speakingId(savedResult.getSpeakingId())
@@ -207,7 +221,7 @@ public class SpeakingServiceImpl implements SpeakingService{
     }
 
     /**
-     * 스피킹 테스트 종료
+     * 스피킹 게임 완료 결과 조회
      */
     @Override
     public SpeakingCompleteResponse getSpeakingComplete(Long learnedSongId, Long userId) {

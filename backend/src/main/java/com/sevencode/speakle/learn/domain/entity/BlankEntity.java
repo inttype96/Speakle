@@ -34,7 +34,7 @@ public class BlankEntity {
     private String location;
 
     @Column(name = "song_id")
-    private Long songId;
+    private String songId;
 
     @Column(name = "origin_sentence", columnDefinition = "TEXT")
     private String originSentence;

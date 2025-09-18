@@ -14,7 +14,7 @@ public class DictationQuestionResponse {
     private Long dictationId;
     private Integer questionNumber;
     private Long learnedSongId;
-    private Long songId;
+    private String songId;
     private String title;
     private String[] artists;
     private String coreSentence;

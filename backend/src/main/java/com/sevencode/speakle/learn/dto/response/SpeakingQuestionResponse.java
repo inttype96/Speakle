@@ -10,6 +10,6 @@ import lombok.*;
 public class SpeakingQuestionResponse {
     private Long speakingId;
     private Long learnedSongId;
-    private Long songId;
+    private String songId;
     private String coreSentence;
 }
