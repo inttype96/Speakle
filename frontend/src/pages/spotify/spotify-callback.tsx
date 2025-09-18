@@ -34,14 +34,18 @@ export default function SpotifyCallbackPage() {
     setStatus('success');
     setMessage('Spotify 계정이 성공적으로 연동되었습니다!');
 
-    // 3초 후 메인 페이지로 이동
+    // 3초 후 마이페이지로 이동 (연동 완료 파라미터 포함)
     setTimeout(() => {
-      navigate('/');
+      navigate('/mypage?spotify_connected=true');
     }, 3000);
   }, [searchParams, navigate]);
 
   const handleGoHome = () => {
-    navigate('/');
+    if (status === 'success') {
+      navigate('/mypage?spotify_connected=true');
+    } else {
+      navigate('/');
+    }
   };
 
   return (
@@ -63,7 +67,7 @@ export default function SpotifyCallbackPage() {
 
             {status === 'success' && (
               <p className="text-sm text-muted-foreground mb-4">
-                잠시 후 메인 페이지로 이동합니다.
+                잠시 후 마이페이지로 이동합니다.
               </p>
             )}
 
