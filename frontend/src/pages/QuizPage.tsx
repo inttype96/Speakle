@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom"; 
 import Navbar from "@/components/common/navbar";
 
 // shadcn/ui
@@ -49,17 +50,15 @@ const DEFAULT_SONG_ID = 1;
 const TOTAL_QUESTIONS = 3;
 const POINTS_PER_Q = 100;
 
-// ✅ learnedSongId별로 진행을 분리해 저장
-const STORAGE_KEY = `quiz-progress:${DEFAULT_LEARNED_SONG_ID}`;
-
 // ✅ 초기 qNum 결정: 1) URL ?q= → 2) localStorage → 3) 1
-function getInitialQ(): number {
-  const sp = new URLSearchParams(window.location.search);
+function getInitialQ(search: string, storageKey: string): number {
+  const sp = new URLSearchParams(search);              // ← 전달받은 search 사용
   const fromUrl = Number(sp.get("q"));
   if (Number.isFinite(fromUrl) && fromUrl >= 1 && fromUrl <= TOTAL_QUESTIONS) {
     return fromUrl;
   }
-  const saved = Number(localStorage.getItem(STORAGE_KEY));
+
+  const saved = Number(localStorage.getItem(storageKey)); // ← 전달받은 storageKey 사용
   if (Number.isFinite(saved) && saved >= 1 && saved <= TOTAL_QUESTIONS) {
     return saved;
   }
@@ -71,9 +70,31 @@ const mmss = (sec: number) =>
   `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 
 export default function QuizPage() {
+  const [sp] = useSearchParams(); // ✅ URL 쿼리 읽기
+
+  // ✅ URL → 파라미터 파싱 (+ 기본값 폴백)
+  const { learnedSongId, songId, situation, location } = useMemo(() => {
+    const lsid = Number(sp.get("learnedSongId"));
+    const rawSongId = sp.get("songId");
+    const songIdNum = Number(rawSongId);
+
+    return {
+      learnedSongId: Number.isFinite(lsid) ? lsid : DEFAULT_LEARNED_SONG_ID,
+      songId: Number.isFinite(songIdNum) ? songIdNum : DEFAULT_SONG_ID,
+      situation: sp.get("situation") ?? DEFAULT_SITUATION,
+      location: sp.get("location") ?? DEFAULT_LOCATION,
+    };
+  }, [sp]);
+
+  // ✅ learnedSongId 별로 진행상태 분리 저장
+  const STORAGE_KEY = `quiz-progress:${learnedSongId}`;
+
   const lastFetchedQRef = useRef<number | null>(null);  
   // ✅ 새로고침 복원 대응
-  const [qNum, setQNum] = useState<number>(getInitialQ());
+ const [qNum, setQNum] = useState<number>(
+    getInitialQ(window.location.search, STORAGE_KEY) // ✅ 동적 키 반영
+  );
+
 
   const [question, setQuestion] = useState<QuizGenerateRes["data"] | null>(null);
   const [userInput, setUserInput] = useState("");
@@ -85,28 +106,26 @@ export default function QuizPage() {
   // ✅ qNum 변경 → URL & localStorage 동기화
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, String(qNum));
+    const nsp = new URLSearchParams(window.location.search);
+    nsp.set("q", String(qNum)); // 기존 쿼리 유지 + q만 갱신
+    window.history.replaceState(null, "", `${window.location.pathname}?${nsp.toString()}`);
+  }, [qNum, STORAGE_KEY]);
 
-    const sp = new URLSearchParams(window.location.search);
-    sp.set("q", String(qNum));
-    const newUrl = `${window.location.pathname}?${sp.toString()}`;
-    window.history.replaceState(null, "", newUrl);
-  }, [qNum]);
-
-  // 문제 로드
+  // ✅ 문제 로드 시 URL 파라미터를 그대로 req에 포함
   useEffect(() => {
-    // 안전장치: 범위 보정
     if (qNum < 1 || qNum > TOTAL_QUESTIONS) {
       setQNum(1);
       return;
     }
-    if (lastFetchedQRef.current === qNum) return; // ← 같은 qNum 중복 호출 방지
+    if (lastFetchedQRef.current === qNum) return;
     lastFetchedQRef.current = qNum;
+
     (async () => {
       const res = await generateQuiz({
-        learnedSongId: DEFAULT_LEARNED_SONG_ID,
-        situation: DEFAULT_SITUATION,
-        location: DEFAULT_LOCATION,
-        songId: DEFAULT_SONG_ID,
+        learnedSongId,     // ← URL에서 받은 값
+        songId,            // ← URL에서 받은 값
+        situation,         // ← URL에서 받은 값
+        location,          // ← URL에서 받은 값
         questionNumber: qNum,
       });
       setQuestion(res.data);
@@ -115,7 +134,7 @@ export default function QuizPage() {
       setOpenResult(false);
       setElapsed(0);
     })();
-  }, [qNum]);
+  }, [qNum, learnedSongId, songId, situation, location]);
 
   // 타이머
   useEffect(() => {
@@ -163,11 +182,10 @@ export default function QuizPage() {
   }, [question, isCorrect, userInput, qNum]);
 
   // 마지막 문제에서 모달의 "퀴즈 종료" 누를 때: 마지막 답안 저장 + complete
-  const finishFromModal = useCallback(async () => {
+const finishFromModal = useCallback(async () => {
     if (!question || isCorrect === null) return setOpenResult(false);
 
-    // 마지막 문제의 채점 결과도 저장
-    const body: MarkingReq = {
+    await marking({
       userId: DEFAULT_USER_ID,
       blankId: question.blankId,
       isCorrect,
@@ -176,16 +194,13 @@ export default function QuizPage() {
       question: question.question,
       correctAnswer: question.answer,
       userAnswer: [userInput],
-    };
-    await marking(body);
+    });
 
-    // 퀴즈 종료(요약 데이터 수령)
-    const res = await completeQuiz({ learnedSongId: DEFAULT_LEARNED_SONG_ID });
+    const res = await completeQuiz({ learnedSongId }); // ← URL 파라미터
     setComplete(res.data);
     localStorage.removeItem(STORAGE_KEY);
-
     setOpenResult(false);
-  }, [question, isCorrect, userInput]);
+  }, [question, isCorrect, userInput, learnedSongId, STORAGE_KEY]);
 
   // 스킵(오답으로 저장 후 다음)
   const onSkip = useCallback(async () => {
