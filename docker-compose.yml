@@ -43,7 +43,7 @@ services:
     networks:
       - proxy
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -60,7 +60,7 @@ services:
     networks:
       - proxy
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -68,11 +68,24 @@ services:
 
   frontend:
     container_name: frontend
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    build: ./frontend
     # ports:
     #   - '3000:3000'
+    networks:
+      - proxy
+
+  fastapi:
+    container_name: fastapi
+    build: ./data-service
+    # ports:
+    #   - '8081:8081'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      weaviate:
+        condition: service_healthy
     networks:
       - proxy
 
@@ -89,32 +102,8 @@ services:
       CLUSTER_HOSTNAME: 'node1'
     volumes:
       - ./weaviate_data:/var/lib/weaviate
-
-  # prometheus:
-  #   image: prom/prometheus
-  #   container_name: prometheus
-  #   ports:
-  #     - '9090:9090'
-  #   restart: unless-stopped
-  #   volumes:
-  #     - ./infrastructure/prometheus.yml:/etc/prometheus/prometheus.yml
-  #     - ./infrastructure/prom_data:/prometheus
-  #   networks:
-  #     - proxy
-
-  # grafana:
-  #   image: grafana/grafana
-  #   container_name: grafana
-  #   ports:
-  #     - '13000:3000'
-  #   restart: unless-stopped
-  #   environment:
-  #     - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
-  #     - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PW}
-  #   volumes:
-  #     - ./grafana:/etc/grafana/provisioning/datasources
-  #   networks:
-  #     - proxy
+    networks:
+      - proxy
 
 networks:
   proxy:
