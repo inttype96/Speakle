@@ -24,6 +24,12 @@ public class ExpressionEntity {
 	@Column(name = "learned_song_id", nullable = false)
 	private String learnedSongId;
 
+	@Column(name = "situation", length = 255)
+	private String situation;
+
+	@Column(name = "location", length = 255)
+	private String location;
+
 	@Column(name = "expression", nullable = false, length = 255)
 	private String expression;
 

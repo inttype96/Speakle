@@ -12,6 +12,7 @@ import com.sevencode.speakle.song.dto.response.SongResponse;
 // 수정(소연) - learn 패키지의 LearnedSongRepository 사용
 import com.sevencode.speakle.learn.repository.LearnedSongRepository;
 import com.sevencode.speakle.learn.service.LearningSentenceService;
+import com.sevencode.speakle.parser.service.LyricsParsingService;
 import com.sevencode.speakle.song.repository.LyricChunkRepository;
 import com.sevencode.speakle.song.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,9 +32,9 @@ public class SongService {
 
     private final SongRepository songRepository;
     private final LyricChunkRepository lyricChunkRepository;
-    // 수정(소연) - learn 패키지의 LearnedSongRepository 추가
     private final LearnedSongRepository learnedSongRepository;
     private final LearningSentenceService learningSentenceService;
+    private final LyricsParsingService lyricsParsingService;
 
     // 노래 리스트 (페이징)
     public Page<SongResponse> getSongs(Pageable pageable) {
@@ -47,8 +48,8 @@ public class SongService {
 
     // POST 방식 노래 검색
     public Page<SongResponse> searchSongs(SongSearchRequest request) {
-        log.info("[SongService] POST 노래 검색 요청 page={}, size={}, sort={}",
-                request.getPage(), request.getSize(), request.getSort());
+        log.info("[SongService] POST 노래 검색 요청 page={}, size={}, sort={}, keyword={}",
+                request.getPage(), request.getSize(), request.getSort(), request.getKeyword());
 
         // Sort 객체 생성
         Sort sort = Sort.unsorted();
@@ -62,8 +63,16 @@ public class SongService {
         // Pageable 생성
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
 
-        Page<Song> songs = songRepository.findAll(pageable);
-        log.info("[SongService] POST 노래 검색 성공 - 조회된 개수: {}", songs.getTotalElements());
+        // 키워드가 있으면 제목/아티스트로 검색, 없으면 전체 조회
+        Page<Song> songs;
+        if (request.getKeyword() != null && !request.getKeyword().trim().isEmpty()) {
+            songs = songRepository.findByTitleOrArtistsContainingIgnoreCase(request.getKeyword().trim(), pageable);
+            log.info("[SongService] POST 노래 검색 성공 (키워드: '{}') - 조회된 개수: {}",
+                    request.getKeyword(), songs.getTotalElements());
+        } else {
+            songs = songRepository.findAll(pageable);
+            log.info("[SongService] POST 노래 전체 조회 성공 - 조회된 개수: {}", songs.getTotalElements());
+        }
 
         return songs.map(this::toSongResponse);
     }
@@ -83,8 +92,13 @@ public class SongService {
         }
     }
 
-    // 노래 상세
+    // 노래 상세 (기존 - 하위 호환성)
     public SongDetailResponse getSongDetail(String songId) {
+        return getSongDetail(songId, null, null);
+    }
+
+    // 노래 상세 (situation, location 포함)
+    public SongDetailResponse getSongDetail(String songId, String situation, String location) {
         log.info("[SongService] 노래 상세 조회 요청 songId={}", songId);
         Song song = songRepository.findById(songId)
                 .orElseThrow(() -> {
@@ -141,6 +155,10 @@ public class SongService {
             LearnedSongEntity saved = learnedSongRepository.save(learnedSong);
             log.info("[SongService] 학습곡 저장 성공 - learnedSongId={}, userId={}, songId={}",
                     saved.getLearnedSongId(), userId, saved.getSongId());
+
+            // Parser 데이터 확인 및 LLM 파싱 수행
+            String learnedSongIdStr = String.valueOf(saved.getLearnedSongId());
+            ensureParsingDataExists(learnedSongIdStr, request.getSituation(), request.getLocation());
 
             return SaveLearnedSongResponse.builder()
                     .learnedSongId(saved.getLearnedSongId())
@@ -205,5 +223,39 @@ public class SongService {
                 .build();
     }
 
+    /**
+     * Parser 데이터 존재 여부 확인 및 LLM 파싱 수행
+     * @param learnedSongId 학습곡 ID (String)
+     * @param situation 상황
+     * @param location 장소
+     */
+    private void ensureParsingDataExists(String learnedSongId, String situation, String location) {
+        log.info("[SongService] Parser 데이터 확인 시작 - learnedSongId={}, situation={}, location={}",
+                learnedSongId, situation, location);
+
+        try {
+            // Context-aware 파싱 데이터 존재 여부 확인 및 생성
+            lyricsParsingService.parseAndSaveBySongIdWithContext(learnedSongId, situation, location)
+                    .doOnSuccess(result -> {
+                        log.info("[SongService] Parser 데이터 준비 완료 - learnedSongId={}, words={}, expressions={}, idioms={}, sentences={}",
+                                learnedSongId,
+                                result.get("words").size(),
+                                result.get("expressions").size(),
+                                result.get("idioms").size(),
+                                result.get("sentences").size());
+                    })
+                    .doOnError(error -> {
+                        log.error("[SongService] Parser 데이터 생성 실패 - learnedSongId={}, error={}",
+                                learnedSongId, error.getMessage(), error);
+                    })
+                    .subscribe(); // 비동기 실행
+
+            log.info("[SongService] Parser 데이터 확인 요청 완료 - learnedSongId={}", learnedSongId);
+        } catch (Exception e) {
+            log.error("[SongService] Parser 데이터 확인 중 예외 발생 - learnedSongId={}, error={}",
+                    learnedSongId, e.getMessage(), e);
+            // 파싱 실패해도 학습곡 저장은 성공으로 처리 (게임에서 더미 데이터 사용 가능)
+        }
+    }
 
 }

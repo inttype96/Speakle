@@ -42,10 +42,19 @@ public class LyricsPersistService {
 
 	/** DB → 파싱 스키마(JSON) 형태로 재구성하여 반환 (검수/재사용용) */
 	public ObjectNode loadAsJson(String songId) {
+		return loadAsJsonWithContext(songId, null, null);
+	}
+
+	/** Context-aware DB → JSON 변환 */
+	public ObjectNode loadAsJsonWithContext(String songId, String situation, String location) {
 		ObjectNode root = objectMapper.createObjectNode();
 
 		var words = objectMapper.createArrayNode();
-		for (var e : wordRepo.findAllByLearnedSongId(songId)) {
+		var wordList = (situation == null && location == null) ?
+			wordRepo.findAllByLearnedSongId(songId) :
+			wordRepo.findAllByLearnedSongIdAndSituationAndLocation(songId, situation, location);
+
+		for (var e : wordList) {
 			var n = objectMapper.createObjectNode();
 			n.put("word", e.getWord());
 			n.put("phonetic", nullSafe(e.getPhonetic()));
@@ -58,7 +67,11 @@ public class LyricsPersistService {
 		}
 
 		var exps = objectMapper.createArrayNode();
-		for (var e : exprRepo.findAllByLearnedSongId(songId)) {
+		var expList = (situation == null && location == null) ?
+			exprRepo.findAllByLearnedSongId(songId) :
+			exprRepo.findAllByLearnedSongIdAndSituationAndLocation(songId, situation, location);
+
+		for (var e : expList) {
 			var n = objectMapper.createObjectNode();
 			n.put("expression", e.getExpression());
 			n.put("meaning", nullSafe(e.getMeaning()));
@@ -70,7 +83,11 @@ public class LyricsPersistService {
 		}
 
 		var idioms = objectMapper.createArrayNode();
-		for (var e : idiomRepo.findAllByLearnedSongId(songId)) {
+		var idiomList = (situation == null && location == null) ?
+			idiomRepo.findAllByLearnedSongId(songId) :
+			idiomRepo.findAllByLearnedSongIdAndSituationAndLocation(songId, situation, location);
+
+		for (var e : idiomList) {
 			var n = objectMapper.createObjectNode();
 			n.put("phrase", e.getPhrase());
 			n.put("meaning", nullSafe(e.getMeaning()));
@@ -81,7 +98,11 @@ public class LyricsPersistService {
 		}
 
 		var sents = objectMapper.createArrayNode();
-		for (var e : sentRepo.findAllByLearnedSongId(songId)) {
+		var sentList = (situation == null && location == null) ?
+			sentRepo.findAllByLearnedSongId(songId) :
+			sentRepo.findAllByLearnedSongIdAndSituationAndLocation(songId, situation, location);
+
+		for (var e : sentList) {
 			var n = objectMapper.createObjectNode();
 			n.put("sentence", e.getSentence());
 			n.put("translation", nullSafe(e.getTranslation()));
@@ -104,14 +125,25 @@ public class LyricsPersistService {
 	/** 트랜잭션 1회로 4개 카테고리를 일괄 저장 (이미 있으면 skip) */
 	@Transactional
 	public void saveAll(String learnedSongId, ObjectNode parsed) {
-		saveWords(learnedSongId, parsed.withArray("words"));
-		saveExpressions(learnedSongId, parsed.withArray("expressions"));
-		saveIdioms(learnedSongId, parsed.withArray("idioms"));
-		saveSentences(learnedSongId, parsed.withArray("sentences"));
+		saveAllWithContext(learnedSongId, parsed, null, null);
+	}
+
+	/** Context-aware 저장 메서드 */
+	@Transactional
+	public void saveAllWithContext(String learnedSongId, ObjectNode parsed, String situation, String location) {
+		saveWordsWithContext(learnedSongId, parsed.withArray("words"), situation, location);
+		saveExpressionsWithContext(learnedSongId, parsed.withArray("expressions"), situation, location);
+		saveIdiomsWithContext(learnedSongId, parsed.withArray("idioms"), situation, location);
+		saveSentencesWithContext(learnedSongId, parsed.withArray("sentences"), situation, location);
 	}
 
 	/** key: (songId + word, 대소문자 무시). meaning 없으면 저장 안 함. */
 	private void saveWords(String songId, ArrayNode arr) {
+		saveWordsWithContext(songId, arr, null, null);
+	}
+
+	/** Context-aware words 저장 */
+	private void saveWordsWithContext(String songId, ArrayNode arr, String situation, String location) {
 		for (JsonNode n : arr) {
 			String word = text(n, "word");
 			if (isBlank(word))
@@ -121,6 +153,8 @@ public class LyricsPersistService {
 
 			WordEntity e = new WordEntity();
 			e.setLearnedSongId(songId);
+			e.setSituation(situation);
+			e.setLocation(location);
 			e.setWord(word);
 			e.setPhonetic(text(n, "phonetic"));
 			e.setMeaning(text(n, "meaning"));
@@ -135,6 +169,11 @@ public class LyricsPersistService {
 
 	/** key: (songId + expression). meaning 없으면 저장 안 함. */
 	private void saveExpressions(String songId, ArrayNode arr) {
+		saveExpressionsWithContext(songId, arr, null, null);
+	}
+
+	/** Context-aware expressions 저장 */
+	private void saveExpressionsWithContext(String songId, ArrayNode arr, String situation, String location) {
 		for (JsonNode n : arr) {
 			String exp = text(n, "expression");
 			if (isBlank(exp))
@@ -144,6 +183,8 @@ public class LyricsPersistService {
 
 			ExpressionEntity e = new ExpressionEntity();
 			e.setLearnedSongId(songId);
+			e.setSituation(situation);
+			e.setLocation(location);
 			e.setExpression(exp);
 			e.setMeaning(text(n, "meaning"));
 			e.setContext(text(n, "context"));
@@ -157,6 +198,11 @@ public class LyricsPersistService {
 
 	/** key: (songId + phrase). meaning 없으면 저장 안 함. */
 	private void saveIdioms(String songId, ArrayNode arr) {
+		saveIdiomsWithContext(songId, arr, null, null);
+	}
+
+	/** Context-aware idioms 저장 */
+	private void saveIdiomsWithContext(String songId, ArrayNode arr, String situation, String location) {
 		for (JsonNode n : arr) {
 			String phrase = text(n, "phrase");
 			if (isBlank(phrase))
@@ -166,6 +212,8 @@ public class LyricsPersistService {
 
 			IdiomEntity e = new IdiomEntity();
 			e.setLearnedSongId(songId);
+			e.setSituation(situation);
+			e.setLocation(location);
 			e.setPhrase(phrase);
 			e.setMeaning(text(n, "meaning"));
 			e.setExamples(text(n, "examples"));
@@ -178,6 +226,11 @@ public class LyricsPersistService {
 
 	/** key: (songId + sentence). translation 없으면 저장 안 함. */
 	private void saveSentences(String songId, ArrayNode arr) {
+		saveSentencesWithContext(songId, arr, null, null);
+	}
+
+	/** Context-aware sentences 저장 */
+	private void saveSentencesWithContext(String songId, ArrayNode arr, String situation, String location) {
 		for (JsonNode n : arr) {
 			String sentence = text(n, "sentence");
 			if (isBlank(sentence))
@@ -187,6 +240,8 @@ public class LyricsPersistService {
 
 			SentenceEntity e = new SentenceEntity();
 			e.setLearnedSongId(songId);
+			e.setSituation(situation);
+			e.setLocation(location);
 			e.setSentence(sentence);
 			e.setTranslation(text(n, "translation")); // 문장 카테고리는 번역이 핵심
 			e.setTags(text(n, "tags"));

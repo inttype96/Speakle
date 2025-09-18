@@ -76,7 +76,11 @@ public class LyricsParsingService {
 
 	/** 가사 → 전처리/청크 → LLM(JSON) → 병합/레벨정규화 → 최종 JSON 반환 */
 	public Mono<ObjectNode> parse(String rawLyrics) {
+		return parseWithContext(rawLyrics, null, null);
+	}
 
+	/** Context-aware 파싱: situation/location 기반 프롬프트 적용 */
+	public Mono<ObjectNode> parseWithContext(String rawLyrics, String situation, String location) {
 		log.debug("[TRACE] lyrics.raw (chars={}, lines≈={}):\n{}",
 			rawLyrics != null ? rawLyrics.length() : 0,
 			rawLyrics != null ? rawLyrics.lines().count() : 0,
@@ -87,10 +91,10 @@ public class LyricsParsingService {
 		if (chunks == null || chunks.isEmpty())
 			return Mono.just(emptyResult());
 
-		// 2) 스키마/프롬프트 준비(스키마 고정, 프롬프트 외부 관리)
+		// 2) 스키마/프롬프트 준비 (context-aware 프롬프트)
 		ObjectNode schema = buildSchema();
 		String schemaName = props.defaults().schemaName();
-		String developerPrompt = promptManager.lyricsPrompt();
+		String developerPrompt = buildContextualPrompt(situation, location);
 
 		// 3) 청크 순차 호출(concatMap) → JSON 파싱 → 누산
 		return Flux.fromIterable(chunks)
@@ -98,7 +102,8 @@ public class LyricsParsingService {
 			.concatMap(t -> { // 순차 처리(레이트/타임아웃 안정성 우선)
 				long idx = t.getT1() + 1;
 				String chunk = t.getT2();
-				log.info("LLM call for chunk #{} (chars={}, lines≈{})", idx, chunk.length(), chunk.lines().count());
+				log.info("LLM call for chunk #{} (chars={}, lines≈{}) with context situation={}, location={}",
+					idx, chunk.length(), chunk.lines().count(), situation, location);
 				log.debug("[TRACE] chunk #{} input:\n{}", idx, clip(chunk));
 
 				return gmsClient.chatWithSchema(developerPrompt, chunk, schemaName, schema)
@@ -128,19 +133,24 @@ public class LyricsParsingService {
 
 	/** parse() + 저장. 기존 데이터 있으면 LLM 스킵 후 DB→JSON 반환. */
 	public Mono<ObjectNode> parseAndSave(String learnedSongId, String rawLyrics) {
+		return parseAndSave(learnedSongId, rawLyrics, null, null);
+	}
+
+	/** parse() + 저장. situation/location을 포함한 context-aware 파싱 */
+	public Mono<ObjectNode> parseAndSave(String learnedSongId, String rawLyrics, String situation, String location) {
 		// JPA I/O는 boundedElastic로 작업분리
-		return Mono.fromCallable(() -> lyricsPersistService.existsAny(learnedSongId))
+		return Mono.fromCallable(() -> existsWithContext(learnedSongId, situation, location))
 			.subscribeOn(Schedulers.boundedElastic())
 			.flatMap(exists -> {
 				if (exists) {
-					log.info("learnedSongId={} already has parsed rows. Skip LLM.", learnedSongId);
-					return Mono.fromCallable(() -> lyricsPersistService.loadAsJson(learnedSongId))
+					log.info("learnedSongId={}, situation={}, location={} already has parsed rows. Skip LLM.", learnedSongId, situation, location);
+					return Mono.fromCallable(() -> loadAsJsonWithContext(learnedSongId, situation, location))
 						.subscribeOn(Schedulers.boundedElastic());
 				}
 				// 신규: 파싱 → 저장 → 결과 반환
-				return this.parse(rawLyrics)
+				return this.parseWithContext(rawLyrics, situation, location)
 					.flatMap(parsed ->
-						Mono.fromRunnable(() -> lyricsPersistService.saveAll(learnedSongId, parsed))
+						Mono.fromRunnable(() -> saveAllWithContext(learnedSongId, parsed, situation, location))
 							.subscribeOn(Schedulers.boundedElastic())
 							.thenReturn(parsed)
 					);
@@ -213,6 +223,127 @@ public class LyricsParsingService {
 				return root;
 			})
 			.subscribeOn(Schedulers.boundedElastic());
+	}
+
+	public Mono<ObjectNode> parseAndSaveBySongIdWithContext(String songId, String situation, String location) {
+		if (songId == null || songId.isBlank()) {
+			return Mono.error(new IllegalArgumentException("songId 값이 비어 있습니다."));
+		}
+
+		// songId를 learnedSongId로 사용 (context-aware 파싱)
+		String learnedSongId = songId;
+
+		// 0) 가사 로딩 (없으면 404)
+		Mono<String> lyricsMono = Mono.fromCallable(() ->
+				songParsingRepository.findLyricsBySongId(songId))
+			.subscribeOn(Schedulers.boundedElastic())
+			.flatMap(opt -> opt.map(Mono::just)
+				.orElseGet(() -> Mono.error(
+					new ResponseStatusException(HttpStatus.NOT_FOUND,
+						"해당 songId에 대한 가사가 존재하지 않습니다."))));
+
+		// 1) Context-aware 파싱 데이터 존재 여부 체크
+		Mono<Boolean> existsMono = Mono.fromCallable(() ->
+				existsWithContext(learnedSongId, situation, location))
+			.subscribeOn(Schedulers.boundedElastic());
+
+		return existsMono.flatMap(exists -> {
+			if (exists) {
+				log.info("songId={}, situation={}, location={} 이미 파싱 데이터 존재 → LLM 스킵, JPA 재조회 후 조립",
+					songId, situation, location);
+				return assembleFromJpaWithContext(learnedSongId, situation, location);
+			}
+
+			// 신규: 가사 로딩 → context-aware 파싱 → 저장 → JPA 재조회/조립
+			return lyricsMono
+				.flatMap(rawLyrics -> {
+					if (rawLyrics.isBlank()) {
+						return Mono.error(new ResponseStatusException(
+							HttpStatus.BAD_REQUEST, "해당 songId의 가사가 비어 있습니다."));
+					}
+					return parseWithContext(rawLyrics, situation, location);
+				})
+				.flatMap(parsed ->
+					Mono.fromRunnable(() -> saveAllWithContext(learnedSongId, parsed, situation, location))
+						.subscribeOn(Schedulers.boundedElastic())
+						.then(assembleFromJpaWithContext(learnedSongId, situation, location))
+				);
+		});
+	}
+
+	private Mono<ObjectNode> assembleFromJpaWithContext(String learnedSongId, String situation, String location) {
+		return Mono.fromCallable(() -> {
+				ObjectNode root = objectMapper.createObjectNode();
+
+				root.set("words", objectMapper.valueToTree(
+					wordRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+
+				root.set("expressions", objectMapper.valueToTree(
+					expressionRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+
+				root.set("idioms", objectMapper.valueToTree(
+					idiomRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+
+				root.set("sentences", objectMapper.valueToTree(
+					sentenceRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+
+				return root;
+			})
+			.subscribeOn(Schedulers.boundedElastic());
+	}
+
+	// ===== Context-aware 헬퍼 메서드 =====
+
+	private boolean existsWithContext(String learnedSongId, String situation, String location) {
+		return wordRepository.existsByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location) ||
+			   expressionRepository.existsByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location) ||
+			   idiomRepository.existsByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location) ||
+			   sentenceRepository.existsByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location);
+	}
+
+	private ObjectNode loadAsJsonWithContext(String learnedSongId, String situation, String location) {
+		ObjectNode root = objectMapper.createObjectNode();
+
+		root.set("words", objectMapper.valueToTree(
+			wordRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+
+		root.set("expressions", objectMapper.valueToTree(
+			expressionRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+
+		root.set("idioms", objectMapper.valueToTree(
+			idiomRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+
+		root.set("sentences", objectMapper.valueToTree(
+			sentenceRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+
+		return root;
+	}
+
+	private void saveAllWithContext(String learnedSongId, ObjectNode parsed, String situation, String location) {
+		lyricsPersistService.saveAllWithContext(learnedSongId, parsed, situation, location);
+	}
+
+	private String buildContextualPrompt(String situation, String location) {
+		String basePrompt = promptManager.lyricsPrompt();
+
+		if (situation == null && location == null) {
+			return basePrompt;
+		}
+
+		StringBuilder contextualPrompt = new StringBuilder(basePrompt);
+		contextualPrompt.append("\n\n추가 컨텍스트:");
+
+		if (situation != null && !situation.trim().isEmpty()) {
+			contextualPrompt.append("\n상황: ").append(situation);
+		}
+
+		if (location != null && !location.trim().isEmpty()) {
+			contextualPrompt.append("\n장소: ").append(location);
+		}
+
+		contextualPrompt.append("\n\n위 상황과 장소에서 사용하기 적합한 어휘, 표현, 관용구, 문장들을 우선적으로 추출해주세요.");
+
+		return contextualPrompt.toString();
 	}
 
 	// ===== 코어 헬퍼 =====

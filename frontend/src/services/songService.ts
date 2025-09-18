@@ -23,12 +23,20 @@ export async function createLearnedSong(
   payload: LearnedReq,
   accessToken?: string
 ) {
-  const { data } = await http.post<LearnedRes>("/songs/learned", payload, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  // songId를 URL path에 포함
+  const { data } = await http.post<LearnedRes>(
+    `/songs/learned/${payload.songId}`,
+    {
+      situation: payload.situation || null,
+      location: payload.location || null,
     },
-  });
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+    }
+  );
   return data.data; // learnedSongId 등을 돌려줌
 }
 
@@ -36,9 +44,17 @@ export async function fetchSongDetail(
   songId: string,
   params: { situation?: string; location?: string } = {}
 ): Promise<SongDetail> {
-  const { data } = await http.get<SongDetailRes>(`/songs/${songId}`, {
-    params, // ✅ GET 쿼리로 전달
-    headers: { "Content-Type": "application/json" },
-  });
-  return data;
+  // POST 방식으로 body에 situation, location 전달
+  const response = await http.post<SongDetailRes>(
+    `/songs/${songId}`,
+    {
+      situation: params.situation || null,
+      location: params.location || null,
+    },
+    {
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+  // ApiResponse wrapper에서 실제 데이터 추출
+  return response.data.data;
 }

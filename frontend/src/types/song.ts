@@ -17,5 +17,9 @@ export type SongDetail = {
   lyricChunks: LyricChunk[]; // 한 줄 단위 (영/한)
 };
 
-// 서버가 래퍼 없이 위 스펙 그대로 반환한다고 가정
-export type SongDetailRes = SongDetail;
+// 서버 응답은 ApiResponse로 감싸져 있음
+export type SongDetailRes = {
+  status: number;
+  message: string;
+  data: SongDetail;
+};

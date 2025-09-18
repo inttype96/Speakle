@@ -12,6 +12,8 @@ import com.sevencode.speakle.learn.exception.*;
 import com.sevencode.speakle.learn.repository.BlankRepository;
 import com.sevencode.speakle.learn.repository.BlankResultRepository;
 import com.sevencode.speakle.learn.repository.LearnedSongRepository;
+import com.sevencode.speakle.parser.repository.SentenceRepository;
+import com.sevencode.speakle.parser.entity.SentenceEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,7 @@ public class BlankServiceImpl implements BlankService{
     private final BlankRepository blankRepository;
     private final BlankResultRepository blankResultRepository;
     private final LearnedSongRepository learnedSongRepository;
+    private final SentenceRepository sentenceRepository;
 
     private final Random random = new Random();
 
