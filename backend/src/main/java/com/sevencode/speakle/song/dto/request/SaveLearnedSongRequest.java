@@ -11,7 +11,6 @@ import java.util.List;
 @Builder
 public class SaveLearnedSongRequest {
     private String songId;
-    private List<String> artists;
     private String situation;
     private String location;
 }

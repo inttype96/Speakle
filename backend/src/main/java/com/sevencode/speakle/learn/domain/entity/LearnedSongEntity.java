@@ -28,7 +28,7 @@ public class LearnedSongEntity {
     private Long userId;
 
     @Column(name = "song_id")
-    private Long songId;
+    private String songId;
 
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "artists", columnDefinition = "text[]")
