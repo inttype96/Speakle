@@ -376,7 +376,7 @@ const onSubmit = useCallback(async () => {
       <Dialog open={openResult} onOpenChange={setOpenResult}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-gray-900 dark:text-gray-700, mb-3">
+            <DialogTitle className="text-gray-900 dark:text-gray-700 mb-3">
               {lastIsCorrect ? "정답입니다! 🎉" : "오답입니다 😢"}
             </DialogTitle>
             <DialogDescription className="space-y-2">
