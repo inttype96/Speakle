@@ -5,8 +5,8 @@ import type {
 } from '@/services/spotify'
 
 interface SpotifyTabProps {
-  spotifyStatus: SpotifyStatusResponse['data'] | null
-  spotifyProfile: SpotifyProfileResponse['data'] | null
+  spotifyStatus: SpotifyStatusResponse | null
+  spotifyProfile: SpotifyProfileResponse | null
   onConnect: () => void
   onDisconnect: () => void
 }

@@ -56,8 +56,8 @@ export default function MyPage() {
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [recentSongs, setRecentSongs] = useState<LearnedSong[]>([])
   const [checkinInfo, setCheckinInfo] = useState<CheckinResponse['data'] | null>(null)
-  const [spotifyStatus, setSpotifyStatus] = useState<SpotifyStatusResponse['data'] | null>(null)
-  const [spotifyProfile, setSpotifyProfile] = useState<SpotifyProfileResponse['data'] | null>(null)
+  const [spotifyStatus, setSpotifyStatus] = useState<SpotifyStatusResponse | null>(null)
+  const [spotifyProfile, setSpotifyProfile] = useState<SpotifyProfileResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [apiErrors, setApiErrors] = useState({
@@ -70,6 +70,7 @@ export default function MyPage() {
   const [editForm, setEditForm] = useState({
     username: ''
   })
+  const [activeTab, setActiveTab] = useState('overview')
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -79,19 +80,29 @@ export default function MyPage() {
     loadAllData()
   }, [navigate])
 
-  // Spotify 연동 후 돌아왔을 때 데이터 새로고침
+  // Spotify 탭이 활성화될 때 데이터 새로고침
   useEffect(() => {
-    const urlParams = new URLSearchParams(location.search)
-    const spotifyConnected = urlParams.get('spotify_connected')
-
-    if (spotifyConnected === 'true') {
-      // URL에서 파라미터 제거
-      navigate('/mypage', { replace: true })
-      // Spotify 데이터만 다시 로드
+    if (activeTab === 'spotify') {
       loadSpotifyData()
-      toast.success('Spotify 연동이 완료되었습니다!')
     }
-  }, [location.search, navigate])
+  }, [activeTab])
+
+  // 페이지 포커스될 때 Spotify 데이터 새로고침 (연동 후 돌아왔을 때)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (document.visibilityState === 'visible') {
+        loadSpotifyData(true) // 연동 성공 토스트 표시
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleFocus)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleFocus)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [])
 
   const loadAllData = async () => {
     try {
@@ -216,7 +227,7 @@ export default function MyPage() {
   const loadSpotifyStatus = async () => {
     try {
       const response = await getSpotifyStatusAPI()
-      setSpotifyStatus(response.data.data)
+      setSpotifyStatus(response.data)
     } catch (err) {
       console.error('Spotify 상태 로딩 실패:', err)
     }
@@ -225,19 +236,30 @@ export default function MyPage() {
   const loadSpotifyProfile = async () => {
     try {
       const response = await getSpotifyProfileAPI()
-      setSpotifyProfile(response.data.data)
+      setSpotifyProfile(response.data)
     } catch (err) {
       console.error('Spotify 프로필 로딩 실패:', err)
       setSpotifyProfile(null)
     }
   }
 
-  const loadSpotifyData = async () => {
+  const loadSpotifyData = async (showSuccessToast = false) => {
     try {
-      await Promise.allSettled([
+      const [statusResult, profileResult] = await Promise.allSettled([
         loadSpotifyStatus(),
         loadSpotifyProfile()
       ])
+
+      // 연동 성공 체크 (status가 성공적으로 로드되고 connected가 true인 경우)
+      if (showSuccessToast && statusResult.status === 'fulfilled') {
+        const currentStatus = spotifyStatus
+        // 새로 로드된 후 연동 상태 확인은 다음 렌더링에서 확인
+        setTimeout(() => {
+          if (spotifyStatus?.connected && !currentStatus?.connected) {
+            toast.success('Spotify 연동이 완료되었습니다!')
+          }
+        }, 100)
+      }
     } catch (err) {
       console.error('Spotify 데이터 로딩 실패:', err)
     }
@@ -419,7 +441,7 @@ export default function MyPage() {
           )}
 
           {profile && (
-            <Tabs defaultValue="overview" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="w-full">
                 <TabsTrigger value="overview">개요</TabsTrigger>
                 <TabsTrigger value="learning" className="flex items-center gap-1">

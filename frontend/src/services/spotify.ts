@@ -5,24 +5,16 @@ export type SpotifyConnectResponse = {
 };
 
 export type SpotifyStatusResponse = {
-  status: number;
-  message: string;
-  data: {
-    connected: boolean;
-    expiresAtEpochSec: number | null;
-    scope: string | null;
-  };
+  connected: boolean;
+  expiresAtEpochSec: number | null;
+  scope: string | null;
 };
 
 export type SpotifyProfileResponse = {
-  status: number;
-  message: string;
-  data: {
-    id: string;
-    display_name: string;
-    email: string;
-    country: string;
-  };
+  id: string;
+  displayName: string;
+  email: string;
+  country: string;
 };
 
 export async function connectSpotifyAPI() {

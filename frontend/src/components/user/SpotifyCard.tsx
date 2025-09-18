@@ -5,8 +5,8 @@ import { Separator } from '@/components/ui/separator'
 import type { SpotifyStatusResponse, SpotifyProfileResponse } from '@/services/spotify'
 
 interface SpotifyCardProps {
-  spotifyStatus: SpotifyStatusResponse['data'] | null
-  spotifyProfile: SpotifyProfileResponse['data'] | null
+  spotifyStatus: SpotifyStatusResponse | null
+  spotifyProfile: SpotifyProfileResponse | null
   onConnect: () => void
   onDisconnect: () => void
 }
@@ -60,7 +60,7 @@ export default function SpotifyCard({
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-muted-foreground">계정명:</span>
                   <span className="text-sm font-medium">
-                    {spotifyProfile.display_name || spotifyProfile.id}
+                    {spotifyProfile.displayName || spotifyProfile.id}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
