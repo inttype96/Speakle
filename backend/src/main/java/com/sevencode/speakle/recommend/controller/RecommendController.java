@@ -8,6 +8,7 @@ import com.sevencode.speakle.recommend.dto.response.RecommendResponse;
 import com.sevencode.speakle.recommend.dto.response.EnhancedRecommendResponse;
 import com.sevencode.speakle.learn.dto.response.ApiResponse;
 import com.sevencode.speakle.recommend.service.RecommendService;
+import com.sevencode.speakle.recommend.service.RecommendationSentenceService;
 import com.sevencode.speakle.song.domain.Song;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -27,6 +28,7 @@ import java.util.List;
 public class RecommendController {
 
     private final RecommendService recommendService;
+    private final RecommendationSentenceService recommendationSentenceService;
 
     // 기본 하이브리드 추천 (하위 호환성 유지)
     @PostMapping("/hybrid")

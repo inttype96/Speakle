@@ -46,9 +46,9 @@ public class CorsConfig {
 
 	/** Dev 환경 - 개발 서버 전용 Origin */
 	private void setDev(CorsConfiguration config) {
-		config.setAllowedOrigins(List.of("https://dev.myfrontend.com"));
+		config.setAllowedOriginPatterns(List.of("*"));
 		config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-		config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+		config.setAllowedHeaders(List.of("*"));
 
 	}
 
