@@ -1,5 +1,6 @@
 package com.sevencode.speakle.learn.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,7 @@ public class SpeakingEvaluationRequest {
     /**
      * Base64 오디오 데이터의 유효성을 추가 검증
      */
+    @JsonIgnore
     public boolean isValidAudioData() {
         if (audio == null || audio.trim().isEmpty()) {
             return false;
