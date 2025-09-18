@@ -22,11 +22,9 @@ import {
   Moon,
   Home,
   Car,
-  TentTree,
   Building2,
   GraduationCap,
   Library,
-  Landmark,
   Mountain,
 } from "lucide-react";
 
@@ -112,7 +110,7 @@ export default function ExplorePage() {
             className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
           >
             {SITUATIONS.map((opt) => (
-              <ToggleTile key={opt.value} option={opt} selected={situation === opt.value} />
+              <ToggleTile key={opt.value} option={opt} />
             ))}
           </ToggleGroup>
         </CardContent>
@@ -131,7 +129,7 @@ export default function ExplorePage() {
             className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
           >
             {LOCATIONS.map((opt) => (
-              <ToggleTile key={opt.value} option={opt} selected={location === opt.value} />
+              <ToggleTile key={opt.value} option={opt} />
             ))}
           </ToggleGroup>
         </CardContent>
@@ -198,10 +196,8 @@ export default function ExplorePage() {
 /** 카드처럼 보이는 ToggleGroupItem */
 function ToggleTile({
   option,
-  selected,
 }: {
   option: Option;
-  selected: boolean;
 }) {
   const Icon = option.icon;
   return (
