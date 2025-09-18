@@ -1,7 +1,7 @@
 import Navbar from "@/components/common/navbar"
 import Footer from "./footer"
 import SplashCursor from '@/lib/splashCursor'
-import Plasma from './Plasma';
+import Plasma from '@/lib/plasma';
 
 
 export default function IndexPage() {
