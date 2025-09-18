@@ -47,6 +47,7 @@ public class SpeakingServiceImpl implements SpeakingService {
      * 스피킹 평가 문제 생성(조회)
      */
     @Override
+    @Transactional
     public SpeakingQuestionResponse getSpeakingQuestion(Long learnedSongId, Integer questionNumber, Long userId) {
         // 1. 학습곡 존재 및 권한 확인
         LearnedSongEntity learned = learnedSongRepository.findById(learnedSongId)
@@ -118,6 +119,8 @@ public class SpeakingServiceImpl implements SpeakingService {
     /**
      * 스피킹 평가 채점 & 결과 저장
      */
+    @Override
+    @Transactional
     public SpeakingEvaluationResponse evaluateSpeaking(Long userId, SpeakingEvaluationRequest request) {
         // 1. 입력값 추가 검증
         if (!request.isValidAudioData()) {
