@@ -75,11 +75,11 @@ export default function MyPage() {
       const profileResponse = await getUserProfileAPI()
 
       // API 응답 구조 확인하고 데이터 추출
-      let profileData
+      let profileData: UserProfile
       if (profileResponse.data?.data) {
         profileData = profileResponse.data.data
-      } else if (profileResponse.data?.userId) {
-        profileData = profileResponse.data
+      } else if (profileResponse.data && 'userId' in profileResponse.data) {
+        profileData = profileResponse.data as UserProfile
       } else {
         throw new Error('사용자 프로필 데이터를 찾을 수 없습니다.')
       }
