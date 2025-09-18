@@ -395,7 +395,7 @@ export default function QuizPage() {
       <Dialog open={openResult} onOpenChange={setOpenResult}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-gray-900 dark:text-gray-700, mb-3">{isCorrect ? "정답입니다! 🎉" : "오답입니다! 😢"}</DialogTitle>
+            <DialogTitle className="text-gray-900 dark:text-gray-700 mb-3">{isCorrect ? "정답입니다! 🎉" : "오답입니다! 😢"}</DialogTitle>
             <DialogDescription className="space-y-2">
               {question && (
                 <>
