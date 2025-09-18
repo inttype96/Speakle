@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
 
-const SituationListen: React.FC = () => {
-  const [selectedSituations, setSelectedSituations] = useState<string[]>([]);
+// 상위 컴포넌트로부터 받을 props 타입 정의
+interface SituationListenProps {
+  onSituationChange: (situation: string) => void;  // 상황 선택 시 호출될 함수
+  selectedSituation: string;  // 현재 선택된 상황
+}
+
+const SituationListen: React.FC<SituationListenProps> = ({ 
+  onSituationChange, 
+  selectedSituation 
+}) => {
+  // 로컬 상태는 제거하고 상위에서 관리되는 상태 사용
+  // const [selectedSituations, setSelectedSituations] = useState<string[]>([]);
 
   const situations = [
     { id: 'morning', label: '아침 출근길', icon: '🌅' },
@@ -14,12 +24,14 @@ const SituationListen: React.FC = () => {
     { id: 'sleep', label: '잠들기 전', icon: '🌙' }
   ];
 
+  // 상황 선택 핸들러 - 상위 컴포넌트의 함수 호출
   const toggleSituation = (id: string) => {
-    setSelectedSituations(prev => 
-      prev.includes(id) 
-        ? prev.filter(s => s !== id)
-        : [...prev, id]
-    );
+    // 현재 선택된 상황과 같으면 선택 해제, 다르면 선택
+    if (selectedSituation === id) {
+      onSituationChange('');  // 선택 해제
+    } else {
+      onSituationChange(id);  // 새로운 상황 선택
+    }
   };
 
   return (
@@ -31,7 +43,7 @@ const SituationListen: React.FC = () => {
             key={situation.id}
             onClick={() => toggleSituation(situation.id)}
             className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-              selectedSituations.includes(situation.id)
+              selectedSituation === situation.id
                 ? 'border-primary bg-primary/10 text-primary-foreground shadow-md'
                 : 'border-border bg-card text-card-foreground hover:border-primary/30 hover:bg-muted/50'
             }`}
