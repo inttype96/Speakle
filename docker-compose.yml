@@ -78,7 +78,7 @@ services:
     image: semitechnologies/weaviate:1.24.12
     container_name: weaviate
     ports:
-      - "8082:8082"
+      - "8082:8080"
       - "50051:50051"
     environment:
       QUERY_DEFAULTS_LIMIT: 25
@@ -86,7 +86,6 @@ services:
       PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
       ENABLE_MODULES: text2vec-openai
       CLUSTER_HOSTNAME: 'node1'
-      WEAVIATE_PORT: 8082
     volumes:
       - ./weaviate_data:/var/lib/weaviate
     networks:
