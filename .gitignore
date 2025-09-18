@@ -7,6 +7,7 @@
 
 # **environment**
 .env
+.env.example
 
 ### VisualStudioCode ###
 .vscode/*
@@ -16,9 +17,16 @@
 !.vscode/extensions.json
 !.vscode/*.code-snippets
 
+### dataset ###
+/data-service/data/*.csv
+/data-service/data/*.parquet
+/
+### venv ###
+/data-service/venv311/*
+/weaviate_data/*
 # Local History for Visual Studio Code
 .history/
-
+.idea
 # Built Visual Studio Code Extensions
 *.vsix
 

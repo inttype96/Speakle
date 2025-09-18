@@ -76,6 +76,20 @@ services:
     networks:
       - proxy
 
+  weaviate:
+    image: semitechnologies/weaviate:1.24.12
+    # ports:
+    #   - "8082:8080"
+    #   - "50051:50051"
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      ENABLE_MODULES: text2vec-openai
+      CLUSTER_HOSTNAME: 'node1'
+    volumes:
+      - ./weaviate_data:/var/lib/weaviate
+
   # prometheus:
   #   image: prom/prometheus
   #   container_name: prometheus

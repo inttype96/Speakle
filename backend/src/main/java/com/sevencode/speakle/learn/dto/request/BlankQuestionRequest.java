@@ -21,8 +21,7 @@ public class BlankQuestionRequest {
     private String location;
 
     @NotNull(message = "song_id는 필수입니다.")
-    @Positive(message = "곡 ID는 양수여야 합니다.")
-    private Long songId;
+    private String songId;
 
     @NotNull(message = "문제 번호는 필수입니다.")
     @Min(value = 1, message = "문제 번호는 1 이상이어야 합니다.")
