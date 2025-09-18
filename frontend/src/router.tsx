@@ -8,7 +8,6 @@ import SignupPage from "@/pages/auth/signupPage";
 import SpotifySetupPage from "@/pages/spotify/spotify-setup";
 import SpotifyCallbackPage from "@/pages/spotify/spotify-callback";
 import MyPage from "@/pages/user/myPage";
-import LearnedSongDetailPage from "@/pages/user/learnedSongDetailPage";
 import NotFoundPage from "@/pages/common/notFoundPage";
 
 const router = createBrowserRouter([
@@ -43,10 +42,6 @@ const router = createBrowserRouter([
     {
         path: "/mypage",
         element: <MyPage />,
-    },
-    {
-        path: "/learned-songs/:learnedSongId",
-        element: <LearnedSongDetailPage />,
     },
     {
         path: "*",
