@@ -79,7 +79,7 @@ export default function MyPage() {
       if (profileResponse.data?.data) {
         profileData = profileResponse.data.data
       } else if (profileResponse.data && 'userId' in profileResponse.data) {
-        profileData = profileResponse.data as UserProfile
+        profileData = profileResponse.data as unknown as UserProfile
       } else {
         throw new Error('사용자 프로필 데이터를 찾을 수 없습니다.')
       }
