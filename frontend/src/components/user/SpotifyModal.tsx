@@ -6,8 +6,8 @@ import type { SpotifyStatusResponse, SpotifyProfileResponse } from '@/services/s
 interface SpotifyModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  spotifyStatus: SpotifyStatusResponse['data'] | null
-  spotifyProfile: SpotifyProfileResponse['data'] | null
+  spotifyStatus: SpotifyStatusResponse | null
+  spotifyProfile: SpotifyProfileResponse | null
   onConnect: () => void
   onDisconnect: () => void
 }
@@ -36,7 +36,7 @@ export default function SpotifyModal({
                 {spotifyProfile && (
                   <div className="space-y-1">
                     <p className="font-medium text-foreground">
-                      {spotifyProfile.display_name || spotifyProfile.id}
+                      {spotifyProfile.displayName || spotifyProfile.id}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {spotifyProfile.email}

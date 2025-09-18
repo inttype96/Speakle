@@ -9,6 +9,8 @@ import com.sevencode.speakle.playlist.dto.response.CustomPlaylistTracksResponse;
 import com.sevencode.speakle.playlist.entity.CustomPlaylist;
 import com.sevencode.speakle.playlist.repository.CustomPlaylistRepository;
 import com.sevencode.speakle.playlist.repository.CustomPlaylistTrackRepository;
+import com.sevencode.speakle.song.domain.Song;
+import com.sevencode.speakle.song.repository.SongRepository;
 import com.sevencode.speakle.spotify.service.SpotifyService;
 
 import lombok.RequiredArgsConstructor;
@@ -19,9 +21,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -30,6 +35,7 @@ public class CustomPlaylistService {
 
 	private final CustomPlaylistRepository playlistRepository;
 	private final CustomPlaylistTrackRepository trackRepository;
+	private final SongRepository songRepository;
 
 	/**
 	 * 사용자가 기본 플레이리스트를 가지고 있는지 확인 (중복 방지용)
@@ -214,20 +220,40 @@ public class CustomPlaylistService {
 		CustomPlaylist playlist = playlistRepository.findByIdAndUserId(playlistId, auth.userId())
 			.orElseThrow(() -> new IllegalArgumentException("플레이리스트를 찾을 수 없습니다."));
 
+		int addedCount = 0;
+		int skippedCount = 0;
+		int invalidCount = 0;
+
 		for (String uri : request.getUris()) {
 			String songId = extractSongIdFromUri(uri);
+
+			// Song 존재성 검증
+			if (!songRepository.existsById(songId)) {
+				log.warn("존재하지 않는 Song ID - songId: {}", songId);
+				invalidCount++;
+				continue;
+			}
+
 			if (!trackRepository.existsByPlaylistIdAndSongId(playlistId, songId)) {
 				// 트랙 추가
 				com.sevencode.speakle.playlist.entity.CustomPlaylistTrack track = new com.sevencode.speakle.playlist.entity.CustomPlaylistTrack(
 					playlistId, auth.userId(), songId);
 				trackRepository.save(track);
+				addedCount++;
+			} else {
+				skippedCount++;
 			}
 		}
+
+		String message = String.format("추가: %d개, 중복: %d개, 유효하지 않음: %d개", addedCount, skippedCount, invalidCount);
 
 		return Map.of(
 			"snapshot_id", "custom_" + System.currentTimeMillis(),
 			"custom", true,
-			"message", "트랙이 플레이리스트에 추가되었습니다."
+			"message", message,
+			"added_count", addedCount,
+			"skipped_count", skippedCount,
+			"invalid_count", invalidCount
 		);
 	}
 
@@ -291,24 +317,95 @@ public class CustomPlaylistService {
 
 	private com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack convertToTrackDto(com.sevencode.speakle.playlist.entity.CustomPlaylistTrack track) {
 		com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack dto = new com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack();
-		dto.setAddedAt(track.getAddedAt().toString());
+
+		// 추가 날짜를 사용자 친화적인 형식으로 포맷팅 (YY-MM-DD)
+		dto.setAddedAt(track.getAddedAt().atZone(ZoneId.systemDefault())
+			.format(DateTimeFormatter.ofPattern("yy-MM-dd")));
 
 		com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Track trackInfo = new com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Track();
 		trackInfo.setId(track.getSongId());
-		trackInfo.setName("Song " + track.getSongId()); // Mock 데이터
+
+		// Song 정보 조회
+		Song song = songRepository.findById(track.getSongId()).orElse(null);
+
+		if (song != null) {
+			// 실제 Song 정보 사용
+			trackInfo.setName(song.getTitle());
+
+			// Duration 정보 확인 및 로깅
+			if (song.getDurationMs() != null) {
+				trackInfo.setDurationMs(song.getDurationMs().intValue());
+
+				// 사용자 친화적인 시간 형식 추가 (예: 3:43)
+				int totalSeconds = (int) (song.getDurationMs() / 1000);
+				int minutes = totalSeconds / 60;
+				int seconds = totalSeconds % 60;
+				String formattedDuration = String.format("%d:%02d", minutes, seconds);
+				trackInfo.setDurationFormatted(formattedDuration);
+
+				log.debug("Song duration found - songId: {}, duration: {}ms ({})", track.getSongId(), song.getDurationMs(), formattedDuration);
+			} else {
+				trackInfo.setDurationMs(180000); // 3분 기본값
+				trackInfo.setDurationFormatted("3:00");
+				log.debug("Song duration is null - songId: {}, using default 180000ms (3:00)", track.getSongId());
+			}
+
+			// Artist 정보 (여러 아티스트가 쉼표로 구분되어 저장되어 있을 수 있음)
+			if (song.getArtists() != null && !song.getArtists().trim().isEmpty()) {
+				String[] artistNames = song.getArtists().split(",");
+				List<com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Artist> artists =
+					Stream.of(artistNames)
+						.map(name -> {
+							com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Artist artist =
+								new com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Artist();
+							artist.setName(name.trim());
+							return artist;
+						})
+						.collect(Collectors.toList());
+				trackInfo.setArtists(artists);
+			} else {
+				// Artist 정보가 없는 경우 기본값
+				com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Artist artist =
+					new com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Artist();
+				artist.setName("Unknown Artist");
+				trackInfo.setArtists(List.of(artist));
+			}
+
+			// Album 정보
+			com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Album album =
+				new com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Album();
+			album.setName(song.getAlbum() != null ? song.getAlbum() : "Unknown Album");
+
+			// Album 이미지가 있는 경우 추가
+			if (song.getAlbumImgUrl() != null && !song.getAlbumImgUrl().trim().isEmpty()) {
+				com.sevencode.speakle.playlist.dto.response.CustomPlaylistResponse.Image image =
+					new com.sevencode.speakle.playlist.dto.response.CustomPlaylistResponse.Image();
+				image.setUrl(song.getAlbumImgUrl());
+				album.setImages(List.of(image));
+			}
+			trackInfo.setAlbum(album);
+
+		} else {
+			// Song을 찾을 수 없는 경우 기본값 설정
+			log.warn("Song을 찾을 수 없음 - songId: {}", track.getSongId());
+			trackInfo.setName("Unknown Song (" + track.getSongId() + ")");
+			trackInfo.setDurationMs(180000); // 3분 기본값
+			trackInfo.setDurationFormatted("3:00");
+
+			// Artist 정보 (기본값)
+			com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Artist artist =
+				new com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Artist();
+			artist.setName("Unknown Artist");
+			trackInfo.setArtists(List.of(artist));
+
+			// Album 정보 (기본값)
+			com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Album album =
+				new com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Album();
+			album.setName("Unknown Album");
+			trackInfo.setAlbum(album);
+		}
+
 		trackInfo.setUri("custom:track:" + track.getSongId());
-		trackInfo.setDurationMs(180000); // 3분 Mock
-
-		// Artist 정보 (Mock)
-		com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Artist artist = new com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Artist();
-		artist.setName("Artist " + track.getSongId());
-		trackInfo.setArtists(List.of(artist));
-
-		// Album 정보 (Mock)
-		com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Album album = new com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Album();
-		album.setName("Album " + track.getSongId());
-		trackInfo.setAlbum(album);
-
 		dto.setTrack(trackInfo);
 		return dto;
 	}

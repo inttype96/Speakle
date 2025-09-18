@@ -5,8 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Navbar from "@/components/common/navbar";
 
@@ -52,35 +50,20 @@ const LOCATIONS: Option[] = [
   { value: "outdoor", label: "야외/산책", icon: Mountain },
 ];
 
-const GENRES: string[] = [
-  "Pop",
-  "K-Pop",
-  "Rock",
-  "Hip-Hop",
-  "R&B",
-  "Electronic",
-  "Indie",
-  "Ballad",
-  "Jazz",
-  "Country",
-];
-
 export default function ExplorePage() {
   const navigate = useNavigate();
   const [situation, setSituation] = useState<string>("");
   const [location, setLocation] = useState<string>("");
-  const [genres, setGenres] = useState<string[]>([]);
 
   const canRecommend = useMemo(
-    () => !!situation && !!location && genres.length > 0,
-    [situation, location, genres]
+    () => !!situation && !!location,
+    [situation, location]
   );
 
   const handleRecommend = () => {
     const params = new URLSearchParams();
     params.set("situation", situation);
     params.set("location", location);
-    params.set("genre", genres.join(",")); // 다중 선택 → 콤마로 직렬화
     navigate(`/recommendations?${params.toString()}`);
   };
 
@@ -93,7 +76,7 @@ export default function ExplorePage() {
       <div className="text-center space-y-2 mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">나만의 음악 찾기</h1>
         <p className="text-muted-foreground">
-          상황과 장소, 그리고 선호하는 장르를 선택하면 당신에게 맞춘 곡을 추천해드려요.
+          영어를 배우고 싶은 상황과 장소를 선택하면 당신에게 맞춘 곡을 추천해드려요.
         </p>
       </div>
 
@@ -135,44 +118,6 @@ export default function ExplorePage() {
         </CardContent>
       </Card>
 
-      {/* 장르 */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="text-lg">선호하는 장르를 선택해주세요.</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {GENRES.map((g) => {
-              const active = genres.includes(g);
-              return (
-                <Badge
-                  key={g}
-                  variant={active ? "default" : "outline"}
-                  className={cn(
-                    "cursor-pointer text-sm px-3 py-1 rounded-full",
-                    active && "ring-2 ring-primary/30"
-                  )}
-                  onClick={() =>
-                    setGenres((prev) =>
-                      prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]
-                    )
-                  }
-                >
-                  {g}
-                </Badge>
-              );
-            })}
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>선택된 장르</span>
-            <span>{genres.length ? genres.join(" · ") : "없음"}</span>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* 추천 버튼 */}
       <div className="flex justify-center">
         <Button size="lg" className="px-6" onClick={handleRecommend} disabled={!canRecommend}>
@@ -184,7 +129,7 @@ export default function ExplorePage() {
       <div className="mt-8 text-sm text-muted-foreground">
         <Card>
           <CardContent className="space-y-1 py-4">
-            <p>• 상황, 장소, 장르 중 하나 이상을 선택할수록 추천 정확도가 높아집니다.</p>
+            <p>• 상황, 장소 하나 이상을 선택할수록 추천 정확도가 높아집니다.</p>
             <p>• 추천은 선택된 키워드를 바탕으로 영어 학습에 적합한 곡을 우선 제공합니다.</p>
           </CardContent>
         </Card>

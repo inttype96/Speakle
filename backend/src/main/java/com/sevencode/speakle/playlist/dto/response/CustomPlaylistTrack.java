@@ -46,6 +46,10 @@ public class CustomPlaylistTrack {
 		@JsonProperty("duration_ms")
 		private Integer durationMs;
 
+		@Schema(description = "트랙 길이 (분:초 형식)", example = "3:43")
+		@JsonProperty("duration_formatted")
+		private String durationFormatted;
+
 		@Schema(description = "외부 URL")
 		@JsonProperty("external_urls")
 		private CustomPlaylistResponse.ExternalUrls externalUrls;
