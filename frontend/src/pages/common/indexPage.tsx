@@ -1,9 +1,11 @@
 import Navbar from "@/components/common/navbar"
 import Footer from "./footer"
+import SplashCursor from '@/lib/splashCursor'
 
 export default function IndexPage() {
     return (
         <div className="bg-background text-foreground">
+            <SplashCursor />
             <Navbar />
 
             {/* Hero Section */}
