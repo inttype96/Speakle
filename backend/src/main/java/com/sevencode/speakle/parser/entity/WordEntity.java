@@ -22,7 +22,7 @@ public class WordEntity {
 	private Long id;
 
 	@Column(name = "learned_song_id", nullable = false)
-	private Long learnedSongId;
+	private String learnedSongId;
 
 	@Column(name = "word", nullable = false, length = 255)
 	private String word;
