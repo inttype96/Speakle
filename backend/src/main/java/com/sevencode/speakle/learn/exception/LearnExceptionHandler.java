@@ -148,6 +148,32 @@ public class LearnExceptionHandler {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(errorResponse);
     }
 
+    @ExceptionHandler(InvalidAudioDataException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidAudioData(
+            InvalidAudioDataException ex, WebRequest request) {
+        log.warn("유효하지 않은 오디오 데이터 - 경로: {}, 메시지: {}", getRequestPath(request), ex.getMessage());
+
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "INVALID_AUDIO_DATA",
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(ApiTimeoutException.class)
+    public ResponseEntity<ApiErrorResponse> handleApiTimeout(
+            ApiTimeoutException ex, WebRequest request) {
+        log.warn("API 타임아웃 발생 - 경로: {}, 메시지: {}", getRequestPath(request), ex.getMessage());
+
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "SPEAKING_API_TIMEOUT",
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(errorResponse);
+    }
+
     @ExceptionHandler(SpeakingNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleSpeakingNotFound(
             SpeakingNotFoundException ex, WebRequest request) {
