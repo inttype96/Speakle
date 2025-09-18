@@ -442,7 +442,6 @@ export default function MyPage() {
                 <div className="grid gap-6 md:grid-cols-2">
                   <ProfileCard
                     profile={profile}
-                    pointProfile={pointProfile}
                     checkinInfo={checkinInfo}
                     checkinError={apiErrors.checkin}
                     onEditClick={openEditModal}
