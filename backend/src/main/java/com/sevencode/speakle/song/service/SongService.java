@@ -11,6 +11,7 @@ import com.sevencode.speakle.song.dto.response.SongDetailResponse;
 import com.sevencode.speakle.song.dto.response.SongResponse;
 // 수정(소연) - learn 패키지의 LearnedSongRepository 사용
 import com.sevencode.speakle.learn.repository.LearnedSongRepository;
+import com.sevencode.speakle.learn.service.LearningSentenceService;
 import com.sevencode.speakle.song.repository.LyricChunkRepository;
 import com.sevencode.speakle.song.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class SongService {
     private final LyricChunkRepository lyricChunkRepository;
     // 수정(소연) - learn 패키지의 LearnedSongRepository 추가
     private final LearnedSongRepository learnedSongRepository;
+    private final LearningSentenceService learningSentenceService;
 
     // 노래 리스트 (페이징)
     public Page<SongResponse> getSongs(Pageable pageable) {

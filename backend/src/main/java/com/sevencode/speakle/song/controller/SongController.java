@@ -2,11 +2,13 @@ package com.sevencode.speakle.song.controller;
 
 import com.sevencode.speakle.config.security.UserPrincipal;
 import com.sevencode.speakle.learn.dto.response.ApiResponse;
+import com.sevencode.speakle.recommend.service.RecommendationSentenceService;
 import com.sevencode.speakle.song.dto.request.SaveLearnedSongRequest;
 import com.sevencode.speakle.song.dto.request.SongSearchRequest;
 import com.sevencode.speakle.song.dto.response.SaveLearnedSongResponse;
 import com.sevencode.speakle.song.dto.response.SongDetailResponse;
 import com.sevencode.speakle.song.dto.response.SongResponse;
+import com.sevencode.speakle.song.dto.response.SongRecommendationReasonResponse;
 import com.sevencode.speakle.song.service.SongService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ import java.util.List;
 public class SongController {
 
     private final SongService songService;
+    private final RecommendationSentenceService recommendationSentenceService;
 
     // 노래 리스트 (페이징) - GET 방식
     @GetMapping
@@ -75,17 +78,53 @@ public class SongController {
             @PathVariable String songId,
             @RequestBody SaveLearnedSongRequest request,
             @AuthenticationPrincipal UserPrincipal me) {
-
-        // 수정(소연) - URL에서 받은 songId를 request에 설정
         request.setSongId(songId);
 
         SaveLearnedSongResponse data = songService.saveLearnedSong(me.userId(), request);
         ApiResponse<SaveLearnedSongResponse> response = ApiResponse.success(
                 200,
-                "노래 학습이 완료되었습니다.",
+                "노래 학습 게임이 시작되었습니다.",
                 data
         );
         return ResponseEntity.ok(response);
+    }
+
+    // 추천 이유 조회
+    @GetMapping("/reason/{songId}")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponse<SongRecommendationReasonResponse>> getRecommendationReason(
+            @PathVariable String songId,
+            @AuthenticationPrincipal UserPrincipal me) {
+
+        return recommendationSentenceService.getRecommendationReason(me.userId(), songId)
+                .map(reason -> {
+                    SongRecommendationReasonResponse data = SongRecommendationReasonResponse.builder()
+                            .songId(songId)
+                            .reasonSentence(reason.getReasonSentence())
+                            .message("이 문장과 같은 '상황', '표현'에 사용할 수 있는 곡을 배울 수 있어요!")
+                            .build();
+
+                    ApiResponse<SongRecommendationReasonResponse> response = ApiResponse.success(
+                            200,
+                            "추천 이유를 성공적으로 조회했습니다.",
+                            data
+                    );
+                    return ResponseEntity.ok(response);
+                })
+                .orElseGet(() -> {
+                    SongRecommendationReasonResponse data = SongRecommendationReasonResponse.builder()
+                            .songId(songId)
+                            .reasonSentence("추천 이유를 찾을 수 없습니다.")
+                            .message("이 곡의 추천 이유가 아직 생성되지 않았습니다.")
+                            .build();
+
+                    ApiResponse<SongRecommendationReasonResponse> response = ApiResponse.success(
+                            200,
+                            "추천 이유가 없습니다.",
+                            data
+                    );
+                    return ResponseEntity.ok(response);
+                });
     }
 
 //    //학습 노래 저장
