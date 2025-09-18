@@ -1,10 +1,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const StartButton: React.FC = () => {
+// 상위 컴포넌트로부터 받을 props 타입 정의
+interface StartButtonProps {
+  userInput: {
+    situation: string;  // 선택된 상황
+    location: string;   // 선택된 장소
+  };
+}
+
+const StartButton: React.FC<StartButtonProps> = ({ userInput }) => {
   const navigate = useNavigate();
 
   const handleStartClick = () => {
+    // 선택된 데이터를 확인하고 다음 페이지로 이동
+    console.log('선택된 데이터:', userInput);  // 디버깅용 로그
     navigate('/songlist');
   };
 

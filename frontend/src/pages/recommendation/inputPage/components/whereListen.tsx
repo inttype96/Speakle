@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
 
-const WhereListen: React.FC = () => {
-  const [selectedPlaces, setSelectedPlaces] = useState<string[]>([]);
+// 상위 컴포넌트로부터 받을 props 타입 정의
+interface WhereListenProps {
+  onLocationChange: (location: string) => void;  // 장소 선택 시 호출될 함수
+  selectedLocation: string;  // 현재 선택된 장소
+}
+
+const WhereListen: React.FC<WhereListenProps> = ({ 
+  onLocationChange, 
+  selectedLocation 
+}) => {
+  // 로컬 상태는 제거하고 상위에서 관리되는 상태 사용
+  // const [selectedPlaces, setSelectedPlaces] = useState<string[]>([]);
 
   const places = [
     { id: 'home', label: '집', icon: '🏠' },
@@ -14,12 +24,14 @@ const WhereListen: React.FC = () => {
     { id: 'walk', label: '산책 중', icon: '🚶' }
   ];
 
+  // 장소 선택 핸들러 - 상위 컴포넌트의 함수 호출
   const togglePlace = (id: string) => {
-    setSelectedPlaces(prev => 
-      prev.includes(id) 
-        ? prev.filter(p => p !== id)
-        : [...prev, id]
-    );
+    // 현재 선택된 장소와 같으면 선택 해제, 다르면 선택
+    if (selectedLocation === id) {
+      onLocationChange('');  // 선택 해제
+    } else {
+      onLocationChange(id);  // 새로운 장소 선택
+    }
   };
 
   return (
@@ -31,7 +43,7 @@ const WhereListen: React.FC = () => {
             key={place.id}
             onClick={() => togglePlace(place.id)}
             className={`p-4 rounded-lg border-2 transition-all duration-200 ${
-              selectedPlaces.includes(place.id)
+              selectedLocation === place.id
                 ? 'border-primary bg-primary/10 text-primary-foreground shadow-md'
                 : 'border-border bg-card text-card-foreground hover:border-primary/30 hover:bg-muted/50'
             }`}
