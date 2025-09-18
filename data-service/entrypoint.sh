@@ -17,3 +17,6 @@ echo "All ingestion scripts finished. Starting FastAPI server..."
 
 # Start the FastAPI application
 exec uvicorn main:app --host 0.0.0.0 --port 8081
+
+# sudo docker bulid -t fastapi .
+# sudo docker run -d --name fastapi --network proxy --env-file ../.env -v "./data:/app/data" fastapi

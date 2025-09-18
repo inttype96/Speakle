@@ -1,0 +1,12 @@
+# Docker 빌드 컨텍스트에서 대용량 데이터 폴더를 제외합니다.
+data/
+
+# Python 가상 환경 폴더를 제외합니다.
+.venv
+venv
+
+# Python 캐시 파일을 제외합니다.
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

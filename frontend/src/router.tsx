@@ -57,6 +57,18 @@ const router = createBrowserRouter([
         path: "*",
         element: <NotFoundPage />,
     },
+    {
+        path: "/input",
+        element: <InputPage />,
+    },
+    {
+        path: "/songlist",
+        element: <SongListPage />,
+    },
+    {
+        path: "/songdetail",
+        element: <SongDetailPage />,
+    },
 ]);
 
 export default router;
