@@ -13,7 +13,6 @@ import Footer from '@/pages/common/footer'
 // import RecentSongsCard from '@/components/user/RecentSongsCard'
 // import SpotifyCard from '@/components/user/SpotifyCard'
 import EditProfileModal from '@/components/user/EditProfileModal'
-import SpotifyModal from '@/components/user/SpotifyModal'
 import OverviewTab from '@/components/user/my-page-tabs/OverviewTab'
 import LearningTab from '@/components/user/my-page-tabs/LearningTab'
 import PlaylistsTab from '@/components/user/my-page-tabs/PlaylistsTab'
@@ -68,7 +67,6 @@ export default function MyPage() {
     checkin: false
   })
   const [editModalOpen, setEditModalOpen] = useState(false)
-  const [spotifyModalOpen, setSpotifyModalOpen] = useState(false)
   const [editForm, setEditForm] = useState({
     username: ''
   })
@@ -355,7 +353,6 @@ export default function MyPage() {
       setSpotifyStatus({ connected: false, expiresAtEpochSec: null, scope: null })
       setSpotifyProfile(null)
       toast.success('Spotify 연동이 해제되었습니다.')
-      setSpotifyModalOpen(false)
     } catch (err: any) {
       toast.error('Spotify 연동 해제에 실패했습니다.')
     }
@@ -440,7 +437,7 @@ export default function MyPage() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="overview" className="flex h-[600px]">
+              <TabsContent value="overview" className="space-y-6">
                 <OverviewTab
                   profile={profile}
                   checkinInfo={checkinInfo}
@@ -450,6 +447,7 @@ export default function MyPage() {
                   recentSongs={recentSongs}
                   playlists={playlists}
                   pointProfile={pointProfile}
+                  recentSongsError={apiErrors.recentSongs}
                 />
               </TabsContent>
 
@@ -461,11 +459,12 @@ export default function MyPage() {
                 <PlaylistsTab playlists={playlists} error={apiErrors.playlists} />
               </TabsContent>
 
-              <TabsContent value="spotify" className="flex h-[600px]">
+              <TabsContent value="spotify" className="space-y-6">
                 <SpotifyTab
                   spotifyStatus={spotifyStatus}
                   spotifyProfile={spotifyProfile}
-                  onManageClick={() => setSpotifyModalOpen(true)}
+                  onConnect={handleSpotifyConnect}
+                  onDisconnect={handleSpotifyDisconnect}
                 />
               </TabsContent>
 
@@ -489,15 +488,6 @@ export default function MyPage() {
             onDeleteAccount={handleDeleteAccount}
           />
 
-          {/* Spotify 연동 모달 */}
-          <SpotifyModal
-            open={spotifyModalOpen}
-            onOpenChange={setSpotifyModalOpen}
-            spotifyStatus={spotifyStatus}
-            spotifyProfile={spotifyProfile}
-            onConnect={handleSpotifyConnect}
-            onDisconnect={handleSpotifyDisconnect}
-          />
         </div>
       </div>
       <Footer />

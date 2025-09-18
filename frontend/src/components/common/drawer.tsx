@@ -1,7 +1,7 @@
 'use client'
 
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle, TransitionChild } from '@headlessui/react'
-import { XMarkIcon, LockClosedIcon, StarIcon, TrophyIcon, UserIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, LockClosedIcon, StarIcon, UserIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from '@/components/mode-toggle'
 import { Link } from 'react-router-dom'
@@ -64,13 +64,8 @@ export default function Drawer({ open, setOpen }: { open: boolean, setOpen: (ope
                     </Button>
                   )}
                   <Button variant="outline" size="lg" className="w-full mb-2">
-                    <Link to="/leaderboard" className="flex items-center justify-center">
+                    <Link to="/explore" className="flex items-center justify-center">
                       <StarIcon className="h-6 w-6 mr-2" /> 노래 추천 받기
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" size="lg" className="w-full mb-2">
-                    <Link to="/leaderboard" className="flex items-center justify-center">
-                      <TrophyIcon className="h-6 w-6 mr-2" /> 리더보드
                     </Link>
                   </Button>
                   <Button asChild variant="outline" size="lg" className="w-full mb-2">
