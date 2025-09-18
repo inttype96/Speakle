@@ -74,20 +74,19 @@ services:
     networks:
       - proxy
 
-  fastapi:
-    container_name: fastapi
-    build: ./data-service
-    # ports:
-    #   - '8081:8081'
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      weaviate:
-        condition: service_healthy
-    networks:
-      - proxy
+  # fastapi:
+  #   container_name: fastapi
+  #   build: ./data-service
+  #   # ports:
+  #   #   - '8081:8081'
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ./data-service/data:/app/data
+  #   depends_on:
+  #     - weaviate
+  #   networks:
+  #     - proxy
 
   weaviate:
     image: semitechnologies/weaviate:1.24.12
@@ -108,3 +107,6 @@ services:
 networks:
   proxy:
     driver: bridge
+
+volumes:
+  weaviate_data:
