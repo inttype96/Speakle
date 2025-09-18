@@ -3,15 +3,18 @@ package com.sevencode.speakle.learn.service;
 import com.sevencode.speakle.learn.domain.entity.BlankEntity;
 import com.sevencode.speakle.learn.domain.entity.BlankResultEntity;
 import com.sevencode.speakle.learn.domain.entity.LearnedSongEntity;
+import com.sevencode.speakle.learn.domain.entity.LearningSentence;
 import com.sevencode.speakle.learn.dto.request.BlankQuestionRequest;
 import com.sevencode.speakle.learn.dto.request.BlankResultRequest;
 import com.sevencode.speakle.learn.dto.response.BlankQuestionResponse;
 import com.sevencode.speakle.learn.dto.response.BlankResultResponse;
 import com.sevencode.speakle.learn.dto.response.BlankCompleteResponse;
 import com.sevencode.speakle.learn.exception.*;
-import com.sevencode.speakle.learn.repository.BlankRepository;
-import com.sevencode.speakle.learn.repository.BlankResultRepository;
-import com.sevencode.speakle.learn.repository.LearnedSongRepository;
+import com.sevencode.speakle.learn.repository.*;
+import com.sevencode.speakle.parser.entity.SentenceEntity;
+import com.sevencode.speakle.reward.dto.request.RewardUpdateRequest;
+import com.sevencode.speakle.reward.dto.response.RewardUpdateResponse;
+import com.sevencode.speakle.reward.service.RewardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +31,9 @@ public class BlankServiceImpl implements BlankService{
     private final BlankRepository blankRepository;
     private final BlankResultRepository blankResultRepository;
     private final LearnedSongRepository learnedSongRepository;
+    private final LearningSentenceRepository learningSentenceRepository;
+    private final SpeakingSentenceRepository speakingSentenceRepository;
+    private final RewardService rewardService;
 
     private final Random random = new Random();
 
@@ -119,47 +125,25 @@ public class BlankServiceImpl implements BlankService{
 
         // 1. questionNumber에 따라 문장 출처 결정
         if(req.getQuestionNumber()==1){
-            // 첫 번째 문제: recommendation_sentence 테이블에서 가져오기
-            // TODO: Recommendation_sentence 테이블에서 퀴즈 문장 가져오기 (getRecommendationSentence() 함수 구현하기)
-            // RecommendationSentence recommendationSentence = getRecommendationSentence(
-            //         request.getLearnedSongId(),
-            //         request.getQuestionNumber()
-            // );
-            // originalSentence = recommendationSentence.getCoreSentence();
-            // korean = recommendationSentence.getKorean();
-            // recommendationSentenceId = recommendationSentence.getRecommendationSentenceId();
-            // 테스트용 더미 값
-            originalSentence = "The club isn't the best place to find a lover";
-            korean = "클럽은 연인을 찾기에 최적의 장소가 아닙니다";
-            recommendationSentenceId = 123L;
-            //
+            // 첫 번째 문제: learning_sentence 테이블에서 가져오기
+            LearningSentence learningSentence = (LearningSentence) learningSentenceRepository
+                    .findFirstByLearnedSongIdOrderByOrderAsc(req.getLearnedSongId())
+                    .orElseThrow(() -> new NoSentenceAvailableException("해당 학습곡에 learning sentence가 없습니다."));
+
+            originalSentence = learningSentence.getCoreSentence();
+            korean = learningSentence.getKorean();
+            recommendationSentenceId = learningSentence.getLearningSentenceId();
         }else{
             // 두 번째, 세 번째 문제: sentences 테이블에서 가져오기
-            // TODO : Sentence 테이블에서 learnedSongId인 데이터 개수 계산하기
-            // long sentenceCount = sentenceRepository.countByLearnedSongId(learnedSongId);
-            // 테스트용 더미 값
-            long sentenceCount = 6;
-            //
+            List<SentenceEntity> sentences = speakingSentenceRepository.findByLearnedSongIdOrderByIdAsc(String.valueOf(req.getLearnedSongId()));
 
-            if (sentenceCount == 0) {
+            // 해당 학습곡의 문장 개수 확인
+            if (sentences.size() == 0) {
                 throw new NoSentenceAvailableException("해당 학습 곡에서 추출할 문장이 없습니다.");
             }
 
-            // 문장 조회 (학습한 sentence에서 가져오기)
-            // TODO : Sentence 테이블에서 Sentence 객체 기져오기
-            //  List<SentencesEntity> sentences = sentencesRepository.findByLearnedSongIdOrderBySentencesIdAsc(learnedSongId);
-            // 테스트용 더미 값
-            List<String> sentences = new ArrayList<>(Arrays.asList(
-                    "I have to buy new shoes",
-                    "I've been tryna call",
-                    "Sin City's cold and empty",
-                    "I said ooh I'm blinede by the lights",
-                    "I'm running out of time",
-                    "So I hit the road in overdrive"));
-            //
-
             int index;
-            if(sentenceCount == 6){
+            if(sentences.size() >= 6){
                 index = (req.getQuestionNumber() * 2) - 3;   // 빈칸 게임에 2, 4, 5번 문장 가져오기
             }else{
                 index = req.getQuestionNumber() - 1;         // 빈칸 게임에 1, 2번 문장 가져오기
@@ -169,10 +153,10 @@ public class BlankServiceImpl implements BlankService{
                 throw new IllegalArgumentException("해당 questionNumber에 맞는 문장이 존재하지 않습니다.");
             }
 
-            // String coreSentence = sentences.get(index).getSentence();
-            // 테스트용 코드
-            originalSentence =  sentences.get(index);
-            //
+            originalSentence = sentences.get(index).getSentence();
+            System.out.println("original Sentence : "+originalSentence);
+            korean = sentences.get(index).getTranslation();
+            recommendationSentenceId = -1L;
         }
 
         // 2. 빈칸 문제 생성
@@ -183,8 +167,7 @@ public class BlankServiceImpl implements BlankService{
         meta.put("question", quizResult.getQuestion());
         meta.put("answer", quizResult.getAnswers()); // List<String> -> JSON 배열로 직렬화됨
         meta.put("originSentence", originalSentence);
-//        meta.put("korean", recommendationSentence.getKorean());   // TODO: recommendation_sentence 테이블 연결하면 주석 삭제하기
-        meta.put("korean", "클럽은 연인을 찾기에 최적의 장소가 아닙니다"); // TODO: recommendation_sentence 테이블 연결하면 삭제하기
+        meta.put("korean", korean);
 
         BlankEntity blank = BlankEntity.builder()
                 .learnedSongId(req.getLearnedSongId())
@@ -192,8 +175,7 @@ public class BlankServiceImpl implements BlankService{
                 .location(req.getLocation())
                 .songId(req.getSongId())
                 .originSentence(originalSentence)
-                // .korean(recommendationSentence.getKorean())      // TODO: recommendation_sentence 테이블 연결하면 주석 삭제하기
-                .korean("클럽은 연인을 찾기에 최적의 장소가 아닙니다")    // TODO: recommendation_sentence 테이블 연결하면 삭제하기
+                .korean(korean)
                 .question(quizResult.getQuestion())
                 .answer(quizResult.getAnswers().toArray(new String[0]))
                 .level(BlankEntity.Level.BEGINNER)
@@ -208,8 +190,7 @@ public class BlankServiceImpl implements BlankService{
                 .blankId(savedBlank.getBlankId())
                 .learnedSongId(savedBlank.getLearnedSongId())
                 .songId(savedBlank.getSongId())
-                // .recommendationSentenceId(recommendationSentence.getRecommendationSentenceId())   // TODO: recommendation_sentence 테이블 연결하면 주석 삭제하기
-                .recommendationSentenceId(123L)         // TODO: recommendation_sentence 테이블 연결하면 삭제하기
+                .recommendationSentenceId(recommendationSentenceId)
                 .originSentence(savedBlank.getOriginSentence())
                 .korean(savedBlank.getKorean())
                 .question(savedBlank.getQuestion())
@@ -224,11 +205,14 @@ public class BlankServiceImpl implements BlankService{
     // 빈칸 문제 생성
     // ------------------------------------------------------------
     private BlankQuizResult createBlankQuiz(String sentence) {
+        sentence = sentence.trim();
         String[] words = sentence.split("\\s+");
         List<String> validWords = new ArrayList<>();
 
         // 1. 빈칸 퀴즈에 유효한 단어만 필터링
         for (String word : words) {
+            // 구두점 제거한 순수 단어만 검증
+            word = word.replaceAll("[^a-zA-Z]", "");
             if (isValidWord(word) && isValidWord(word.toLowerCase())) {
                 validWords.add(word);
             }
@@ -428,7 +412,15 @@ public class BlankServiceImpl implements BlankService{
 
             // 5. 포인트 업데이트 (정답인 경우)
             if (req.getIsCorrect()) {
-                // TODO: 포인트 업데이트 로직 추가
+                RewardUpdateRequest rewardRequest = RewardUpdateRequest.builder()
+                        .userId(userId)
+                        .delta(req.getScore())  // 획득할 포인트
+                        .source("BLANK")  // SourceType.BLANK
+                        .refType("BLANK_RESULT")  // RefType.BLANK_RESULT
+                        .refId(savedResult.getBlankId())  // Blank 결과 ID
+                        .build();
+
+                RewardUpdateResponse rewardResponse = rewardService.updateReward(rewardRequest, userId);
             }
 
             // 6. 응답 생성
