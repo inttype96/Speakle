@@ -517,17 +517,6 @@ export default function MyPage() {
             onConnect={handleSpotifyConnect}
             onDisconnect={handleSpotifyDisconnect}
           />
-
-          {/* 하단 네비게이션 */}
-          <div className="mt-8 pt-6 border-t">
-            <Button
-              onClick={() => navigate('/')}
-              variant="outline"
-              className="w-full"
-            >
-              메인으로 돌아가기
-            </Button>
-          </div>
         </div>
       </div>
       <Footer />
