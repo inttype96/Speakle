@@ -1,4 +1,4 @@
-package com.sevencode.speakle.recommend.domain;
+package com.sevencode.speakle.learn.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -10,26 +10,32 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "recommendation_sentence")
+@Table(name = "learning_sentence")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RecommendationSentence {
+public class LearningSentence {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "recommendation_sentence_id")
-    private Long recommendationSentenceId;
+    @Column(name = "learning_sentence_id")
+    private Long learningSentenceId;
+
+    @Column(name = "learned_song_id")
+    private Long learnedSongId;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "song_id", nullable = false)
-    private String songId;
+    @Column(name = "core_sentence", columnDefinition = "TEXT", nullable = false)
+    private String coreSentence;
 
-    @Column(name = "reason_sentence", columnDefinition = "TEXT", nullable = false)
-    private String reasonSentence;
+    @Column(name = "korean", columnDefinition = "TEXT")
+    private String korean;
+
+    @Column(name = "sentence_order", nullable = false)
+    private Long order;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

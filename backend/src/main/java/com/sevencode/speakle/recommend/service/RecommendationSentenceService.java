@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -17,46 +18,29 @@ public class RecommendationSentenceService {
     private final RecommendationSentenceRepository recommendationSentenceRepository;
 
     @Transactional
-    public void saveRecommendedSentences(Long userId, Long learnedSongId, List<String> coreSentences, List<String> koreanTranslations) {
-        log.info("[RecommendationSentenceService] 추천 문장 저장 시작 - userId={}, learnedSongId={}, sentences={}",
-                userId, learnedSongId, coreSentences.size());
+    public void saveRecommendationReason(Long userId, String songId, String reasonSentence) {
+        log.info("[RecommendationSentenceService] 추천 이유 저장 - userId={}, songId={}", userId, songId);
 
-        // 기존 추천 문장 삭제 (같은 learnedSongId)
-        recommendationSentenceRepository.deleteByLearnedSongId(learnedSongId);
+        // 기존 추천 이유가 있으면 업데이트, 없으면 생성
+        Optional<RecommendationSentence> existing = recommendationSentenceRepository.findByUserIdAndSongId(userId, songId);
 
-        // 새로운 추천 문장들 저장
-        for (int i = 0; i < coreSentences.size(); i++) {
-            String coreSentence = coreSentences.get(i);
-            String korean = (koreanTranslations != null && i < koreanTranslations.size())
-                    ? koreanTranslations.get(i) : null;
-
-            RecommendationSentence sentence = RecommendationSentence.builder()
-                    .userId(userId)
-                    .learnedSongId(learnedSongId)
-                    .coreSentence(coreSentence)
-                    .korean(korean)
-                    .order((long) (i + 1))
-                    .build();
-
-            recommendationSentenceRepository.save(sentence);
+        if (existing.isPresent()) {
+            // 기존 데이터 삭제 후 새로 생성 (업데이트 대신)
+            recommendationSentenceRepository.delete(existing.get());
         }
 
-        log.info("[RecommendationSentenceService] 추천 문장 저장 완료 - 총 {}개", coreSentences.size());
+        RecommendationSentence newReason = RecommendationSentence.builder()
+                .userId(userId)
+                .songId(songId)
+                .reasonSentence(reasonSentence)
+                .build();
+
+        recommendationSentenceRepository.save(newReason);
+        log.info("[RecommendationSentenceService] 추천 이유 저장 완료 - songId={}", songId);
     }
 
-    public List<RecommendationSentence> getRecommendedSentences(Long learnedSongId) {
-        log.info("[RecommendationSentenceService] 추천 문장 조회 - learnedSongId={}", learnedSongId);
-        return recommendationSentenceRepository.findByLearnedSongIdOrderByOrder(learnedSongId);
+    public Optional<RecommendationSentence> getRecommendationReason(Long userId, String songId) {
+        return recommendationSentenceRepository.findByUserIdAndSongId(userId, songId);
     }
 
-    public List<RecommendationSentence> getUserRecommendationHistory(Long userId) {
-        log.info("[RecommendationSentenceService] 사용자 추천 이력 조회 - userId={}", userId);
-        return recommendationSentenceRepository.findByUserIdOrderByCreatedAtDesc(userId);
-    }
-
-    @Transactional
-    public void deleteRecommendedSentences(Long learnedSongId) {
-        log.info("[RecommendationSentenceService] 추천 문장 삭제 - learnedSongId={}", learnedSongId);
-        recommendationSentenceRepository.deleteByLearnedSongId(learnedSongId);
-    }
 }

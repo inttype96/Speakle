@@ -19,6 +19,7 @@ import com.sevencode.speakle.song.domain.Song;
 import com.sevencode.speakle.song.repository.SongRepository;
 import com.sevencode.speakle.learn.repository.LearnHistoryRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +32,7 @@ import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RecommendService {
 
     private final FastApiClient fastApiClient;
@@ -109,8 +111,8 @@ public class RecommendService {
                 Math.min(end, totalElements)
         );
 
-        // 10. 추천 문장 저장
-        saveRecommendedSentences(userId, queryResponse);
+        // 10. 추천 이유 저장 (songId별 대표 문장)
+        saveRecommendationReasons(userId, queryResponse);
 
         // 11. 로그 저장
         saveRecommendationLog(userId, request, pagedSongs, queryResponse);
@@ -263,27 +265,31 @@ public class RecommendService {
         logRepository.save(log);
     }
 
-    private void saveRecommendedSentences(Long userId, QueryResponse queryResponse) {
+    private void saveRecommendationReasons(Long userId, QueryResponse queryResponse) {
         try {
-            // QueryResponse에서 추천 문장들 추출
-            List<String> coreSentences = queryResponse.getResults().stream()
-                    .map(Recommendation::getWords)
-                    .filter(words -> words != null && !words.trim().isEmpty())
-                    .distinct() // 중복 제거
-                    .collect(Collectors.toList());
+            // songId별로 점수가 가장 높은 문장을 추천 이유로 저장
+            Map<String, Recommendation> songReasonMap = queryResponse.getResults().stream()
+                    .collect(Collectors.groupingBy(
+                            Recommendation::getSongId,
+                            Collectors.maxBy(Comparator.comparing(Recommendation::getScore))
+                    ))
+                    .entrySet().stream()
+                    .filter(entry -> entry.getValue().isPresent())
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            entry -> entry.getValue().get()
+                    ));
 
-            if (!coreSentences.isEmpty()) {
-                // learnedSongId를 null로 설정 (추천 세션별 저장)
-                recommendationSentenceService.saveRecommendedSentences(
-                        userId,
-                        null, // learnedSongId는 나중에 특정 곡 학습시 연결
-                        coreSentences,
-                        null // 한국어 번역은 일단 null로 설정
-                );
+            for (Map.Entry<String, Recommendation> entry : songReasonMap.entrySet()) {
+                String songId = entry.getKey();
+                String reasonSentence = entry.getValue().getWords();
+
+                if (reasonSentence != null && !reasonSentence.trim().isEmpty()) {
+                    recommendationSentenceService.saveRecommendationReason(userId, songId, reasonSentence);
+                }
             }
         } catch (Exception e) {
-            // 추천 문장 저장 실패해도 전체 추천 프로세스는 계속 진행
-            System.err.println("추천 문장 저장 실패: " + e.getMessage());
+            log.error("[RecommendService] 추천 이유 저장 실패: {}", e.getMessage());
         }
     }
 
