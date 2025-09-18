@@ -38,6 +38,7 @@ public class RecommendService {
     private final RecommendationLogRepository logRepository;
     private final SongRepository songRepository;
     private final LearnHistoryRepository learnHistoryRepository;
+    private final RecommendationSentenceService recommendationSentenceService;
     private final ObjectMapper objectMapper;
 
     /* 향상된 상황 + 장소 기반 추천 with 메타데이터 */
@@ -108,10 +109,13 @@ public class RecommendService {
                 Math.min(end, totalElements)
         );
 
-        // 10. 로그 저장
+        // 10. 추천 문장 저장
+        saveRecommendedSentences(userId, queryResponse);
+
+        // 11. 로그 저장
         saveRecommendationLog(userId, request, pagedSongs, queryResponse);
 
-        // 11. 응답 반환
+        // 12. 응답 반환
         return EnhancedRecommendResponse.builder()
                 .recommendedSongs(pagedSongs)
                 .keywords(keywords)
@@ -257,6 +261,30 @@ public class RecommendService {
                 .build();
 
         logRepository.save(log);
+    }
+
+    private void saveRecommendedSentences(Long userId, QueryResponse queryResponse) {
+        try {
+            // QueryResponse에서 추천 문장들 추출
+            List<String> coreSentences = queryResponse.getResults().stream()
+                    .map(Recommendation::getWords)
+                    .filter(words -> words != null && !words.trim().isEmpty())
+                    .distinct() // 중복 제거
+                    .collect(Collectors.toList());
+
+            if (!coreSentences.isEmpty()) {
+                // learnedSongId를 null로 설정 (추천 세션별 저장)
+                recommendationSentenceService.saveRecommendedSentences(
+                        userId,
+                        null, // learnedSongId는 나중에 특정 곡 학습시 연결
+                        coreSentences,
+                        null // 한국어 번역은 일단 null로 설정
+                );
+            }
+        } catch (Exception e) {
+            // 추천 문장 저장 실패해도 전체 추천 프로세스는 계속 진행
+            System.err.println("추천 문장 저장 실패: " + e.getMessage());
+        }
     }
 
     private String toJson(Object obj) {
