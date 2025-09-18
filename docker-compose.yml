@@ -84,11 +84,7 @@ services:
     volumes:
       - ./data-service/data:/app/data
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      weaviate:
+      - weaviate
     networks:
       - proxy
 
