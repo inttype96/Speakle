@@ -5,9 +5,11 @@ import { refreshAPI } from "@/services/auth";
 
 type AuthState = {
   tokens: AuthTokens | null;
+  userId: number | null;
   login: (tokens: AuthTokens) => void;
   logout: () => void;
   setTokens: (tokens: AuthTokens | null) => void;
+  setUserId: (userId: number | null) => void;
 
   // (선택) refresh 시도
   tryRefreshToken: () => Promise<boolean>;
@@ -17,10 +19,12 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       tokens: null,
+      userId: null,
 
       login: (tokens) => set({ tokens }),
-      logout: () => set({ tokens: null }),
+      logout: () => set({ tokens: null, userId: null }),
       setTokens: (tokens) => set({ tokens }),
+      setUserId: (userId) => set({ userId }),
 
       tryRefreshToken: async () => {
         const rt = get().tokens?.refreshToken;
@@ -40,6 +44,7 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         tokens: state.tokens,
+        userId: state.userId,
       }),
     }
   )
@@ -56,4 +61,8 @@ export const getAccessToken = () => {
 
 export const getRefreshToken = () => {
   return useAuthStore.getState().tokens?.refreshToken ?? null;
+};
+
+export const getUserId = () => {
+  return useAuthStore.getState().userId ?? null;
 };
