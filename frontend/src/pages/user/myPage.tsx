@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore, isAuthenticated } from '@/store/auth'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Separator } from '@/components/ui/separator'
 import Navbar from '@/components/common/navbar'
 import Footer from '@/pages/common/footer'
 import ProfileCard from '@/components/user/ProfileCard'
@@ -372,105 +376,148 @@ export default function MyPage() {
     <div className="bg-background text-foreground">
       <Navbar />
       <div className="relative isolate px-6 pt-14 lg:px-8">
-        <div className="container mx-auto py-6 max-w-4xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">마이페이지</h1>
-        <p className="text-muted-foreground">
-          내 정보를 확인하고 관리하세요.
-        </p>
-      </div>
-
-      {error && (
-        <Card className="mb-6 border-destructive">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-destructive mb-3">
-              <span>⚠️</span>
-              <p className="font-medium">오류가 발생했습니다</p>
+        <div className="container mx-auto py-6 max-w-6xl">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">마이페이지</h1>
+              <p className="text-muted-foreground">
+                내 정보를 확인하고 관리하세요.
+              </p>
             </div>
-            <p className="text-sm mb-3">{error}</p>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              <Button onClick={openEditModal} variant="outline" size="sm">
+                프로필 수정
+              </Button>
               <Button
-                onClick={loadAllData}
+                onClick={handleLogout}
                 variant="outline"
                 size="sm"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
               >
-                다시 시도
+                로그아웃
               </Button>
-              {error.includes('인증') && (
-                <Button
-                  onClick={handleLogout}
-                  variant="destructive"
-                  size="sm"
-                >
-                  다시 로그인
-                </Button>
-              )}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
 
-      {profile && (
-        <div className="grid gap-6">
-          {/* 사용자 정보 및 포인트 카드 */}
-          <ProfileCard
-            profile={profile}
-            pointProfile={pointProfile}
-            checkinInfo={checkinInfo}
-            checkinError={apiErrors.checkin}
-            onEditClick={openEditModal}
-            onCheckinClick={handleCheckin}
+          {error && (
+            <Card className="mb-6 border-destructive">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 text-destructive mb-3">
+                  <span>⚠️</span>
+                  <p className="font-medium">오류가 발생했습니다</p>
+                </div>
+                <p className="text-sm mb-3">{error}</p>
+                <div className="flex gap-2">
+                  <Button onClick={loadAllData} variant="outline" size="sm">
+                    다시 시도
+                  </Button>
+                  {error.includes('인증') && (
+                    <Button onClick={handleLogout} variant="destructive" size="sm">
+                      다시 로그인
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {profile && (
+            <Tabs defaultValue="overview" className="w-full flex-col justify-start gap-6">
+              <TabsList className="w-full justify-start">
+                <TabsTrigger value="overview">개요</TabsTrigger>
+                <TabsTrigger value="learning" className="flex items-center gap-2">
+                  학습 관리
+                  <Badge variant="secondary">{recentSongs.length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="playlists" className="flex items-center gap-2">
+                  플레이리스트
+                  <Badge variant="secondary">{playlists.length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="spotify">Spotify 연동</TabsTrigger>
+                <TabsTrigger value="ranking">랭킹</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <ProfileCard
+                    profile={profile}
+                    pointProfile={pointProfile}
+                    checkinInfo={checkinInfo}
+                    checkinError={apiErrors.checkin}
+                    onEditClick={openEditModal}
+                    onCheckinClick={handleCheckin}
+                  />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <span>📊</span>
+                        학습 현황
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="text-center p-4 rounded-lg bg-muted/30">
+                          <div className="text-2xl font-bold text-primary">{recentSongs.length}</div>
+                          <div className="text-sm text-muted-foreground">학습한 곡</div>
+                        </div>
+                        <div className="text-center p-4 rounded-lg bg-muted/30">
+                          <div className="text-2xl font-bold text-primary">{playlists.length}</div>
+                          <div className="text-sm text-muted-foreground">내 플레이리스트</div>
+                        </div>
+                      </div>
+                      <Separator className="my-4" />
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-muted-foreground">현재 포인트</div>
+                        <div className="text-lg font-semibold text-yellow-600">
+                          {pointProfile ? `${pointProfile.balance}P` : '로딩 중...'}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="learning" className="space-y-6">
+                <RecentSongsCard recentSongs={recentSongs} error={apiErrors.recentSongs} />
+              </TabsContent>
+
+              <TabsContent value="playlists" className="space-y-6">
+                <PlaylistCard playlists={playlists} error={apiErrors.playlists} />
+              </TabsContent>
+
+              <TabsContent value="spotify" className="space-y-6">
+                <SpotifyCard
+                  spotifyStatus={spotifyStatus}
+                  spotifyProfile={spotifyProfile}
+                  onManageClick={() => setSpotifyModalOpen(true)}
+                />
+              </TabsContent>
+
+              <TabsContent value="ranking" className="space-y-6">
+                <PointRankingCard ranking={ranking} error={apiErrors.ranking} />
+              </TabsContent>
+            </Tabs>
+          )}
+
+          {/* 프로필 수정 모달 */}
+          <EditProfileModal
+            open={editModalOpen}
+            onOpenChange={setEditModalOpen}
+            editForm={editForm}
+            onFormChange={setEditForm}
+            onSave={handleEditProfile}
+            onDeleteAccount={handleDeleteAccount}
           />
 
-          {/* 포인트 랭킹 */}
-          <PointRankingCard ranking={ranking} error={apiErrors.ranking} />
-
-          {/* 내 플레이리스트 */}
-          <PlaylistCard playlists={playlists} error={apiErrors.playlists} />
-
-          {/* 최근 학습한 곡 */}
-          <RecentSongsCard recentSongs={recentSongs} error={apiErrors.recentSongs} />
-
-          {/* Spotify 연동 상태 카드 */}
-          <SpotifyCard
+          {/* Spotify 연동 모달 */}
+          <SpotifyModal
+            open={spotifyModalOpen}
+            onOpenChange={setSpotifyModalOpen}
             spotifyStatus={spotifyStatus}
             spotifyProfile={spotifyProfile}
-            onManageClick={() => setSpotifyModalOpen(true)}
+            onConnect={handleSpotifyConnect}
+            onDisconnect={handleSpotifyDisconnect}
           />
-
-
-          {/* 로그아웃 */}
-          <div className="flex justify-center pt-6">
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              로그아웃
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* 프로필 수정 모달 */}
-      <EditProfileModal
-        open={editModalOpen}
-        onOpenChange={setEditModalOpen}
-        editForm={editForm}
-        onFormChange={setEditForm}
-        onSave={handleEditProfile}
-        onDeleteAccount={handleDeleteAccount}
-      />
-
-      {/* Spotify 연동 모달 */}
-      <SpotifyModal
-        open={spotifyModalOpen}
-        onOpenChange={setSpotifyModalOpen}
-        spotifyStatus={spotifyStatus}
-        spotifyProfile={spotifyProfile}
-        onConnect={handleSpotifyConnect}
-        onDisconnect={handleSpotifyDisconnect}
-      />
 
           {/* 하단 네비게이션 */}
           <div className="mt-8 pt-6 border-t">
