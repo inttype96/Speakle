@@ -175,21 +175,34 @@ export default function RecommendationsPage() {
                   <div className="px-1 pt-2 pb-3 text-sm font-medium">상위 결과</div>
                   <ScrollArea className="max-h-[220px] pr-2">
                     <div className="space-y-2">
-                      {rest.map((s) => (
-                        <div key={s.songId} className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-accent">
-                          <div className="h-12 w-12 rounded-md overflow-hidden bg-muted">
-                            {s.albumImgUrl ? <img src={s.albumImgUrl} alt={s.title} className="h-full w-full object-cover" /> : <div className="h-full w-full flex items-center justify-center"><Music2 className="h-4 w-4" /></div>}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="truncate font-medium">{s.title}</span>
-                              <Badge variant={DIFFICULTY_MAP[s.difficulty].variant || "default"}>{DIFFICULTY_MAP[s.difficulty].label}</Badge>
+                      {rest.map((s) => {
+                        const to = `/songs/${s.songId}`;
+                        return (
+                          <Link
+                            key={s.songId}
+                            to={to}
+                            className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-accent focus:bg-accent outline-none"
+                          >
+                            <div className="h-12 w-12 rounded-md overflow-hidden bg-muted shrink-0">
+                              {s.albumImgUrl ? (
+                                <img src={s.albumImgUrl} alt={s.title} className="h-full w-full object-cover" />
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center"><Music2 className="h-4 w-4" /></div>
+                              )}
                             </div>
-                            <div className="truncate text-sm text-muted-foreground">{s.artists}</div>
-                          </div>
-                          <div className="text-xs text-muted-foreground">{msToMinSec(s.durationMs)}</div>
-                        </div>
-                      ))}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="truncate font-medium">{s.title}</span>
+                                <Badge variant={DIFFICULTY_MAP[s.difficulty].variant || "default"}>
+                                  {DIFFICULTY_MAP[s.difficulty].label}
+                                </Badge>
+                              </div>
+                              <div className="truncate text-sm text-muted-foreground">{s.artists}</div>
+                            </div>
+                            <div className="text-xs text-muted-foreground">{msToMinSec(s.durationMs)}</div>
+                          </Link>
+                        );
+                      })}
                     </div>
                   </ScrollArea>
                 </div>
@@ -275,8 +288,12 @@ export default function RecommendationsPage() {
 
 function SongCard({ song }: { song: Song }) {
   const diff = DIFFICULTY_MAP[song.difficulty];
+  const to = `/songs/${song.songId}`;
+
   return (
     <Card className="overflow-hidden">
+      <Link to={to} className="absolute inset-0 z-10" aria-label={`${song.title} 상세 보기`} />
+      
       <div className="relative aspect-[4/3] bg-muted">
         {song.albumImgUrl ? (
           <img src={song.albumImgUrl} alt={song.title} className="h-full w-full object-cover" />
