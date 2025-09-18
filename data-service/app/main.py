@@ -8,6 +8,8 @@ origins = [
     "https://localhost",
     "https://localhost:3000",
     "https://j13c104.p.ssafy.io",
+    "http://backend:8080",
+    "http://backend",
 ]
 
 app.add_middleware(
