@@ -74,20 +74,6 @@ services:
     networks:
       - proxy
 
-  # fastapi:
-  #   container_name: fastapi
-  #   build: ./data-service
-  #   # ports:
-  #   #   - '8081:8081'
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - ./data-service/data:/app/data
-  #   depends_on:
-  #     - weaviate
-  #   networks:
-  #     - proxy
-
   weaviate:
     image: semitechnologies/weaviate:1.24.12
     # ports:
@@ -101,6 +87,20 @@ services:
       CLUSTER_HOSTNAME: 'node1'
     volumes:
       - ./weaviate_data:/var/lib/weaviate
+    networks:
+      - proxy
+
+  fastapi:
+    container_name: fastapi
+    build: ./data-service
+    # ports:
+    #   - '8081:8081'
+    env_file:
+      - .env
+    volumes:
+      - ./data-service/data:/app/data
+    depends_on:
+      - weaviate
     networks:
       - proxy
 

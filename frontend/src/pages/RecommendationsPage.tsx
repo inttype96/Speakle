@@ -5,7 +5,6 @@ import { useSearchParams, Link } from "react-router-dom";
 import { fetchRecommendations } from "@/services/recommend";
 import type { Song, Difficulty } from "@/types/recommend";
 import Navbar from "@/components/common/navbar";
-import { cn } from "@/lib/utils";
 
 // shadcn
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,7 +51,6 @@ export default function RecommendationsPage() {
 
   const [songs, setSongs] = useState<Song[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [keywords, setKeywords] = useState<{ words: string[]; phrases: string[] }>({ words: [], phrases: [] });
 
   // UI 필터/정렬 (클라이언트 측)
   const [difficulty, setDifficulty] = useState<"ALL" | Difficulty>("ALL");
@@ -71,7 +69,6 @@ export default function RecommendationsPage() {
         });
         if (!alive) return;
         setSongs(data.recommendedSongs ?? []);
-        setKeywords(data.keywords ?? { words: [], phrases: [] });
         setTotalCount(data.totalCount ?? 0);
       } catch (e: any) {
         if (!alive) return;
