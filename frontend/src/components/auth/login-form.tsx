@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useState } from "react"
-import { useAuthStore } from "@/store/auth"
+import { useAuthStore, getAccessToken } from "@/store/auth"
 import { loginAPI, getUserProfileAPI } from "@/services/auth"
 
 export function LoginForm({
@@ -39,6 +39,12 @@ export function LoginForm({
 
                 // 토큰이 확실히 저장될 때까지 잠시 대기
                 await new Promise(resolve => setTimeout(resolve, 100));
+
+                // 저장 확인
+                const savedTokens = getAccessToken();
+                console.log('저장된 토큰 확인:', savedTokens ? savedTokens.substring(0, 20) + '...' : 'null');
+                const storedData = localStorage.getItem('auth-storage');
+                console.log('localStorage 확인:', storedData ? 'saved' : 'null');
 
                 try {
                     // 사용자 프로필 조회하여 userId 저장

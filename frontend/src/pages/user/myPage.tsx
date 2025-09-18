@@ -160,9 +160,16 @@ export default function MyPage() {
       const response = await getPointRankingAPI()
       setRanking(response.data.data)
       setApiErrors(prev => ({ ...prev, ranking: false }))
-    } catch (err) {
+    } catch (err: any) {
       console.error('랭킹 정보 로딩 실패:', err)
-      setApiErrors(prev => ({ ...prev, ranking: true }))
+      // 404 오류인 경우 랭킹 기능이 아직 구현되지 않았음을 표시
+      if (err.response?.status === 404) {
+        console.log('랭킹 API가 아직 구현되지 않았습니다.')
+        setRanking([]) // 빈 배열로 설정
+        setApiErrors(prev => ({ ...prev, ranking: false })) // 오류로 표시하지 않음
+      } else {
+        setApiErrors(prev => ({ ...prev, ranking: true }))
+      }
     }
   }
 
@@ -425,7 +432,10 @@ export default function MyPage() {
                   <Badge variant="secondary">{playlists.length}</Badge>
                 </TabsTrigger>
                 <TabsTrigger value="spotify">Spotify 연동</TabsTrigger>
-                <TabsTrigger value="ranking">랭킹</TabsTrigger>
+                <TabsTrigger value="ranking" className="flex items-center gap-2">
+                  랭킹
+                  {ranking.length > 0 && <Badge variant="secondary">{ranking.length}</Badge>}
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">

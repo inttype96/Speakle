@@ -40,7 +40,10 @@ export default function PointRankingCard({ ranking, error }: PointRankingCardPro
               </div>
             ))
           ) : (
-            <p className="text-center text-muted-foreground py-4">랭킹 정보를 불러오는 중...</p>
+            <div className="text-center text-muted-foreground py-8">
+              <p className="mb-2">🚧 랭킹 기능 준비 중</p>
+              <p className="text-sm">곧 다른 사용자들과 포인트 경쟁을 할 수 있습니다!</p>
+            </div>
           )}
         </div>
       </CardContent>

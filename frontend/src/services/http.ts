@@ -16,15 +16,21 @@ export const http = axios.create({
 // 요청 인터셉터: accessToken 자동 부착
 http.interceptors.request.use((config) => {
   const token = getAccessToken();
+  const authState = useAuthStore.getState();
   const isFormData =
     typeof FormData !== "undefined" && config.data instanceof FormData;
+
+  console.log(`[HTTP] ${config.method?.toUpperCase()} ${config.url}`);
+  console.log('[HTTP] Auth state tokens:', authState.tokens ? 'present' : 'null');
+  console.log('[HTTP] localStorage auth-storage:', localStorage.getItem('auth-storage') ? 'present' : 'null');
 
   if (token) {
     config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
-    console.log(`[HTTP] ${config.method?.toUpperCase()} ${config.url} - 토큰 부착됨:`, token.substring(0, 20) + '...');
+    console.log(`[HTTP] 토큰 부착됨:`, token.substring(0, 20) + '...');
   } else {
-    console.log(`[HTTP] ${config.method?.toUpperCase()} ${config.url} - 토큰 없음`);
+    console.log(`[HTTP] 토큰 없음 - token:`, token);
+    console.log(`[HTTP] Auth state:`, authState);
   }
   
   if (isFormData) {
