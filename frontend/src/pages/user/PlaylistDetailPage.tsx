@@ -7,14 +7,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DataTable } from '@/components/ui/data-table';
+import { createTrackColumns } from '@/components/playlists/track-columns';
 import Navbar from '@/components/common/navbar';
 import Footer from '@/pages/common/footer';
 import { playlistService, type Playlist, type PlaylistTracksResponse, type UpdatePlaylistRequest, type DeleteTracksRequest } from '@/services/playlist';
 import { toast } from 'sonner';
-import { Music, Users, Lock, Globe, Settings, Trash2, MoreVertical, Play, Clock, Calendar } from 'lucide-react';
+import { Music, Settings, Trash2, MoreVertical } from 'lucide-react';
 
 export default function PlaylistDetailPage() {
   const { playlistId } = useParams<{ playlistId: string }>();
@@ -56,9 +57,7 @@ export default function PlaylistDetailPage() {
       setTracks(tracksData);
       setFormData({
         name: playlistData.name,
-        description: playlistData.description,
-        public: playlistData.public,
-        collaborative: playlistData.collaborative
+        description: playlistData.description
       });
     } catch (error: any) {
       console.error('플레이리스트 로딩 실패:', error);
@@ -122,8 +121,8 @@ export default function PlaylistDetailPage() {
       return;
     }
 
-    if (formData.description && formData.description.length > 300) {
-      toast.error('설명은 300자 이하여야 합니다.');
+    if (formData.description && formData.description.length > 500) {
+      toast.error('설명은 500자 이하여야 합니다.');
       return;
     }
 
@@ -231,7 +230,12 @@ export default function PlaylistDetailPage() {
     }
   };
 
+  const handleTrackView = (trackId: string) => {
+    navigate(`/songs/${trackId}`);
+  };
+
   const isOwner = playlist && userId && playlist.owner.id === userId.toString();
+  const trackColumns = createTrackColumns(handleDeleteTrack, handleTrackView, !!isOwner);
 
   if (loading) {
     return (
@@ -294,24 +298,6 @@ export default function PlaylistDetailPage() {
                     <p className="text-muted-foreground mb-4">
                       {playlist.description || '설명이 없습니다.'}
                     </p>
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="flex items-center gap-2">
-                        {playlist.public ? (
-                          <Globe className="w-4 h-4" />
-                        ) : (
-                          <Lock className="w-4 h-4" />
-                        )}
-                        <Badge variant={playlist.public ? "default" : "secondary"}>
-                          {playlist.public ? '공개' : '비공개'}
-                        </Badge>
-                      </div>
-                      {playlist.collaborative && (
-                        <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4" />
-                          <Badge variant="outline">공동편집</Badge>
-                        </div>
-                      )}
-                    </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span>{playlist.owner.display_name}</span>
                       <span>•</span>
@@ -341,12 +327,6 @@ export default function PlaylistDetailPage() {
                     </DropdownMenu>
                   )}
                 </div>
-                <div className="flex gap-4">
-                  <Button size="lg">
-                    <Play className="w-5 h-5 mr-2" />
-                    재생
-                  </Button>
-                </div>
               </div>
             </div>
           </div>
@@ -354,73 +334,17 @@ export default function PlaylistDetailPage() {
           {/* 트랙 목록 */}
           <Card>
             <CardHeader>
-              <CardTitle>트랙</CardTitle>
+              <CardTitle>트랙 ({tracks?.total || 0}곡)</CardTitle>
             </CardHeader>
             <CardContent>
               {tracks && tracks.items.length > 0 ? (
-                <div className="space-y-2">
-                  {tracks.items.map((item, index) => (
-                    <div
-                      key={`${item.track.id}-${index}`}
-                      className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 group"
-                    >
-                      <div className="w-8 text-center text-sm text-muted-foreground">
-                        {index + 1}
-                      </div>
-                      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                        {item.track.album.images.length > 0 ? (
-                          <img
-                            src={item.track.album.images[0].url}
-                            alt={item.track.album.name}
-                            className="w-full h-full object-cover rounded"
-                          />
-                        ) : (
-                          <Music className="w-6 h-6 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{item.track.name}</p>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {item.track.artists.map(artist => artist.name).join(', ')}
-                        </p>
-                      </div>
-                      <div className="hidden md:block text-sm text-muted-foreground">
-                        {item.track.album.name}
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Calendar className="w-4 h-4" />
-                          {item.added_at}
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Clock className="w-4 h-4" />
-                          {item.track.duration_formatted}
-                        </div>
-                        {isOwner && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="opacity-0 group-hover:opacity-100"
-                              >
-                                <MoreVertical className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteTrack(item.track.uri)}
-                                className="text-destructive"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                삭제
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                <div>
+                  <DataTable
+                    columns={trackColumns}
+                    data={tracks.items}
+                    searchKey="track.name"
+                    searchPlaceholder="트랙 검색..."
+                  />
 
                   {tracks.next && (
                     <div className="text-center pt-4">
@@ -479,23 +403,7 @@ export default function PlaylistDetailPage() {
                 value={formData.description || ''}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="플레이리스트에 대한 설명을 입력하세요"
-                maxLength={300}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="edit-public">공개 플레이리스트</Label>
-              <Switch
-                id="edit-public"
-                checked={formData.public || false}
-                onCheckedChange={(checked: boolean) => setFormData(prev => ({ ...prev, public: checked }))}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="edit-collaborative">공동 편집 허용</Label>
-              <Switch
-                id="edit-collaborative"
-                checked={formData.collaborative || false}
-                onCheckedChange={(checked: boolean) => setFormData(prev => ({ ...prev, collaborative: checked }))}
+                maxLength={500}
               />
             </div>
           </div>

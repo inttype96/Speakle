@@ -1,31 +1,32 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore, isAuthenticated } from '@/store/auth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
+import { DataTable } from '@/components/ui/data-table';
+import { createPlaylistColumns } from '@/components/playlists/playlist-columns';
 import Navbar from '@/components/common/navbar';
 import Footer from '@/pages/common/footer';
 import { playlistService, type Playlist, type CreatePlaylistRequest } from '@/services/playlist';
 import { toast } from 'sonner';
-import { Plus, Music, Users, Lock, Globe } from 'lucide-react';
+import { Plus, Music, Trash2 } from 'lucide-react';
 
 export default function PlaylistsPage() {
   const navigate = useNavigate();
-  const { } = useAuthStore();
+  const { userId } = useAuthStore();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
   const [formData, setFormData] = useState<CreatePlaylistRequest>({
     name: '',
-    description: '',
-    public: true,
-    collaborative: false
+    description: ''
   });
 
   useEffect(() => {
@@ -70,8 +71,8 @@ export default function PlaylistsPage() {
       return;
     }
 
-    if (formData.description && formData.description.length > 300) {
-      toast.error('설명은 300자 이하여야 합니다.');
+    if (formData.description && formData.description.length > 500) {
+      toast.error('설명은 500자 이하여야 합니다.');
       return;
     }
 
@@ -83,9 +84,7 @@ export default function PlaylistsPage() {
       setCreateDialogOpen(false);
       setFormData({
         name: '',
-        description: '',
-        public: true,
-        collaborative: false
+        description: ''
       });
     } catch (error: any) {
       console.error('플레이리스트 생성 실패:', error);
@@ -108,9 +107,54 @@ export default function PlaylistsPage() {
     }
   };
 
-  const handlePlaylistClick = (playlistId: string) => {
+  const handlePlaylistView = (playlistId: string) => {
     navigate(`/playlists/${playlistId}`);
   };
+
+  const handlePlaylistEdit = (playlist: Playlist) => {
+    // 편집 기능은 상세 페이지에서 처리하므로 상세 페이지로 이동
+    navigate(`/playlists/${playlist.id}`);
+  };
+
+  const handlePlaylistDelete = (playlist: Playlist) => {
+    setSelectedPlaylist(playlist);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedPlaylist) return;
+
+    try {
+      setDeleteLoading(true);
+      await playlistService.deletePlaylist(selectedPlaylist.id);
+      setPlaylists(prev => prev.filter(p => p.id !== selectedPlaylist.id));
+      toast.success('플레이리스트가 삭제되었습니다.');
+      setDeleteDialogOpen(false);
+      setSelectedPlaylist(null);
+    } catch (error: any) {
+      console.error('플레이리스트 삭제 실패:', error);
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+
+      switch (status) {
+        case 401:
+          toast.error('로그인이 필요합니다.');
+          break;
+        case 403:
+          toast.error('플레이리스트를 삭제할 권한이 없습니다.');
+          break;
+        case 404:
+          toast.error('플레이리스트를 찾을 수 없습니다.');
+          break;
+        default:
+          toast.error(message || '플레이리스트 삭제에 실패했습니다.');
+      }
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const columns = createPlaylistColumns(handlePlaylistEdit, handlePlaylistDelete, handlePlaylistView, userId);
 
   if (loading) {
     return (
@@ -176,23 +220,7 @@ export default function PlaylistsPage() {
                       value={formData.description}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                       placeholder="플레이리스트에 대한 설명을 입력하세요"
-                      maxLength={300}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="public">공개 플레이리스트</Label>
-                    <Switch
-                      id="public"
-                      checked={formData.public}
-                      onCheckedChange={(checked: boolean) => setFormData(prev => ({ ...prev, public: checked }))}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="collaborative">공동 편집 허용</Label>
-                    <Switch
-                      id="collaborative"
-                      checked={formData.collaborative}
-                      onCheckedChange={(checked: boolean) => setFormData(prev => ({ ...prev, collaborative: checked }))}
+                      maxLength={500}
                     />
                   </div>
                 </div>
@@ -223,50 +251,12 @@ export default function PlaylistsPage() {
           </div>
 
           {playlists.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {playlists.map((playlist) => (
-                <Card
-                  key={playlist.id}
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => handlePlaylistClick(playlist.id)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg flex items-center justify-center mb-3">
-                      <Music className="w-12 h-12 text-primary" />
-                    </div>
-                    <CardTitle className="text-lg line-clamp-1">{playlist.name}</CardTitle>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      {playlist.public ? (
-                        <Globe className="w-4 h-4" />
-                      ) : (
-                        <Lock className="w-4 h-4" />
-                      )}
-                      <span>{playlist.public ? '공개' : '비공개'}</span>
-                      {playlist.collaborative && (
-                        <>
-                          <span>•</span>
-                          <Users className="w-4 h-4" />
-                          <span>공동편집</span>
-                        </>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                      {playlist.description || '설명이 없습니다.'}
-                    </p>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        {playlist.tracks.total}곡
-                      </span>
-                      <span className="text-muted-foreground">
-                        {playlist.owner.display_name}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <DataTable
+              columns={columns}
+              data={playlists}
+              searchKey="name"
+              searchPlaceholder="플레이리스트 검색..."
+            />
           ) : (
             <div className="text-center py-16">
               <div className="mb-6">
@@ -307,23 +297,7 @@ export default function PlaylistsPage() {
                           value={formData.description}
                           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                           placeholder="플레이리스트에 대한 설명을 입력하세요"
-                          maxLength={300}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="public">공개 플레이리스트</Label>
-                        <Switch
-                          id="public"
-                          checked={formData.public}
-                          onCheckedChange={(checked: boolean) => setFormData(prev => ({ ...prev, public: checked }))}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="collaborative">공동 편집 허용</Label>
-                        <Switch
-                          id="collaborative"
-                          checked={formData.collaborative}
-                          onCheckedChange={(checked: boolean) => setFormData(prev => ({ ...prev, collaborative: checked }))}
+                          maxLength={500}
                         />
                       </div>
                     </div>
@@ -356,6 +330,45 @@ export default function PlaylistsPage() {
           )}
         </div>
       </div>
+
+      {/* 삭제 확인 다이얼로그 */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>플레이리스트 삭제</DialogTitle>
+            <DialogDescription>
+              정말로 "{selectedPlaylist?.name}" 플레이리스트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleteLoading}
+            >
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleteLoading}
+            >
+              {deleteLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                  삭제 중...
+                </div>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  삭제
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>

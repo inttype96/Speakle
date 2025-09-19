@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore, isAuthenticated } from '@/store/auth'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { BentoGrid } from '@/components/ui/bento-card'
+import {
+  StreakCard,
+  PointsCard,
+  ExploreCard,
+  RecentSongsCard,
+  RankingCard
+} from '@/components/dashboard/dashboard-cards'
 import Navbar from '@/components/common/navbar'
 import Footer from '@/pages/common/footer'
-import RecentSongsCard from '@/components/user/RecentSongsCard'
-import PointRankingCard from '@/components/user/PointRankingCard'
 import {
   getPointProfileAPI,
   getCheckinInfoAPI,
@@ -101,9 +105,6 @@ export default function DashboardPage() {
     }
   }
 
-  const handleExploreClick = () => {
-    navigate('/explore')
-  }
 
   const handleCheckin = async () => {
     if (!userId) return
@@ -178,131 +179,49 @@ export default function DashboardPage() {
 
       <div className="relative isolate px-6 pt-14 lg:px-8">
         <div className="container mx-auto py-6 max-w-6xl">
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">대시보드</h1>
-              <p className="text-muted-foreground">
-                학습 현황과 성과를 한눈에 확인하세요
-              </p>
-            </div>
-            <Button
-              onClick={handleExploreClick}
-              className="py-6 px-8 text-lg"
-            >
-              학습 더 하러가기
-            </Button>
+          <div className="mb-8 text-center">
+            <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              학습 대시보드
+            </h1>
+            <p className="text-xl text-muted-foreground">
+              오늘도 즐거운 영어 학습하세요! 🎵
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <BentoGrid>
             {/* 연속 출석일 카드 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span>🔥</span>
-                  연속 출석일
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {errors.checkin ? (
-                  <div className="text-center text-muted-foreground py-4">
-                    <p>연속 출석일 정보를 불러올 수 없습니다.</p>
-                    <p className="text-sm">서버에 일시적인 문제가 있을 수 있습니다.</p>
-                  </div>
-                ) : checkinInfo ? (
-                  <div className="text-center space-y-4">
-                    <div>
-                      <div className="text-3xl font-bold text-primary mb-2">
-                        {checkinInfo.currentStreak}일
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        최고 기록: {checkinInfo.longestStreak}일
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        총 학습일: {checkinInfo.totalDays}일
-                      </p>
-                    </div>
-                    <Button
-                      onClick={handleCheckin}
-                      disabled={checkinLoading || isCheckedInToday()}
-                      className="w-full"
-                      variant={isCheckedInToday() ? "secondary" : "default"}
-                    >
-                      {checkinLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-                          처리 중...
-                        </div>
-                      ) : isCheckedInToday() ? (
-                        '✓ 오늘 출석 완료'
-                      ) : (
-                        '출석 체크'
-                      )}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center text-muted-foreground py-4 space-y-4">
-                    <div>
-                      <p>학습 기록이 없습니다.</p>
-                      <p className="text-sm">첫 학습을 시작해보세요!</p>
-                    </div>
-                    <Button
-                      onClick={handleCheckin}
-                      disabled={checkinLoading}
-                      className="w-full"
-                    >
-                      {checkinLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-                          처리 중...
-                        </div>
-                      ) : (
-                        '첫 출석 체크'
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <StreakCard
+              currentStreak={checkinInfo?.currentStreak || 0}
+              longestStreak={checkinInfo?.longestStreak || 0}
+              totalDays={checkinInfo?.totalDays || 0}
+              onCheckin={handleCheckin}
+              isCheckedIn={isCheckedInToday()}
+              loading={checkinLoading}
+            />
 
             {/* 포인트 카드 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span>💎</span>
-                  포인트
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {errors.pointProfile ? (
-                  <div className="text-center text-muted-foreground py-4">
-                    <p>포인트 정보를 불러올 수 없습니다.</p>
-                    <p className="text-sm">서버에 일시적인 문제가 있을 수 있습니다.</p>
-                  </div>
-                ) : pointProfile ? (
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-yellow-600 mb-2">
-                      {pointProfile.balance}P
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      레벨: {pointProfile.level}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="text-center text-muted-foreground py-4">
-                    <p>포인트 정보가 없습니다.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+            {pointProfile && (
+              <PointsCard
+                balance={pointProfile.balance}
+                level={pointProfile.level}
+              />
+            )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* 포인트 랭킹 */}
-            <PointRankingCard ranking={ranking} error={errors.ranking} />
+            {/* 학습 시작 카드 */}
+            <ExploreCard />
 
             {/* 최근 학습한 곡 */}
-            <RecentSongsCard recentSongs={recentSongs} error={errors.recentSongs} />
-          </div>
+            <RecentSongsCard
+              recentSongs={recentSongs}
+              error={errors.recentSongs}
+            />
+
+            {/* 포인트 랭킹 */}
+            <RankingCard
+              ranking={ranking}
+              error={errors.ranking}
+            />
+          </BentoGrid>
         </div>
       </div>
 

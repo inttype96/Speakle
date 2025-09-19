@@ -24,8 +24,6 @@ export interface Playlist {
   id: string;
   name: string;
   description: string;
-  public: boolean;
-  collaborative: boolean;
   owner: PlaylistOwner;
   tracks: PlaylistTracks;
   images: PlaylistImage[];
@@ -39,16 +37,12 @@ export interface Playlist {
 export interface CreatePlaylistRequest {
   name: string;
   description?: string;
-  public?: boolean;
-  collaborative?: boolean;
 }
 
 // 플레이리스트 수정 요청 타입
 export interface UpdatePlaylistRequest {
   name?: string;
   description?: string;
-  public?: boolean;
-  collaborative?: boolean;
 }
 
 // 플레이리스트 삭제 응답 타입
