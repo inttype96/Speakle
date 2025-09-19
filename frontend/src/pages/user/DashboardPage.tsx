@@ -294,19 +294,6 @@ export default function DashboardPage() {
                 )}
               </CardContent>
             </Card>
-
-            {/* 학습 더 하러가기 버튼 카드 */}
-            <Card className="flex flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span>🎯</span>
-                  학습 시작
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 flex items-center justify-center">
-
-              </CardContent>
-            </Card>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
