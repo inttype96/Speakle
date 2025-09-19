@@ -111,30 +111,30 @@ export interface DeleteTracksResponse {
 export const playlistService = {
   // 플레이리스트 목록 조회
   async getPlaylists(): Promise<Playlist[]> {
-    const response = await http.get<Playlist[]>('/api/playlists');
+    const response = await http.get<Playlist[]>('/playlists');
     return response.data;
   },
 
   // 플레이리스트 생성
   async createPlaylist(data: CreatePlaylistRequest): Promise<Playlist> {
-    const response = await http.post<Playlist>('/api/playlists/create', data);
+    const response = await http.post<Playlist>('/playlists/create', data);
     return response.data;
   },
 
   // 플레이리스트 상세 조회
   async getPlaylist(playlistId: string): Promise<Playlist> {
-    const response = await http.get<Playlist>(`/api/playlists/${playlistId}`);
+    const response = await http.get<Playlist>(`/playlists/${playlistId}`);
     return response.data;
   },
 
   // 플레이리스트 수정
   async updatePlaylist(playlistId: string, data: UpdatePlaylistRequest): Promise<void> {
-    await http.patch(`/api/playlists/${playlistId}`, data);
+    await http.patch(`/playlists/${playlistId}`, data);
   },
 
   // 플레이리스트 삭제
   async deletePlaylist(playlistId: string): Promise<DeletePlaylistResponse> {
-    const response = await http.delete<DeletePlaylistResponse>(`/api/playlists/${playlistId}`);
+    const response = await http.delete<DeletePlaylistResponse>(`/playlists/${playlistId}`);
     return response.data;
   },
 
@@ -155,7 +155,7 @@ export const playlistService = {
     if (params?.order) searchParams.append('order', params.order);
 
     const queryString = searchParams.toString();
-    const url = `/api/playlists/${playlistId}/songs${queryString ? `?${queryString}` : ''}`;
+    const url = `/playlists/${playlistId}/songs${queryString ? `?${queryString}` : ''}`;
 
     const response = await http.get<PlaylistTracksResponse>(url);
     return response.data;
@@ -168,7 +168,7 @@ export const playlistService = {
     data: DeleteTracksRequest
   ): Promise<DeleteTracksResponse> {
     const response = await http.delete<DeleteTracksResponse>(
-      `/api/playlists/${playlistId}/songs/${songId}`,
+      `/playlists/${playlistId}/songs/${songId}`,
       { data }
     );
     return response.data;
