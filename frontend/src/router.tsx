@@ -12,6 +12,8 @@ import NotFoundPage from "@/pages/common/notFoundPage";
 import ExplorePage from "@/pages/ExplorePage"
 import RecommendationsPage from "@/pages/RecommendationsPage";
 import DashboardPage from "@/pages/user/DashboardPage";
+import PlaylistsPage from "@/pages/user/PlaylistsPage";
+import PlaylistDetailPage from "@/pages/user/PlaylistDetailPage";
 
 const router = createBrowserRouter([
     {
@@ -57,6 +59,14 @@ const router = createBrowserRouter([
     {
         path: "/dashboard",
         element: <DashboardPage />,
+    },
+    {
+        path: "/playlists",
+        element: <PlaylistsPage />,
+    },
+    {
+        path: "/playlists/:playlistId",
+        element: <PlaylistDetailPage />,
     },
     {
         path: "*",
