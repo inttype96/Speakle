@@ -313,9 +313,6 @@ export default function MyPage() {
                       <span>👤</span>
                       프로필 정보
                     </div>
-                    <Button onClick={openEditModal} variant="outline" size="sm">
-                      수정
-                    </Button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -367,7 +364,7 @@ export default function MyPage() {
                         </div>
                       )}
 
-                      <Button onClick={handleSpotifyDisconnect} variant="outline">
+                      <Button onClick={handleSpotifyDisconnect} variant="destructive">
                         연동 해제
                       </Button>
                     </div>
