@@ -11,6 +11,8 @@ import java.util.List;
 @Builder
 public class EnhancedRecommendResponse {
     private List<SongMetaResponse> recommendedSongs;
+    private String situation;
+    private String location;
     private KeywordsResponse keywords;
     private Integer totalCount;
 }

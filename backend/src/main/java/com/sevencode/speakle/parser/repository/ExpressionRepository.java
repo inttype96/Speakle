@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ExpressionRepository extends JpaRepository<ExpressionEntity, Long> {
-	boolean existsByLearnedSongId(String learnedSongId);
+	boolean existsBySongId(String songId);
 
-	boolean existsByLearnedSongIdAndSituationAndLocation(String learnedSongId, String situation, String location);
+	boolean existsBySongIdAndSituationAndLocation(String songId, String situation, String location);
 
-	List<ExpressionEntity> findAllByLearnedSongId(String learnedSongId);
+	List<ExpressionEntity> findAllBySongId(String songId);
 
-	List<ExpressionEntity> findAllByLearnedSongIdAndSituationAndLocation(String learnedSongId, String situation, String location);
+	List<ExpressionEntity> findAllBySongIdAndSituationAndLocation(String songId, String situation, String location);
 
-	Optional<ExpressionEntity> findByLearnedSongIdAndExpressionIgnoreCase(String learnedSongId, String expression);
+	Optional<ExpressionEntity> findBySongIdAndExpressionIgnoreCase(String songId, String expression);
 }

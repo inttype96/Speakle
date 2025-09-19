@@ -41,7 +41,7 @@ public class SongController {
         return ResponseEntity.ok(response);
     }
 
-    // 노래 검색 (POST 방식) - Request Body로 상세 검색
+    // 노래 검색 (POST 방식)
     @PostMapping("/search")
     public ResponseEntity<ApiResponse<Page<SongResponse>>> searchSongs(@RequestBody SongSearchRequest request) {
         Page<SongResponse> songs = songService.searchSongs(request);

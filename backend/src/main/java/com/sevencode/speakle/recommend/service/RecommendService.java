@@ -120,6 +120,8 @@ public class RecommendService {
         // 12. 응답 반환
         return EnhancedRecommendResponse.builder()
                 .recommendedSongs(pagedSongs)
+                .situation(request.getSituation())
+                .location(request.getLocation())
                 .keywords(keywords)
                 .totalCount(totalElements)
                 .build();

@@ -17,8 +17,10 @@ import com.sevencode.speakle.learn.domain.entity.LearningSentence;
 import com.sevencode.speakle.parser.service.LyricsParsingService;
 import com.sevencode.speakle.parser.repository.SentenceRepository;
 import com.sevencode.speakle.parser.entity.SentenceEntity;
+import com.sevencode.speakle.playlist.service.CustomPlaylistService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import com.sevencode.speakle.song.repository.LyricChunkRepository;
 import com.sevencode.speakle.song.repository.SongRepository;
@@ -44,6 +46,7 @@ public class SongService {
     private final LyricsParsingService lyricsParsingService;
     private final LearningSentenceRepository learningSentenceRepository;
     private final SentenceRepository sentenceRepository;
+    private final CustomPlaylistService customPlaylistService;
 
     // 노래 리스트 (페이징)
     public Page<SongResponse> getSongs(Pageable pageable) {
@@ -108,12 +111,15 @@ public class SongService {
 
     // 노래 상세 (situation, location 포함)
     public SongDetailResponse getSongDetail(String songId, String situation, String location) {
-        log.info("[SongService] 노래 상세 조회 요청 songId={}", songId);
+        log.info("[SongService] 노래 상세 조회 요청 songId={}, situation={}, location={}", songId, situation, location);
         Song song = songRepository.findById(songId)
                 .orElseThrow(() -> {
                     log.error("[SongService] 노래 상세 조회 실패 - 존재하지 않는 songId={}", songId);
                     return new RuntimeException("노래를 찾을 수 없습니다. id=" + songId);
                 });
+
+        // Parser 데이터 비동기 처리 (캐시 우선, 없으면 백그라운드에서 생성)
+        ensureParsingDataExistsAsync(songId, situation, location);
 
         List<LyricChunkResponse> chunks = lyricChunkRepository.findBySong(song).stream()
                 .map(c -> LyricChunkResponse.builder()
@@ -171,7 +177,7 @@ public class SongService {
 
             // 핵심 학습 문장들을 learning_sentence 테이블에 저장
             try {
-                List<SentenceEntity> sentences = sentenceRepository.findAllByLearnedSongIdAndSituationAndLocation(saved.getSongId(), request.getSituation(), request.getLocation());
+                List<SentenceEntity> sentences = sentenceRepository.findAllBySongIdAndSituationAndLocation(saved.getSongId(), request.getSituation(), request.getLocation());
 
                 if (!sentences.isEmpty()) {
                     List<String> coreSentences = sentences.stream()
@@ -257,7 +263,7 @@ public class SongService {
     }
 
     /**
-     * Parser 데이터 존재 여부 확인 및 LLM 파싱 수행
+     * Parser 데이터 존재 여부 확인 및 LLM 파싱 수행 (동기적)
      * @param songId 곡 ID (String)
      * @param situation 상황
      * @param location 장소
@@ -289,6 +295,33 @@ public class SongService {
                     songId, e.getMessage(), e);
             // 파싱 실패해도 학습곡 저장은 성공으로 처리 (게임에서 더미 데이터 사용 가능)
         }
+    }
+
+    /**
+     * Parser 데이터 비동기 처리 (캐시 우선 전략)
+     * @param songId 곡 ID (String)
+     * @param situation 상황
+     * @param location 장소
+     */
+    private void ensureParsingDataExistsAsync(String songId, String situation, String location) {
+        log.info("[SongService] Parser 데이터 비동기 처리 시작 - songId={}, situation={}, location={}",
+                songId, situation, location);
+
+        // 비동기로 Parser 데이터 처리 (캐시 있으면 즉시 반환, 없으면 백그라운드 생성)
+        lyricsParsingService.parseAndSaveBySongIdWithContext(songId, situation, location)
+                .doOnSuccess(result -> {
+                    log.info("[SongService] Parser 데이터 비동기 처리 완료 - songId={}, words={}, expressions={}, idioms={}, sentences={}",
+                            songId,
+                            result.get("words").size(),
+                            result.get("expressions").size(),
+                            result.get("idioms").size(),
+                            result.get("sentences").size());
+                })
+                .doOnError(error -> {
+                    log.error("[SongService] Parser 데이터 비동기 처리 실패 - songId={}, error={}",
+                            songId, error.getMessage(), error);
+                })
+                .subscribe(); // 비동기 실행 (결과 기다리지 않음)
     }
 
 }

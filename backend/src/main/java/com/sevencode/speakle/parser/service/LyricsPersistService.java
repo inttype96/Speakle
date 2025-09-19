@@ -34,10 +34,18 @@ public class LyricsPersistService {
 
 	/** 해당 곡에 어떤 카테고리든 기 저장 여부 빠른 확인 */
 	public boolean existsAny(String songId) {
-		return wordRepo.existsByLearnedSongId(songId)
-			|| exprRepo.existsByLearnedSongId(songId)
-			|| idiomRepo.existsByLearnedSongId(songId)
-			|| sentRepo.existsByLearnedSongId(songId);
+		return wordRepo.existsBySongId(songId)
+			|| exprRepo.existsBySongId(songId)
+			|| idiomRepo.existsBySongId(songId)
+			|| sentRepo.existsBySongId(songId);
+	}
+
+	/** Context-aware 해당 곡에 어떤 카테고리든 기 저장 여부 빠른 확인 */
+	public boolean existsAnyWithContext(String songId, String situation, String location) {
+		return wordRepo.existsBySongIdAndSituationAndLocation(songId, situation, location)
+			|| exprRepo.existsBySongIdAndSituationAndLocation(songId, situation, location)
+			|| idiomRepo.existsBySongIdAndSituationAndLocation(songId, situation, location)
+			|| sentRepo.existsBySongIdAndSituationAndLocation(songId, situation, location);
 	}
 
 	/** DB → 파싱 스키마(JSON) 형태로 재구성하여 반환 (검수/재사용용) */
@@ -51,8 +59,8 @@ public class LyricsPersistService {
 
 		var words = objectMapper.createArrayNode();
 		var wordList = (situation == null && location == null) ?
-			wordRepo.findAllByLearnedSongId(songId) :
-			wordRepo.findAllByLearnedSongIdAndSituationAndLocation(songId, situation, location);
+			wordRepo.findAllBySongId(songId) :
+			wordRepo.findAllBySongIdAndSituationAndLocation(songId, situation, location);
 
 		for (var e : wordList) {
 			var n = objectMapper.createObjectNode();
@@ -68,8 +76,8 @@ public class LyricsPersistService {
 
 		var exps = objectMapper.createArrayNode();
 		var expList = (situation == null && location == null) ?
-			exprRepo.findAllByLearnedSongId(songId) :
-			exprRepo.findAllByLearnedSongIdAndSituationAndLocation(songId, situation, location);
+			exprRepo.findAllBySongId(songId) :
+			exprRepo.findAllBySongIdAndSituationAndLocation(songId, situation, location);
 
 		for (var e : expList) {
 			var n = objectMapper.createObjectNode();
@@ -84,8 +92,8 @@ public class LyricsPersistService {
 
 		var idioms = objectMapper.createArrayNode();
 		var idiomList = (situation == null && location == null) ?
-			idiomRepo.findAllByLearnedSongId(songId) :
-			idiomRepo.findAllByLearnedSongIdAndSituationAndLocation(songId, situation, location);
+			idiomRepo.findAllBySongId(songId) :
+			idiomRepo.findAllBySongIdAndSituationAndLocation(songId, situation, location);
 
 		for (var e : idiomList) {
 			var n = objectMapper.createObjectNode();
@@ -99,8 +107,8 @@ public class LyricsPersistService {
 
 		var sents = objectMapper.createArrayNode();
 		var sentList = (situation == null && location == null) ?
-			sentRepo.findAllByLearnedSongId(songId) :
-			sentRepo.findAllByLearnedSongIdAndSituationAndLocation(songId, situation, location);
+			sentRepo.findAllBySongId(songId) :
+			sentRepo.findAllBySongIdAndSituationAndLocation(songId, situation, location);
 
 		for (var e : sentList) {
 			var n = objectMapper.createObjectNode();
@@ -148,11 +156,11 @@ public class LyricsPersistService {
 			String word = text(n, "word");
 			if (isBlank(word))
 				continue;
-			if (wordRepo.findByLearnedSongIdAndWordIgnoreCase(songId, word).isPresent())
+			if (wordRepo.findBySongIdAndWordIgnoreCase(songId, word).isPresent())
 				continue;
 
 			WordEntity e = new WordEntity();
-			e.setLearnedSongId(songId);
+			e.setSongId(songId);
 			e.setSituation(situation);
 			e.setLocation(location);
 			e.setWord(word);
@@ -178,11 +186,11 @@ public class LyricsPersistService {
 			String exp = text(n, "expression");
 			if (isBlank(exp))
 				continue;
-			if (exprRepo.findByLearnedSongIdAndExpressionIgnoreCase(songId, exp).isPresent())
+			if (exprRepo.findBySongIdAndExpressionIgnoreCase(songId, exp).isPresent())
 				continue;
 
 			ExpressionEntity e = new ExpressionEntity();
-			e.setLearnedSongId(songId);
+			e.setSongId(songId);
 			e.setSituation(situation);
 			e.setLocation(location);
 			e.setExpression(exp);
@@ -207,11 +215,11 @@ public class LyricsPersistService {
 			String phrase = text(n, "phrase");
 			if (isBlank(phrase))
 				continue;
-			if (idiomRepo.findByLearnedSongIdAndPhraseIgnoreCase(songId, phrase).isPresent())
+			if (idiomRepo.findBySongIdAndPhraseIgnoreCase(songId, phrase).isPresent())
 				continue;
 
 			IdiomEntity e = new IdiomEntity();
-			e.setLearnedSongId(songId);
+			e.setSongId(songId);
 			e.setSituation(situation);
 			e.setLocation(location);
 			e.setPhrase(phrase);
@@ -235,11 +243,11 @@ public class LyricsPersistService {
 			String sentence = text(n, "sentence");
 			if (isBlank(sentence))
 				continue;
-			if (sentRepo.findByLearnedSongIdAndSentenceIgnoreCase(songId, sentence).isPresent())
+			if (sentRepo.findBySongIdAndSentenceIgnoreCase(songId, sentence).isPresent())
 				continue;
 
 			SentenceEntity e = new SentenceEntity();
-			e.setLearnedSongId(songId);
+			e.setSongId(songId);
 			e.setSituation(situation);
 			e.setLocation(location);
 			e.setSentence(sentence);

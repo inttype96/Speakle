@@ -21,8 +21,8 @@ public class SentenceEntity {
 	@Column(name = "sentences_id")
 	private Long id;
 
-	@Column(name = "learned_song_id", nullable = false)
-	private String learnedSongId;
+	@Column(name = "song_id", nullable = false)
+	private String songId;
 
 	@Column(name = "situation", length = 255)
 	private String situation;

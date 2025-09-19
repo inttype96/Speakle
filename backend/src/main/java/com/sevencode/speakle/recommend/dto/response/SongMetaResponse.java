@@ -18,7 +18,7 @@ public class SongMetaResponse {
     private Long durationMs;
     private Integer popularity;
     private Double recommendScore;
-    private Integer learnCount;  // 학습 조회수
+    private Integer learnCount;
 
     public static SongMetaResponse from(Song song, Double recommendScore, Integer learnCount) {
         return SongMetaResponse.builder()

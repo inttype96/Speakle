@@ -132,39 +132,39 @@ public class LyricsParsingService {
 	}
 
 	/** parse() + 저장. 기존 데이터 있으면 LLM 스킵 후 DB→JSON 반환. */
-	public Mono<ObjectNode> parseAndSave(String learnedSongId, String rawLyrics) {
-		return parseAndSave(learnedSongId, rawLyrics, null, null);
+	public Mono<ObjectNode> parseAndSave(String songId, String rawLyrics) {
+		return parseAndSave(songId, rawLyrics, null, null);
 	}
 
 	/** parse() + 저장. situation/location을 포함한 context-aware 파싱 */
-	public Mono<ObjectNode> parseAndSave(String learnedSongId, String rawLyrics, String situation, String location) {
+	public Mono<ObjectNode> parseAndSave(String songId, String rawLyrics, String situation, String location) {
 		// JPA I/O는 boundedElastic로 작업분리
-		return Mono.fromCallable(() -> existsWithContext(learnedSongId, situation, location))
+		return Mono.fromCallable(() -> existsWithContext(songId, situation, location))
 			.subscribeOn(Schedulers.boundedElastic())
 			.flatMap(exists -> {
 				if (exists) {
-					log.info("learnedSongId={}, situation={}, location={} already has parsed rows. Skip LLM.", learnedSongId, situation, location);
-					return Mono.fromCallable(() -> loadAsJsonWithContext(learnedSongId, situation, location))
+					log.info("songId={}, situation={}, location={} already has parsed rows. Skip LLM.", songId, situation, location);
+					return Mono.fromCallable(() -> loadAsJsonWithContext(songId, situation, location))
 						.subscribeOn(Schedulers.boundedElastic());
 				}
 				// 신규: 파싱 → 저장 → 결과 반환
 				return this.parseWithContext(rawLyrics, situation, location)
 					.flatMap(parsed ->
-						Mono.fromRunnable(() -> saveAllWithContext(learnedSongId, parsed, situation, location))
+						Mono.fromRunnable(() -> saveAllWithContext(songId, parsed, situation, location))
 							.subscribeOn(Schedulers.boundedElastic())
 							.thenReturn(parsed)
 					);
 			});
 	}
 
-	public Mono<ObjectNode> parseAndSaveBySongId(String learnedSongId) {
-		if (learnedSongId == null || learnedSongId.isBlank()) {
+	public Mono<ObjectNode> parseAndSaveBySongId(String songId) {
+		if (songId == null || songId.isBlank()) {
 			return Mono.error(new IllegalArgumentException("songId 값이 비어 있습니다."));
 		}
 
 		// 0) 가사 로딩 (없으면 404)
 		Mono<String> lyricsMono = Mono.fromCallable(() ->
-				songParsingRepository.findLyricsBySongId(learnedSongId))
+				songParsingRepository.findLyricsBySongId(songId))
 			.subscribeOn(Schedulers.boundedElastic())
 			.flatMap(opt -> opt.map(Mono::just)
 				.orElseGet(() -> Mono.error(
@@ -172,13 +172,13 @@ public class LyricsParsingService {
 						"해당 songId에 대한 가사가 존재하지 않습니다."))));
 		// 1) 이미 파싱/저장 데이터가 있는지 체크
 		Mono<Boolean> existsMono = Mono.fromCallable(() ->
-				lyricsPersistService.existsAny(learnedSongId))
+				lyricsPersistService.existsAny(songId))
 			.subscribeOn(Schedulers.boundedElastic());
 
 		return existsMono.flatMap(exists -> {
 			if (exists) {
-				log.info("songId={} 이미 파싱 데이터 존재 → LLM 스킵, JPA 재조회 후 조립", learnedSongId);
-				return assembleFromJpa(learnedSongId); // ← JPA에서 재조회해 조립
+				log.info("songId={} 이미 파싱 데이터 존재 → LLM 스킵, JPA 재조회 후 조립", songId);
+				return assembleFromJpa(songId); // ← JPA에서 재조회해 조립
 			}
 
 			// 신규: 가사 로딩 → 파싱 → 저장 → JPA 재조회/조립
@@ -191,9 +191,9 @@ public class LyricsParsingService {
 					return parse(rawLyrics); // Mono<ObjectNode> (LLM 파싱 결과)
 				})
 				.flatMap(parsed ->
-					Mono.fromRunnable(() -> lyricsPersistService.saveAll(learnedSongId, parsed))
+					Mono.fromRunnable(() -> lyricsPersistService.saveAll(songId, parsed))
 						.subscribeOn(Schedulers.boundedElastic())
-						.then(assembleFromJpa(learnedSongId)) // 저장 후 JPA로 재조회
+						.then(assembleFromJpa(songId)) // 저장 후 JPA로 재조회
 				);
 		});
 	}
@@ -202,22 +202,22 @@ public class LyricsParsingService {
 	 * 단일 책임: words/expressions/idioms/sentences 테이블을 JPA로 조회해 JSON으로 조립.
 	 * 정렬 기준은 ID(생성순) 또는 created_at을 권장.
 	 */
-	private Mono<ObjectNode> assembleFromJpa(String learnedSongId) {
+	private Mono<ObjectNode> assembleFromJpa(String songId) {
 		return Mono.fromCallable(() -> {
 				ObjectNode root = objectMapper.createObjectNode();
 
 				// 정렬 메서드는 Repository에 아래 시그니처를 만들어 두세요.
 				root.set("words", objectMapper.valueToTree(
-					wordRepository.findAllByLearnedSongId(learnedSongId)));
+					wordRepository.findAllBySongId(songId)));
 
 				root.set("expressions", objectMapper.valueToTree(
-					expressionRepository.findAllByLearnedSongId(learnedSongId)));
+					expressionRepository.findAllBySongId(songId)));
 
 				root.set("idioms", objectMapper.valueToTree(
-					idiomRepository.findAllByLearnedSongId(learnedSongId)));
+					idiomRepository.findAllBySongId(songId)));
 
 				root.set("sentences", objectMapper.valueToTree(
-					sentenceRepository.findAllByLearnedSongId(learnedSongId)));
+					sentenceRepository.findAllBySongId(songId)));
 				// ↑ 컬럼/필드명 오탈자 주의: sentences_id / expressions_id 등 프로젝트에 맞게 수정
 
 				return root;
@@ -230,8 +230,7 @@ public class LyricsParsingService {
 			return Mono.error(new IllegalArgumentException("songId 값이 비어 있습니다."));
 		}
 
-		// songId를 learnedSongId로 사용 (context-aware 파싱)
-		String learnedSongId = songId;
+		// songId를 직접 사용
 
 		// 0) 가사 로딩 (없으면 404)
 		Mono<String> lyricsMono = Mono.fromCallable(() ->
@@ -244,14 +243,14 @@ public class LyricsParsingService {
 
 		// 1) Context-aware 파싱 데이터 존재 여부 체크
 		Mono<Boolean> existsMono = Mono.fromCallable(() ->
-				existsWithContext(learnedSongId, situation, location))
+				existsWithContext(songId, situation, location))
 			.subscribeOn(Schedulers.boundedElastic());
 
 		return existsMono.flatMap(exists -> {
 			if (exists) {
 				log.info("songId={}, situation={}, location={} 이미 파싱 데이터 존재 → LLM 스킵, JPA 재조회 후 조립",
 					songId, situation, location);
-				return assembleFromJpaWithContext(learnedSongId, situation, location);
+				return assembleFromJpaWithContext(songId, situation, location);
 			}
 
 			// 신규: 가사 로딩 → context-aware 파싱 → 저장 → JPA 재조회/조립
@@ -264,28 +263,28 @@ public class LyricsParsingService {
 					return parseWithContext(rawLyrics, situation, location);
 				})
 				.flatMap(parsed ->
-					Mono.fromRunnable(() -> saveAllWithContext(learnedSongId, parsed, situation, location))
+					Mono.fromRunnable(() -> saveAllWithContext(songId, parsed, situation, location))
 						.subscribeOn(Schedulers.boundedElastic())
-						.then(assembleFromJpaWithContext(learnedSongId, situation, location))
+						.then(assembleFromJpaWithContext(songId, situation, location))
 				);
 		});
 	}
 
-	private Mono<ObjectNode> assembleFromJpaWithContext(String learnedSongId, String situation, String location) {
+	private Mono<ObjectNode> assembleFromJpaWithContext(String songId, String situation, String location) {
 		return Mono.fromCallable(() -> {
 				ObjectNode root = objectMapper.createObjectNode();
 
 				root.set("words", objectMapper.valueToTree(
-					wordRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+					wordRepository.findAllBySongIdAndSituationAndLocation(songId, situation, location)));
 
 				root.set("expressions", objectMapper.valueToTree(
-					expressionRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+					expressionRepository.findAllBySongIdAndSituationAndLocation(songId, situation, location)));
 
 				root.set("idioms", objectMapper.valueToTree(
-					idiomRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+					idiomRepository.findAllBySongIdAndSituationAndLocation(songId, situation, location)));
 
 				root.set("sentences", objectMapper.valueToTree(
-					sentenceRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+					sentenceRepository.findAllBySongIdAndSituationAndLocation(songId, situation, location)));
 
 				return root;
 			})
@@ -294,33 +293,33 @@ public class LyricsParsingService {
 
 	// ===== Context-aware 헬퍼 메서드 =====
 
-	private boolean existsWithContext(String learnedSongId, String situation, String location) {
-		return wordRepository.existsByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location) ||
-			   expressionRepository.existsByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location) ||
-			   idiomRepository.existsByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location) ||
-			   sentenceRepository.existsByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location);
+	private boolean existsWithContext(String songId, String situation, String location) {
+		return wordRepository.existsBySongIdAndSituationAndLocation(songId, situation, location) ||
+			   expressionRepository.existsBySongIdAndSituationAndLocation(songId, situation, location) ||
+			   idiomRepository.existsBySongIdAndSituationAndLocation(songId, situation, location) ||
+			   sentenceRepository.existsBySongIdAndSituationAndLocation(songId, situation, location);
 	}
 
-	private ObjectNode loadAsJsonWithContext(String learnedSongId, String situation, String location) {
+	private ObjectNode loadAsJsonWithContext(String songId, String situation, String location) {
 		ObjectNode root = objectMapper.createObjectNode();
 
 		root.set("words", objectMapper.valueToTree(
-			wordRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+			wordRepository.findAllBySongIdAndSituationAndLocation(songId, situation, location)));
 
 		root.set("expressions", objectMapper.valueToTree(
-			expressionRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+			expressionRepository.findAllBySongIdAndSituationAndLocation(songId, situation, location)));
 
 		root.set("idioms", objectMapper.valueToTree(
-			idiomRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+			idiomRepository.findAllBySongIdAndSituationAndLocation(songId, situation, location)));
 
 		root.set("sentences", objectMapper.valueToTree(
-			sentenceRepository.findAllByLearnedSongIdAndSituationAndLocation(learnedSongId, situation, location)));
+			sentenceRepository.findAllBySongIdAndSituationAndLocation(songId, situation, location)));
 
 		return root;
 	}
 
-	private void saveAllWithContext(String learnedSongId, ObjectNode parsed, String situation, String location) {
-		lyricsPersistService.saveAllWithContext(learnedSongId, parsed, situation, location);
+	private void saveAllWithContext(String songId, ObjectNode parsed, String situation, String location) {
+		lyricsPersistService.saveAllWithContext(songId, parsed, situation, location);
 	}
 
 	private String buildContextualPrompt(String situation, String location) {
