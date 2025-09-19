@@ -20,8 +20,8 @@ export default function IndexPage() {
                         </p>
                     </div>
                 </div>
-                <Footer />
             </div>
+            <Footer />
         </div>
     )
 }
