@@ -12,11 +12,12 @@ import {
   getCheckinInfoAPI,
   getRecentLearnedSongsAPI,
   getPointRankingAPI,
+  checkinAPI,
   type PointProfile,
   type LearnedSong,
   type RankingUser
 } from '@/services/mypage'
-// import { AxiosError } from 'axios'
+import { toast } from 'sonner'
 
 export default function DashboardPage() {
   const navigate = useNavigate()
@@ -32,6 +33,7 @@ export default function DashboardPage() {
     recentSongs: false,
     ranking: false
   })
+  const [checkinLoading, setCheckinLoading] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -103,6 +105,54 @@ export default function DashboardPage() {
     navigate('/explore')
   }
 
+  const handleCheckin = async () => {
+    if (!userId) return
+
+    try {
+      setCheckinLoading(true)
+      const today = new Date().toISOString().split('T')[0]
+
+      const response = await checkinAPI({
+        userId: userId,
+        localDate: today
+      })
+
+      if (response.data.data) {
+        setCheckinInfo(response.data.data)
+        toast.success('출석 체크가 완료되었습니다!')
+
+        // 포인트 정보도 업데이트
+        loadDashboardData()
+      }
+    } catch (error: any) {
+      console.error('출석 체크 실패:', error)
+      const status = error.response?.status
+      const message = error.response?.data?.message
+
+      switch (status) {
+        case 400:
+          toast.error(message || '요청 값이 올바르지 않습니다.')
+          break
+        case 409:
+          toast.error(message || '이미 오늘 출석체크를 완료했습니다.')
+          break
+        case 500:
+          toast.error(message || '출석 처리 중 오류가 발생했습니다.')
+          break
+        default:
+          toast.error('출석 체크에 실패했습니다. 다시 시도해주세요.')
+      }
+    } finally {
+      setCheckinLoading(false)
+    }
+  }
+
+  const isCheckedInToday = () => {
+    if (!checkinInfo?.lastCheckinDate) return false
+    const today = new Date().toISOString().split('T')[0]
+    return checkinInfo.lastCheckinDate === today
+  }
+
   if (loading) {
     return (
       <div className="bg-background text-foreground">
@@ -136,36 +186,71 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            {/* 연속 학습일 카드 */}
+            {/* 연속 출석일 카드 */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <span>🔥</span>
-                  연속 학습일
+                  연속 출석일
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {errors.checkin ? (
                   <div className="text-center text-muted-foreground py-4">
-                    <p>연속 학습일 정보를 불러올 수 없습니다.</p>
+                    <p>연속 출석일 정보를 불러올 수 없습니다.</p>
                     <p className="text-sm">서버에 일시적인 문제가 있을 수 있습니다.</p>
                   </div>
                 ) : checkinInfo ? (
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary mb-2">
-                      {checkinInfo.currentStreak}일
+                  <div className="text-center space-y-4">
+                    <div>
+                      <div className="text-3xl font-bold text-primary mb-2">
+                        {checkinInfo.currentStreak}일
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        최고 기록: {checkinInfo.longestStreak}일
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        총 학습일: {checkinInfo.totalDays}일
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      최고 기록: {checkinInfo.longestStreak}일
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      총 학습일: {checkinInfo.totalDays}일
-                    </p>
+                    <Button
+                      onClick={handleCheckin}
+                      disabled={checkinLoading || isCheckedInToday()}
+                      className="w-full"
+                      variant={isCheckedInToday() ? "secondary" : "default"}
+                    >
+                      {checkinLoading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                          처리 중...
+                        </div>
+                      ) : isCheckedInToday() ? (
+                        '✓ 오늘 출석 완료'
+                      ) : (
+                        '출석 체크'
+                      )}
+                    </Button>
                   </div>
                 ) : (
-                  <div className="text-center text-muted-foreground py-4">
-                    <p>학습 기록이 없습니다.</p>
-                    <p className="text-sm">첫 학습을 시작해보세요!</p>
+                  <div className="text-center text-muted-foreground py-4 space-y-4">
+                    <div>
+                      <p>학습 기록이 없습니다.</p>
+                      <p className="text-sm">첫 학습을 시작해보세요!</p>
+                    </div>
+                    <Button
+                      onClick={handleCheckin}
+                      disabled={checkinLoading}
+                      className="w-full"
+                    >
+                      {checkinLoading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                          처리 중...
+                        </div>
+                      ) : (
+                        '첫 출석 체크'
+                      )}
+                    </Button>
                   </div>
                 )}
               </CardContent>
