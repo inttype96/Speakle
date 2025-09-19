@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { BentoCard } from '@/components/ui/bento-card'
 import { useNavigate } from 'react-router-dom'
@@ -6,7 +5,6 @@ import { cn } from '@/lib/utils'
 import {
   TrendingUp,
   Calendar,
-  Clock,
   Music,
   Star,
   Target,

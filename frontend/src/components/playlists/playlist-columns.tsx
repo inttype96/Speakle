@@ -1,11 +1,11 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
+import type { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Music, Settings, Trash2 } from "lucide-react"
-import { Playlist } from "@/services/playlist"
+import type { Playlist } from "@/services/playlist"
 
 interface PlaylistActionsProps {
   playlist: Playlist

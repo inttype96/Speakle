@@ -154,7 +154,7 @@ export default function PlaylistsPage() {
     }
   };
 
-  const columns = createPlaylistColumns(handlePlaylistEdit, handlePlaylistDelete, handlePlaylistView, userId);
+  const columns = createPlaylistColumns(handlePlaylistEdit, handlePlaylistDelete, handlePlaylistView, userId?.toString());
 
   if (loading) {
     return (

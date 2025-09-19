@@ -1,10 +1,10 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
+import type { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Music, Trash2 } from "lucide-react"
-import { PlaylistTrackItem } from "@/services/playlist"
+import type { PlaylistTrackItem } from "@/services/playlist"
 
 interface TrackActionsProps {
   track: PlaylistTrackItem
