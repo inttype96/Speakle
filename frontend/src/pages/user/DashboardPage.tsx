@@ -178,11 +178,19 @@ export default function DashboardPage() {
 
       <div className="relative isolate px-6 pt-14 lg:px-8">
         <div className="container mx-auto py-6 max-w-6xl">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">대시보드</h1>
-            <p className="text-muted-foreground">
-              학습 현황과 성과를 한눈에 확인하세요
-            </p>
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">대시보드</h1>
+              <p className="text-muted-foreground">
+                학습 현황과 성과를 한눈에 확인하세요
+              </p>
+            </div>
+            <Button
+              onClick={handleExploreClick}
+              className="py-6 px-8 text-lg"
+            >
+              학습 더 하러가기
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -296,12 +304,7 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 flex items-center justify-center">
-                <Button
-                  onClick={handleExploreClick}
-                  className="w-full py-6 text-lg"
-                >
-                  학습 더 하러가기
-                </Button>
+
               </CardContent>
             </Card>
           </div>
