@@ -28,7 +28,7 @@ export default function EditProfileModal({
         <DialogHeader>
           <DialogTitle>프로필 수정</DialogTitle>
           <DialogDescription>
-            사용자 이름을 변경할 수 있습니다. 변경사항은 즉시 반영됩니다.
+            사용자 이름을 변경할 수 있습니다.
           </DialogDescription>
         </DialogHeader>
 
