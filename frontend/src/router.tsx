@@ -11,6 +11,7 @@ import MyPage from "@/pages/user/myPage";
 import NotFoundPage from "@/pages/common/notFoundPage";
 import ExplorePage from "@/pages/ExplorePage"
 import RecommendationsPage from "@/pages/RecommendationsPage";
+import DashboardPage from "@/pages/DashboardPage";
 // import InputPage from "@/pages/recommendation/inputPage/inputPage";
 // import SongListPage from "@/pages/recommendation/songListPage/songListPage";
 // import SongDetailPage from "@/pages/recommendation/songDetailPage/songDetailPage";
@@ -55,6 +56,10 @@ const router = createBrowserRouter([
     {
         path: "/recommendations",
         element: <RecommendationsPage />,
+    },
+    {
+        path: "/dashboard",
+        element: <DashboardPage />,
     },
     {
         path: "*",
