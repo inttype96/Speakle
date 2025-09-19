@@ -16,7 +16,7 @@ import { Plus, Music, Users, Lock, Globe } from 'lucide-react';
 
 export default function PlaylistsPage() {
   const navigate = useNavigate();
-  const { userId } = useAuthStore();
+  const { } = useAuthStore();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -164,7 +164,7 @@ export default function PlaylistsPage() {
                     <Input
                       id="name"
                       value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="플레이리스트 이름을 입력하세요"
                       maxLength={100}
                     />
@@ -174,7 +174,7 @@ export default function PlaylistsPage() {
                     <Textarea
                       id="description"
                       value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                       placeholder="플레이리스트에 대한 설명을 입력하세요"
                       maxLength={300}
                     />
@@ -184,7 +184,7 @@ export default function PlaylistsPage() {
                     <Switch
                       id="public"
                       checked={formData.public}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, public: checked }))}
+                      onCheckedChange={(checked: boolean) => setFormData(prev => ({ ...prev, public: checked }))}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -192,7 +192,7 @@ export default function PlaylistsPage() {
                     <Switch
                       id="collaborative"
                       checked={formData.collaborative}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, collaborative: checked }))}
+                      onCheckedChange={(checked: boolean) => setFormData(prev => ({ ...prev, collaborative: checked }))}
                     />
                   </div>
                 </div>
@@ -295,7 +295,7 @@ export default function PlaylistsPage() {
                         <Input
                           id="name"
                           value={formData.name}
-                          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                           placeholder="플레이리스트 이름을 입력하세요"
                           maxLength={100}
                         />
@@ -305,7 +305,7 @@ export default function PlaylistsPage() {
                         <Textarea
                           id="description"
                           value={formData.description}
-                          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                           placeholder="플레이리스트에 대한 설명을 입력하세요"
                           maxLength={300}
                         />
@@ -315,7 +315,7 @@ export default function PlaylistsPage() {
                         <Switch
                           id="public"
                           checked={formData.public}
-                          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, public: checked }))}
+                          onCheckedChange={(checked: boolean) => setFormData(prev => ({ ...prev, public: checked }))}
                         />
                       </div>
                       <div className="flex items-center justify-between">
@@ -323,7 +323,7 @@ export default function PlaylistsPage() {
                         <Switch
                           id="collaborative"
                           checked={formData.collaborative}
-                          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, collaborative: checked }))}
+                          onCheckedChange={(checked: boolean) => setFormData(prev => ({ ...prev, collaborative: checked }))}
                         />
                       </div>
                     </div>

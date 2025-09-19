@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuthStore, isAuthenticated } from '@/store/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -467,7 +467,7 @@ export default function PlaylistDetailPage() {
               <Input
                 id="edit-name"
                 value={formData.name || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="플레이리스트 이름을 입력하세요"
                 maxLength={100}
               />
@@ -477,7 +477,7 @@ export default function PlaylistDetailPage() {
               <Textarea
                 id="edit-description"
                 value={formData.description || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="플레이리스트에 대한 설명을 입력하세요"
                 maxLength={300}
               />
@@ -487,7 +487,7 @@ export default function PlaylistDetailPage() {
               <Switch
                 id="edit-public"
                 checked={formData.public || false}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, public: checked }))}
+                onCheckedChange={(checked: boolean) => setFormData(prev => ({ ...prev, public: checked }))}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -495,7 +495,7 @@ export default function PlaylistDetailPage() {
               <Switch
                 id="edit-collaborative"
                 checked={formData.collaborative || false}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, collaborative: checked }))}
+                onCheckedChange={(checked: boolean) => setFormData(prev => ({ ...prev, collaborative: checked }))}
               />
             </div>
           </div>
