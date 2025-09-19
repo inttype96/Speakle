@@ -14,6 +14,7 @@ import RecommendationsPage from "@/pages/RecommendationsPage";
 // import InputPage from "@/pages/recommendation/inputPage/inputPage";
 // import SongListPage from "@/pages/recommendation/songListPage/songListPage";
 // import SongDetailPage from "@/pages/recommendation/songDetailPage/songDetailPage";
+import SongDetailPage from "@/pages/SongDetailPage"
 
 const router = createBrowserRouter([
     {
@@ -55,6 +56,10 @@ const router = createBrowserRouter([
     {
         path: "/recommendations",
         element: <RecommendationsPage />,
+    },
+    {
+        path: "/songs/:songId",
+        element: <SongDetailPage />,
     },
     {
         path: "*",

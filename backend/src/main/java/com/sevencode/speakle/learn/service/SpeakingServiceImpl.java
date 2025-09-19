@@ -75,7 +75,8 @@ public class SpeakingServiceImpl implements SpeakingService {
         // 3. 기존 데이터가 없으면 새로운 speaking 문제 생성
         // 3-1. 문장 조회 (학습한 sentence에서 가져오기)
         // TODO: SentenceEntity 수정되면 문장 조회 코드도 잘 동작되도록 수정하기
-        List<SentenceEntity> sentences = speakingSentenceRepository.findByLearnedSongIdOrderByIdAsc(String.valueOf(learnedSongId));
+        // List<SentenceEntity> sentences = speakingSentenceRepository.findByLearnedSongIdOrderByIdAsc(String.valueOf(learnedSongId));
+        List<SentenceEntity> sentences = speakingSentenceRepository.findBySongIdOrderByIdAsc(learned.getSongId());
 
         // 3-2. 해당 학습곡의 문장 개수 확인
         if (sentences.size() == 0) {

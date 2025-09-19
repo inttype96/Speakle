@@ -135,7 +135,10 @@ public class BlankServiceImpl implements BlankService{
             recommendationSentenceId = learningSentence.getLearningSentenceId();
         }else{
             // 두 번째, 세 번째 문제: sentences 테이블에서 가져오기
-            List<SentenceEntity> sentences = speakingSentenceRepository.findByLearnedSongIdOrderByIdAsc(String.valueOf(req.getLearnedSongId()));
+            // List<SentenceEntity> sentences = speakingSentenceRepository.findByLearnedSongIdOrderByIdAsc(String.valueOf(req.getLearnedSongId()));
+            LearnedSongEntity learned = learnedSongRepository.findById(req.getLearnedSongId())
+                    .orElseThrow(() -> new LearnedSongNotFoundException("존재하지 않는 학습곡입니다."));
+            List<SentenceEntity> sentences = speakingSentenceRepository.findBySongIdOrderByIdAsc(learned.getSongId());
 
             // 해당 학습곡의 문장 개수 확인
             if (sentences.size() == 0) {

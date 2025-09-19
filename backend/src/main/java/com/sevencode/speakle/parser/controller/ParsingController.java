@@ -73,8 +73,48 @@ public class ParsingController {
 			))
 		}
 	)
-	@PostMapping
+	@PostMapping("/{songId}")
 	public Mono<ResponseEntity<ResponseWrapper<ObjectNode>>> parseAndSave(
+		@AuthenticationPrincipal UserPrincipal me,
+		@PathVariable String songId,
+		@RequestBody(required = false) Map<String, String> body) {
+
+		// Extract situation and location from body
+		String situation = (body != null) ? body.get("situation") : null;
+		String location = (body != null) ? body.get("location") : null;
+
+		// 검증
+		if (songId == null || songId.isBlank()) {
+			return Mono.just(ResponseEntity.badRequest()
+				.body(ResponseWrapper.fail(400, "songId 값이 비어 있습니다.")));
+		}
+
+		log.info("parse request by userId={}, songId={}, situation={}, location={}",
+			(me != null ? me.userId() : null), songId, situation, location);
+
+		// 실제 서비스 호출 - context-aware parsing
+		return lyricsParsingService.parseAndSaveBySongIdWithContext(songId, situation, location)
+			.map(result -> ResponseEntity.ok(
+				ResponseWrapper.success(200, "가사 파싱이 완료되었습니다.", result)))
+			.onErrorResume(ex -> {
+				String msg = ex.getMessage() != null ? ex.getMessage() : "가사 파싱 중 오류가 발생했습니다.";
+				if (msg.contains("존재하지 않습니다") || msg.contains("찾을 수 없습니다")) {
+					return Mono.just(ResponseEntity.status(404)
+						.body(ResponseWrapper.fail(404, msg)));
+				}
+				if (msg.contains("비어 있습니다") || msg.contains("유효하지")) {
+					return Mono.just(ResponseEntity.badRequest()
+						.body(ResponseWrapper.fail(400, msg)));
+				}
+				log.error("가사 파싱 실패: userId={}, songId={}, situation={}, location={}, error={}",
+					(me != null ? me.userId() : null), songId, situation, location, msg, ex);
+				return Mono.just(ResponseEntity.status(500)
+					.body(ResponseWrapper.fail(500, "가사 파싱 중 오류가 발생했습니다.")));
+			});
+	}
+
+	@PostMapping
+	public Mono<ResponseEntity<ResponseWrapper<ObjectNode>>> parseAndSaveLegacy(
 		@AuthenticationPrincipal UserPrincipal me,
 		@RequestParam(value = "songId", required = false) String songIdQuery,
 		@RequestBody(required = false) Map<String, String> body) {
@@ -91,10 +131,10 @@ public class ParsingController {
 				.body(ResponseWrapper.fail(400, "songId 값이 비어 있습니다.")));
 		}
 
-		log.info("parse request by userId={}, songId={}",
+		log.info("parse request (legacy) by userId={}, songId={}",
 			(me != null ? me.userId() : null), songId);
 
-		// 3) 실제 서비스 호출
+		// 3) 실제 서비스 호출 - backward compatibility
 		return lyricsParsingService.parseAndSaveBySongId(songId)
 			.map(result -> ResponseEntity.ok(
 				ResponseWrapper.success(200, "가사 파싱이 완료되었습니다.", result)))

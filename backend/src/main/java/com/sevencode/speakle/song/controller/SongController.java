@@ -5,6 +5,7 @@ import com.sevencode.speakle.learn.dto.response.ApiResponse;
 import com.sevencode.speakle.recommend.service.RecommendationSentenceService;
 import com.sevencode.speakle.song.dto.request.SaveLearnedSongRequest;
 import com.sevencode.speakle.song.dto.request.SongSearchRequest;
+import com.sevencode.speakle.song.dto.request.SongDetailRequest;
 import com.sevencode.speakle.song.dto.response.SaveLearnedSongResponse;
 import com.sevencode.speakle.song.dto.response.SongDetailResponse;
 import com.sevencode.speakle.song.dto.response.SongResponse;
@@ -40,7 +41,7 @@ public class SongController {
         return ResponseEntity.ok(response);
     }
 
-    // 노래 검색 (POST 방식) - Request Body로 상세 검색
+    // 노래 검색 (POST 방식)
     @PostMapping("/search")
     public ResponseEntity<ApiResponse<Page<SongResponse>>> searchSongs(@RequestBody SongSearchRequest request) {
         Page<SongResponse> songs = songService.searchSongs(request);
@@ -53,9 +54,11 @@ public class SongController {
     }
 
     // 노래 상세 조회
-    @GetMapping("/{songId}")
-    public ResponseEntity<ApiResponse<SongDetailResponse>> getSongDetail(@PathVariable String songId) {
-        SongDetailResponse songDetail = songService.getSongDetail(songId);
+    @PostMapping("/{songId}")
+    public ResponseEntity<ApiResponse<SongDetailResponse>> getSongDetail(
+            @PathVariable String songId,
+            @RequestBody SongDetailRequest request) {
+        SongDetailResponse songDetail = songService.getSongDetail(songId, request.getSituation(), request.getLocation());
         ApiResponse<SongDetailResponse> response = ApiResponse.success(
                 200,
                 "노래 상세 정보를 성공적으로 조회했습니다.",
