@@ -12,7 +12,14 @@ import com.sevencode.speakle.song.dto.response.SongResponse;
 // 수정(소연) - learn 패키지의 LearnedSongRepository 사용
 import com.sevencode.speakle.learn.repository.LearnedSongRepository;
 import com.sevencode.speakle.learn.service.LearningSentenceService;
+import com.sevencode.speakle.learn.repository.LearningSentenceRepository;
+import com.sevencode.speakle.learn.domain.entity.LearningSentence;
 import com.sevencode.speakle.parser.service.LyricsParsingService;
+import com.sevencode.speakle.parser.repository.SentenceRepository;
+import com.sevencode.speakle.parser.entity.SentenceEntity;
+
+import java.util.List;
+import java.util.stream.Collectors;
 import com.sevencode.speakle.song.repository.LyricChunkRepository;
 import com.sevencode.speakle.song.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +42,8 @@ public class SongService {
     private final LearnedSongRepository learnedSongRepository;
     private final LearningSentenceService learningSentenceService;
     private final LyricsParsingService lyricsParsingService;
+    private final LearningSentenceRepository learningSentenceRepository;
+    private final SentenceRepository sentenceRepository;
 
     // 노래 리스트 (페이징)
     public Page<SongResponse> getSongs(Pageable pageable) {
@@ -147,7 +156,7 @@ public class SongService {
         LearnedSongEntity learnedSong = new LearnedSongEntity();
         learnedSong.setUserId(userId);
         learnedSong.setSongId(request.getSongId()); // String 그대로 사용
-        learnedSong.setArtists(java.util.Arrays.asList(song.getArtists().split(",\\s*"))); // String을 List<String>으로 변환
+        learnedSong.setArtists(song.getArtists()); // String 그대로 사용
         learnedSong.setSituation(request.getSituation());
         learnedSong.setLocation(request.getLocation());
 
@@ -156,13 +165,37 @@ public class SongService {
             log.info("[SongService] 학습곡 저장 성공 - learnedSongId={}, userId={}, songId={}",
                     saved.getLearnedSongId(), userId, saved.getSongId());
 
-            // Parser 데이터 확인 및 LLM 파싱 수행
-            String learnedSongIdStr = String.valueOf(saved.getLearnedSongId());
-            ensureParsingDataExists(learnedSongIdStr, request.getSituation(), request.getLocation());
+            // Parser 데이터 확인 및 LLM 파싱 수행 (동기적으로 처리)
+            // songId를 사용해야 함 (learnedSongId가 아님)
+            ensureParsingDataExists(saved.getSongId(), request.getSituation(), request.getLocation());
+
+            // 핵심 학습 문장들을 learning_sentence 테이블에 저장
+            try {
+                List<SentenceEntity> sentences = sentenceRepository.findAllByLearnedSongIdAndSituationAndLocation(saved.getSongId(), request.getSituation(), request.getLocation());
+
+                if (!sentences.isEmpty()) {
+                    List<String> coreSentences = sentences.stream()
+                            .map(SentenceEntity::getSentence)
+                            .filter(sentence -> sentence != null && !sentence.trim().isEmpty())
+                            .toList();
+
+                    List<String> koreanTranslations = sentences.stream()
+                            .map(SentenceEntity::getTranslation)
+                            .toList();
+
+                    learningSentenceService.saveLearningSentences(userId, saved.getLearnedSongId(), coreSentences, koreanTranslations);
+                    log.info("[SongService] 핵심 학습 문장 저장 완료 - 문장 수: {}", coreSentences.size());
+                } else {
+                    log.warn("[SongService] 파싱된 문장을 찾을 수 없음 - songId={}", saved.getSongId());
+                }
+            } catch (Exception e) {
+                log.error("[SongService] 학습 문장 저장 중 오류 - error={}", e.getMessage(), e);
+            }
+
 
             return SaveLearnedSongResponse.builder()
                     .learnedSongId(saved.getLearnedSongId())
-                    .songId(String.valueOf(saved.getSongId())) // Long을 String으로 변환
+                    .songId(saved.getSongId()) // String 그대로 반환 (타입이 이미 String임)
                     .situation(saved.getSituation())
                     .location(saved.getLocation())
                     .build();
@@ -225,35 +258,35 @@ public class SongService {
 
     /**
      * Parser 데이터 존재 여부 확인 및 LLM 파싱 수행
-     * @param learnedSongId 학습곡 ID (String)
+     * @param songId 곡 ID (String)
      * @param situation 상황
      * @param location 장소
      */
-    private void ensureParsingDataExists(String learnedSongId, String situation, String location) {
-        log.info("[SongService] Parser 데이터 확인 시작 - learnedSongId={}, situation={}, location={}",
-                learnedSongId, situation, location);
+    private void ensureParsingDataExists(String songId, String situation, String location) {
+        log.info("[SongService] Parser 데이터 확인 시작 - songId={}, situation={}, location={}",
+                songId, situation, location);
 
         try {
-            // Context-aware 파싱 데이터 존재 여부 확인 및 생성
-            lyricsParsingService.parseAndSaveBySongIdWithContext(learnedSongId, situation, location)
+            // Context-aware 파싱 데이터 존재 여부 확인 및 생성 (동기적으로 실행)
+            lyricsParsingService.parseAndSaveBySongIdWithContext(songId, situation, location)
                     .doOnSuccess(result -> {
-                        log.info("[SongService] Parser 데이터 준비 완료 - learnedSongId={}, words={}, expressions={}, idioms={}, sentences={}",
-                                learnedSongId,
+                        log.info("[SongService] Parser 데이터 준비 완료 - songId={}, words={}, expressions={}, idioms={}, sentences={}",
+                                songId,
                                 result.get("words").size(),
                                 result.get("expressions").size(),
                                 result.get("idioms").size(),
                                 result.get("sentences").size());
                     })
                     .doOnError(error -> {
-                        log.error("[SongService] Parser 데이터 생성 실패 - learnedSongId={}, error={}",
-                                learnedSongId, error.getMessage(), error);
+                        log.error("[SongService] Parser 데이터 생성 실패 - songId={}, error={}",
+                                songId, error.getMessage(), error);
                     })
-                    .subscribe(); // 비동기 실행
+                    .block(); // 동기적으로 완료 대기
 
-            log.info("[SongService] Parser 데이터 확인 요청 완료 - learnedSongId={}", learnedSongId);
+            log.info("[SongService] Parser 데이터 확인 완료 - songId={}", songId);
         } catch (Exception e) {
-            log.error("[SongService] Parser 데이터 확인 중 예외 발생 - learnedSongId={}, error={}",
-                    learnedSongId, e.getMessage(), e);
+            log.error("[SongService] Parser 데이터 확인 중 예외 발생 - songId={}, error={}",
+                    songId, e.getMessage(), e);
             // 파싱 실패해도 학습곡 저장은 성공으로 처리 (게임에서 더미 데이터 사용 가능)
         }
     }
