@@ -180,7 +180,7 @@ export default function PlaylistsPage() {
       <Navbar />
 
       <div className="relative isolate px-6 pt-14 lg:px-8">
-        <div className="container mx-auto py-6 max-w-4xl">
+        <div className="container mx-auto py-6 max-w-8xl">
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">내 플레이리스트</h1>
