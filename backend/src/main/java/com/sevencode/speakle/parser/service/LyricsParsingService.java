@@ -187,6 +187,100 @@ public class LyricsParsingService {
 				);
 		});
 	}
+	/** 번역 전용 스키마: { "lines": [ { "ko": "<...>" } ] } */
+	private ObjectNode buildTranslationSchema() {
+		ObjectNode schema = objectMapper.createObjectNode();
+		schema.put("type", "object");
+
+		ObjectNode propsNode = schema.putObject("properties");
+
+		// lines: array of object { ko: string }
+		ObjectNode lineItem = objectMapper.createObjectNode();
+		lineItem.put("type", "object");
+		ObjectNode lineItemProps = lineItem.putObject("properties");
+		ObjectNode ko = objectMapper.createObjectNode();
+		ko.put("type", "string");
+		lineItemProps.set("ko", ko);
+		ArrayNode lineItemRequired = objectMapper.createArrayNode().add("ko");
+		lineItem.set("required", lineItemRequired);
+		lineItem.put("additionalProperties", false);
+
+		ObjectNode lines = objectMapper.createObjectNode();
+		lines.put("type", "array");
+		lines.set("items", lineItem);
+
+		propsNode.set("lines", lines);
+		ArrayNode required = objectMapper.createArrayNode().add("lines");
+		schema.set("required", required);
+		schema.put("additionalProperties", false);
+		return schema;
+	}
+
+	/**
+	 * 번역 전용 호출: rawLyrics는 \n로 라인 구분.
+	 * 응답 형식은 반드시 { "lines": [ { "ko": "..." }, ... ] } 로 강제.
+	 */
+	public Mono<ObjectNode> translateOnlyRaw(String rawLyrics) {
+		if (rawLyrics == null) rawLyrics = "";
+
+		String developerPrompt = promptManager.lyricsTranslationPrompt();
+
+		ObjectNode schema = buildTranslationSchema();
+
+		// ⚠ 프로퍼티에서 읽고, 혹시라도 금지문자 있으면 sanitize
+		String configured = props.defaults().translationSchemaName(); // GmsProperties(record) 접근자
+		String schemaName = sanitizeSchemaName(configured, "lyrics_translation_v1");
+
+		log.info("GMS translateOnlyRaw call (schemaName='{}', chars={}, lines≈{})",
+				schemaName, rawLyrics.length(), rawLyrics.lines().count());
+		log.debug("[TRACE] translateOnlyRaw input:\n{}", clip(rawLyrics));
+
+		return gmsClient.chatWithSchema(developerPrompt, rawLyrics, schemaName, schema)
+			.map(jsonText -> {
+				log.debug("[TRACE] translateOnlyRaw response.raw:\n{}", clip(jsonText));
+				try {
+					return (ObjectNode) objectMapper.readTree(jsonText);
+				} catch (Exception e) {
+					log.warn("translateOnlyRaw returned non-JSON. Fallback to empty translation.");
+					ObjectNode fallback = objectMapper.createObjectNode();
+					fallback.putArray("lines");
+					return fallback;
+				}
+			});
+	}
+
+	/**
+	 * 번역 전용(권장) — 라인 리스트 입력 → ko 라인 리스트 출력.
+	 * 내부적으로 translateOnlyRaw를 호출하고 안전하게 파싱함.
+	 */
+	public Mono<List<String>> translateOnlyLines(List<String> englishLines) {
+		if (englishLines == null) englishLines = List.of();
+		final String raw = String.join("\n", englishLines);
+
+		return translateOnlyRaw(raw)
+			.map(resp -> {
+				JsonNode lines = resp.path("lines");
+				if (!lines.isArray()) return List.of();
+				int n = lines.size();
+				java.util.ArrayList<String> out = new java.util.ArrayList<>(n);
+				for (int i = 0; i < n; i++) {
+					JsonNode it = lines.get(i);
+					String ko = it.path("ko").asText("");
+					out.add(ko);
+				}
+				return out;
+			});
+	}
+
+	/** name은 ^[a-zA-Z0-9_-]+$ 만 허용 → 다른 문자는 '_'로 치환 */
+	private String sanitizeSchemaName(String name, String fallback) {
+		if (name == null || name.isBlank()) return fallback;
+		String fixed = name.replaceAll("[^a-zA-Z0-9_-]", "_");
+		if (!fixed.equals(name)) {
+			log.warn("translationSchemaName sanitized: '{}' -> '{}'", name, fixed);
+		}
+		return fixed;
+	}
 
 	/**
 	 * 단일 책임: words/expressions/idioms/sentences 테이블을 JPA로 조회해 JSON으로 조립.
