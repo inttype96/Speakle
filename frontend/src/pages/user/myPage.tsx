@@ -104,7 +104,6 @@ export default function MyPage() {
     }
   }
 
-
   const loadSpotifyStatus = async () => {
     try {
       const response = await getSpotifyStatusAPI()
@@ -175,7 +174,6 @@ export default function MyPage() {
       navigate('/login')
     }
   }
-
 
   const handleEditProfile = async () => {
     try {
@@ -267,7 +265,6 @@ export default function MyPage() {
       <Navbar />
 
       <div className="relative isolate px-6 pt-4 lg:px-8">
-        {/* <div className="mx-auto py-6 max-w-6xl px-6 lg:px-8"> */}
         <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
           <div className="mb-6 flex items-center justify-between">
             <div>
@@ -283,7 +280,6 @@ export default function MyPage() {
               </Button>
             </div>
           </div>
-          {/* </div> */}
 
           {error && (
             <Card className="mb-6 border-destructive">
@@ -358,17 +354,13 @@ export default function MyPage() {
                         <div className="space-y-2">
                           <p className="text-sm font-medium text-muted-foreground">연동된 계정</p>
                           <div className="flex items-center gap-3">
-                            {spotifyProfile.images?.[0]?.url && (
-                              <img
-                                src={spotifyProfile.images[0].url}
-                                alt="Spotify Profile"
-                                className="w-10 h-10 rounded-full"
-                              />
-                            )}
+                            <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold">
+                              {spotifyProfile.displayName?.charAt(0) || 'S'}
+                            </div>
                             <div>
-                              <p className="font-medium">{spotifyProfile.display_name}</p>
+                              <p className="font-medium">{spotifyProfile.displayName}</p>
                               <p className="text-sm text-muted-foreground">
-                                팔로워 {spotifyProfile.followers?.total || 0}명
+                                {spotifyProfile.email}
                               </p>
                             </div>
                           </div>
