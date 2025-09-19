@@ -3,6 +3,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+#root {
+  width: 100vw;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 body {
   margin: 0;
   /* display: flex; */

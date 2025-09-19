@@ -109,7 +109,6 @@ export function PointsCard({ balance, level }: PointsCardProps) {
           </div>
           <h3 className="text-lg font-bold">포인트</h3>
         </div>
-        <div className="text-2xl">💎</div>
       </div>
 
       <div className="text-center mb-4">
@@ -142,7 +141,6 @@ export function ExploreCard() {
           </div>
           <h3 className="text-lg font-bold">학습 시작</h3>
         </div>
-        <div className="text-2xl">🎯</div>
       </div>
 
       <p className="text-muted-foreground mb-4 text-sm">
@@ -174,14 +172,6 @@ export function RecentSongsCard({ recentSongs, error }: RecentSongsCardProps) {
           </div>
           <h3 className="text-lg font-bold">최근 학습한 곡</h3>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/mypage')}
-          className="text-green-600 hover:text-green-700 hover:bg-green-100"
-        >
-          전체보기
-        </Button>
       </div>
 
       {error ? (
@@ -242,7 +232,6 @@ export function RankingCard({ ranking, error }: RankingCardProps) {
           </div>
           <h3 className="text-lg font-bold">포인트 랭킹</h3>
         </div>
-        <div className="text-2xl">🏆</div>
       </div>
 
       {error ? (

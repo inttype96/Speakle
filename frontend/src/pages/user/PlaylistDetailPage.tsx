@@ -241,7 +241,7 @@ export default function PlaylistDetailPage() {
       <div className="bg-background text-foreground">
         <Navbar />
         <div className="relative isolate px-6 pt-14 lg:px-8">
-          <div className="container mx-auto py-6 max-w-6xl">
+          <div className="container mx-auto py-6 max-w-4xl">
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
@@ -260,7 +260,7 @@ export default function PlaylistDetailPage() {
       <div className="bg-background text-foreground">
         <Navbar />
         <div className="relative isolate px-6 pt-14 lg:px-8">
-          <div className="container mx-auto py-6 max-w-6xl">
+          <div className="container mx-auto py-6 max-w-4xl">
             <div className="text-center py-16">
               <Music className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">플레이리스트를 찾을 수 없습니다</h3>

@@ -161,7 +161,7 @@ export default function PlaylistsPage() {
       <div className="bg-background text-foreground">
         <Navbar />
         <div className="relative isolate px-6 pt-14 lg:px-8">
-          <div className="container mx-auto py-6 max-w-6xl">
+          <div className="container mx-auto py-6 max-w-4xl">
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
@@ -180,7 +180,7 @@ export default function PlaylistsPage() {
       <Navbar />
 
       <div className="relative isolate px-6 pt-14 lg:px-8">
-        <div className="container mx-auto py-6 max-w-6xl">
+        <div className="container mx-auto py-6 max-w-4xl">
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">내 플레이리스트</h1>
