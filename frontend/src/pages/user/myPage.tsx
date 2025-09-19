@@ -383,6 +383,7 @@ export default function MyPage() {
     return (
       <div className="bg-background text-foreground">
         <Navbar />
+
         <div className="relative isolate px-6 pt-14 lg:px-8">
           <div className="container mx-auto py-6 max-w-4xl">
             <div className="flex items-center justify-center min-h-[400px]">
@@ -393,6 +394,7 @@ export default function MyPage() {
             </div>
           </div>
         </div>
+
         <Footer />
       </div>
     )
@@ -401,8 +403,10 @@ export default function MyPage() {
   return (
     <div className="bg-background text-foreground">
       <Navbar />
+
       <div className="relative isolate px-6 pt-14 lg:px-8">
-        <div className="mx-auto py-6 max-w-6xl px-6 lg:px-8">
+        {/* <div className="mx-auto py-6 max-w-6xl px-6 lg:px-8"> */}
+        <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">마이페이지</h1>
@@ -410,12 +414,14 @@ export default function MyPage() {
                 내 정보를 확인하고 관리하세요.
               </p>
             </div>
+            
             <div className="flex items-center gap-2">
               <Button onClick={openEditModal} variant="outline" size="sm">
                 프로필 수정
               </Button>
             </div>
           </div>
+          {/* </div> */}
 
           {error && (
             <Card className="mb-6 border-destructive">
