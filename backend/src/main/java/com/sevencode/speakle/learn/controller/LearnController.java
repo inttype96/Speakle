@@ -129,7 +129,7 @@ public class LearnController {
             @Valid @RequestBody SpeakingQuestionRequest req,
             @AuthenticationPrincipal UserPrincipal me) {
         Long userId = me.userId();
-        SpeakingQuestionResponse res = speakingService.getSpeakingQuestion(req.getLearnedSongId(), req.getQuestionNumber(), userId);
+        SpeakingQuestionResponse res = speakingService.getSpeakingQuestion(req, userId);
         return ResponseEntity.ok(ApiResponse.success(200, "스피킹 평가 문장을 조회했습니다.", res));
     }
 
