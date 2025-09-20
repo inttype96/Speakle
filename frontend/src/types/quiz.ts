@@ -17,6 +17,8 @@ export type QuizGenerateResData = {
   blankId: number;
   learnedSongId: number;
   songId: number;
+  title: string;          // "shape of you"
+  artists: string;        // "Ed Sheeran"
   recommendationSentenceId: number;
   originSentence: string;
   korean: string;
