@@ -6,5 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface SpeakingSentenceRepository extends JpaRepository<SentenceEntity, Long> {
+    List<SentenceEntity> findBySongIdAndSituationAndLocationOrderByIdAsc(String songId, String situation, String location);
+
     List<SentenceEntity> findBySongIdOrderByIdAsc(String songId);
 }
