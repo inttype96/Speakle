@@ -34,10 +34,10 @@ const TOP_RIGHT_MODE = "빈칸 퀴즈";
 const DEFAULT_LEARNED_SONG_ID = 1;
 const DEFAULT_SITUATION = "daily_conversation";
 const DEFAULT_LOCATION = "cafe";
-const DEFAULT_SONG_ID = 1;
+const DEFAULT_SONG_ID = "1";
 
 const TOTAL_QUESTIONS = 3;
-const POINTS_PER_Q = 5; // 문제당 만점
+const POINTS_PER_Q = 5; // 문제당 만점 5점
 
 function getInitialQ(search: string, storageKey: string): number {
   const sp = new URLSearchParams(search);
@@ -114,14 +114,34 @@ export default function QuizPage() {
   const { learnedSongId, songId, situation, location } = useMemo(() => {
     const lsid = Number(sp.get("learnedSongId"));
     const rawSongId = sp.get("songId");
-    const songIdNum = Number(rawSongId);
 
-    return {
+    const result = {
       learnedSongId: Number.isFinite(lsid) ? lsid : DEFAULT_LEARNED_SONG_ID,
-      songId: Number.isFinite(songIdNum) ? songIdNum : DEFAULT_SONG_ID,
+      songId: rawSongId || DEFAULT_SONG_ID,  // 문자열 그대로 사용
       situation: sp.get("situation") ?? DEFAULT_SITUATION,
       location: sp.get("location") ?? DEFAULT_LOCATION,
     };
+    
+    console.log("URL Params parsed:", {
+      raw: {
+        learnedSongId: sp.get("learnedSongId"),
+        songId: sp.get("songId"),
+        situation: sp.get("situation"),
+        location: sp.get("location"),
+      },
+      parsed: result,
+      currentURL: window.location.href
+    });
+    
+    // songId가 없는 경우 경고
+    if (!rawSongId) {
+      console.warn("⚠️ songId가 URL에 없습니다:", {
+        rawSongId,
+        currentURL: window.location.href
+      });
+    }
+    
+    return result;
   }, [sp]);
 
   const STORAGE_KEY = `quiz-progress:${learnedSongId}`;
@@ -156,13 +176,16 @@ export default function QuizPage() {
     lastFetchedQRef.current = qNum;
 
     (async () => {
-      const res = await generateQuiz({
+      const requestData = {
         learnedSongId,
         songId,
         situation,
         location,
         questionNumber: qNum,
-      });
+      };
+      console.log("Quiz API Request:", requestData);
+      
+      const res = await generateQuiz(requestData);
       setQuestion(res.data);
       // ✅ 답 개수만큼 입력칸 초기화
       const blanks = res.data.answer?.length ?? 1;
