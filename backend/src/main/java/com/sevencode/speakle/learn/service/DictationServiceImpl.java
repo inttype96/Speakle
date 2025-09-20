@@ -12,6 +12,9 @@ import com.sevencode.speakle.learn.exception.*;
 import com.sevencode.speakle.learn.repository.DictationRepository;
 import com.sevencode.speakle.learn.repository.DictationResultRepository;
 import com.sevencode.speakle.learn.repository.LearnedSongRepository;
+import com.sevencode.speakle.reward.dto.request.RewardUpdateRequest;
+import com.sevencode.speakle.reward.dto.response.RewardUpdateResponse;
+import com.sevencode.speakle.reward.service.RewardService;
 import com.sevencode.speakle.song.domain.LyricChunk;
 import com.sevencode.speakle.song.domain.Song;
 import com.sevencode.speakle.song.repository.LyricChunkRepository;
@@ -35,6 +38,7 @@ public class DictationServiceImpl implements DictationService{
     private final DictationResultRepository dictationResultRepository;
     private final SongRepository songRepository;
     private final LyricChunkRepository lyricChunkRepository;
+    private final RewardService rewardService;
 
     /**
      * 딕테이션 문제 생성(조회)
@@ -238,7 +242,20 @@ public class DictationServiceImpl implements DictationService{
         // 4. 결과 저장
         DictationResultEntity savedResult = dictationResultRepository.save(dictationResult);
 
-        // 5. 응답 DTO 변환 후 반환
+        // 5. 포인트 업데이트 (정답인 경우)
+        if (request.getIsCorrect()) {
+            RewardUpdateRequest rewardRequest = RewardUpdateRequest.builder()
+                    .userId(userId)
+                    .delta(request.getScore())  // 획득할 포인트
+                    .source("DICTATION")  // SourceType.BLANK
+                    .refType("DICTATION_RESULT")  // RefType.BLANK_RESULT
+                    .refId(savedResult.getDictationId())  // Blank 결과 ID
+                    .build();
+
+            RewardUpdateResponse rewardResponse = rewardService.updateReward(rewardRequest, userId);
+        }
+
+        // 6. 응답 DTO 변환 후 반환
         return DictationEvaluationResponse.builder()
                 .dictationResultId(savedResult.getDictationResultId())
                 .userId(savedResult.getUserId())
