@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/common/navbar";
+import { useAuthStore } from "@/store/auth";
 
 // shadcn
 import { Card, CardContent } from "@/components/ui/card";
@@ -66,6 +67,7 @@ export default function DictationPage() {
   const learnedSongId = Number(sp.get("learned_song_id") || sp.get("learnedSongId"));
   const songIdFromQuery = sp.get("song_id") || sp.get("songId") || "";
   const navigate = useNavigate();
+  const { userId } = useAuthStore();
 
   // 진행상태
   const MAX_Q = 3;
@@ -184,15 +186,15 @@ export default function DictationPage() {
     setResultMsg(isCorrect ? "정답입니다!" : "오답입니다!");
     setOpenResult(true);
 
-    // 점수 규칙은 임시(정답 10점/오답 0점) — BE에서 변경 시 맞춰 수정
+    // 점수 규칙: 정답 5점/오답 0점
     await submitDictation({
-      userId: 101, // TODO: 실제 로그인 사용자로 교체
+      userId: userId || 0,
       dictationId: item.dictationId,
       isCorrect,
-      score: isCorrect ? 10 : 0,
+      score: isCorrect ? 5 : 0,
       meta: { userAnswer, correctAnswer: correct },
     });
-  }, [item, composedUserAnswer]);
+  }, [item, composedUserAnswer, userId]);
 
   // 다음 문제
   const onNext = useCallback(async () => {
