@@ -71,6 +71,7 @@ export default function DictationPage() {
   const MAX_Q = 3;
   const [qNo, setQNo] = useState(1);
   const [item, setItem] = useState<DictationItem | null>(null);
+  const lastFetchedQRef = useRef<number | null>(null);
 
   // 입력 상태
   const [tokens, setTokens] = useState<Token[]>([]);
@@ -100,6 +101,10 @@ export default function DictationPage() {
   }, [learnedSongId]);
 
   useEffect(() => {
+    // 중복 요청 방지
+    if (lastFetchedQRef.current === qNo) return;
+    lastFetchedQRef.current = qNo;
+      
     fetchQuestion(qNo);
     // 브라우저가 처음 로드 후 voice 목록을 비동기 로드하는 경우가 있어 한 번 더 준비
     const onVoices = () => {};
@@ -133,7 +138,7 @@ export default function DictationPage() {
 
   // 입력 핸들러
   const handleChange = (inputIdx: number, v: string) => {
-    const val = (v || "").slice(-1); // 마지막 한 글자만
+    const val = (v || "").slice(-1).toUpperCase(); // 마지막 한 글자만, 대문자로 변환
     setAnswers((prev) => {
       const next = [...prev];
       next[inputIdx] = val;
@@ -174,7 +179,8 @@ export default function DictationPage() {
     const correct = item.coreSentence;
     const userAnswer = composedUserAnswer;
 
-    const isCorrect = userAnswer === correct;
+    // 대소문자 무시하고 비교
+    const isCorrect = userAnswer.toLowerCase() === correct.toLowerCase();
     setResultMsg(isCorrect ? "정답입니다!" : "오답입니다!");
     setOpenResult(true);
 
@@ -269,7 +275,9 @@ export default function DictationPage() {
                   return (
                     <input
                       key={ti}
-                      ref={(el) => (inputsRef.current[inputIdx] = el)}
+                      ref={(el: HTMLInputElement | null) => {
+                        inputsRef.current[inputIdx] = el;
+                      }}
                       className={`${BOX_BASE} ${BOX_INPUT}`}
                       value={answers[inputIdx] || ""}
                       onChange={(e) => handleChange(inputIdx, e.target.value)}
