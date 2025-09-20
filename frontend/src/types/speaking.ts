@@ -10,7 +10,7 @@ export type SpeakingEvalReq = {
 export type SpeakingEvalResData = {
   speakingId: number;
   learnedSongId: number;
-  songId: number;
+  songId: string;        // 문자열 ID로 변경
   title: string;
   artists: string;
   coreSentence: string;

@@ -20,7 +20,9 @@ export async function evaluateSpeaking(
       data: {
         speakingId: 20,
         learnedSongId: body.learnedSongId,
-        songId: 1,
+        songId: "1",
+        title: "Shape of You",
+        artists: "Ed Sheeran",
         coreSentence: "The club isn't the best place to find a lover",
       },
     };

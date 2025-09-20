@@ -122,16 +122,16 @@ export default function QuizPage() {
       location: sp.get("location") ?? DEFAULT_LOCATION,
     };
     
-    console.log("URL Params parsed:", {
-      raw: {
-        learnedSongId: sp.get("learnedSongId"),
-        songId: sp.get("songId"),
-        situation: sp.get("situation"),
-        location: sp.get("location"),
-      },
-      parsed: result,
-      currentURL: window.location.href
-    });
+    // console.log("URL Params parsed:", {
+    //   raw: {
+    //     learnedSongId: sp.get("learnedSongId"),
+    //     songId: sp.get("songId"),
+    //     situation: sp.get("situation"),
+    //     location: sp.get("location"),
+    //   },
+    //   parsed: result,
+    //   currentURL: window.location.href
+    // });
     
     // songId가 없는 경우 경고
     if (!rawSongId) {
@@ -469,7 +469,7 @@ export default function QuizPage() {
             <Button variant="secondary" onClick={() => setOpenSummary(false)}>
               닫기
             </Button>
-            <Button onClick={() => (window.location.href = "/learning")}>
+            <Button onClick={() => (window.location.href = `/song/${songId}`)}>
               곡으로 돌아가기
             </Button>
           </DialogFooter>

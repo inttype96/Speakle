@@ -434,7 +434,9 @@ export default function SpeakingPage() {
             >
               처음으로
             </Button>
-            <Button onClick={() => (window.location.href = "/")}>홈으로</Button>
+            <Button onClick={() => (window.location.href = `/song/${songId}`)}>
+              곡으로 돌아가기
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
