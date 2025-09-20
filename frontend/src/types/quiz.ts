@@ -9,7 +9,7 @@ export type QuizGenerateReq = {
   learnedSongId: number;
   situation: string;     // 예: "daily_conversation"
   location: string;      // 예: "cafe"
-  songId: number;
+  songId: string;        // 문자열 ID (예: "2gFvRmQiWg9fN9i74Q0aiw")
   questionNumber: number; // 1..N (현재 1개 빈칸 기준)
 };
 
@@ -17,6 +17,8 @@ export type QuizGenerateResData = {
   blankId: number;
   learnedSongId: number;
   songId: number;
+  title: string;          // "shape of you"
+  artists: string;        // "Ed Sheeran"
   recommendationSentenceId: number;
   originSentence: string;
   korean: string;

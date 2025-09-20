@@ -57,6 +57,20 @@ public class LearnExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
+
+    @ExceptionHandler(SongNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleSongNotFound(
+            SongNotFoundException ex, WebRequest request) {
+        log.warn("곡 조회 불가 - 경로: {}", getRequestPath(request));
+
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "SONG_NOT_FOUND",
+                "곡을 찾을 수 없습니다."
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
     @ExceptionHandler(ValidWordNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleValidWordNotFound(
             ValidWordNotFoundException ex, WebRequest request) {

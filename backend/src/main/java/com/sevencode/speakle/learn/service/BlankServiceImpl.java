@@ -15,6 +15,8 @@ import com.sevencode.speakle.parser.entity.SentenceEntity;
 import com.sevencode.speakle.reward.dto.request.RewardUpdateRequest;
 import com.sevencode.speakle.reward.dto.response.RewardUpdateResponse;
 import com.sevencode.speakle.reward.service.RewardService;
+import com.sevencode.speakle.song.domain.Song;
+import com.sevencode.speakle.song.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +35,7 @@ public class BlankServiceImpl implements BlankService{
     private final LearnedSongRepository learnedSongRepository;
     private final LearningSentenceRepository learningSentenceRepository;
     private final SpeakingSentenceRepository speakingSentenceRepository;
+    private final SongRepository songRepository;
     private final RewardService rewardService;
 
     private final Random random = new Random();
@@ -138,7 +141,7 @@ public class BlankServiceImpl implements BlankService{
             // List<SentenceEntity> sentences = speakingSentenceRepository.findByLearnedSongIdOrderByIdAsc(String.valueOf(req.getLearnedSongId()));
             LearnedSongEntity learned = learnedSongRepository.findById(req.getLearnedSongId())
                     .orElseThrow(() -> new LearnedSongNotFoundException("존재하지 않는 학습곡입니다."));
-            List<SentenceEntity> sentences = speakingSentenceRepository.findBySongIdOrderByIdAsc(learned.getSongId());
+            List<SentenceEntity> sentences = speakingSentenceRepository.findBySongIdAndSituationAndLocationOrderByIdAsc(learned.getSongId(), req.getSituation(), req.getLocation());
 
             // 해당 학습곡의 문장 개수 확인
             if (sentences.size() == 0) {
@@ -162,10 +165,14 @@ public class BlankServiceImpl implements BlankService{
             recommendationSentenceId = -1L;
         }
 
-        // 2. 빈칸 문제 생성
+        // 2. Song 정보 조회 (title, artists를 위해)
+        Song song = songRepository.findById(req.getSongId())
+                .orElseThrow(() -> new SongNotFoundException("존재하지 않는 곡입니다."));
+
+        // 3. 빈칸 문제 생성
         BlankQuizResult quizResult = createBlankQuiz(originalSentence);
 
-        // 3. BlankEntity 생성 및 저장
+        // 4. BlankEntity 생성 및 저장
         Map<String, Object> meta = new LinkedHashMap<>();
         meta.put("question", quizResult.getQuestion());
         meta.put("answer", quizResult.getAnswers()); // List<String> -> JSON 배열로 직렬화됨
@@ -188,11 +195,13 @@ public class BlankServiceImpl implements BlankService{
 
         BlankEntity savedBlank = blankRepository.save(blank);
 
-        // 4. 응답 데이터 생성
+        // 5. 응답 데이터 생성
         BlankQuestionResponse res = BlankQuestionResponse.builder()
                 .blankId(savedBlank.getBlankId())
                 .learnedSongId(savedBlank.getLearnedSongId())
                 .songId(savedBlank.getSongId())
+                .title(song.getTitle())
+                .artists(song.getArtists())
                 .recommendationSentenceId(recommendationSentenceId)
                 .originSentence(savedBlank.getOriginSentence())
                 .korean(savedBlank.getKorean())
@@ -291,7 +300,7 @@ public class BlankServiceImpl implements BlankService{
         String result = sentence;
 
         for (String targetWord : targetWords) {
-            String blank = "_".repeat(targetWord.length());
+            String blank = "빈칸";
             // 단어 경계를 고려한 첫 번째 매칭만 교체
             result = result.replaceFirst("\\b" + Pattern.quote(targetWord) + "\\b", blank);
         }
