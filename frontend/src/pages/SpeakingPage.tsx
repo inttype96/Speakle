@@ -19,11 +19,13 @@ import {
 import type { SpeakingEvalRes } from "@/types/speaking";
 
 // 표시용
-const TOP_RIGHT_SONG = "Blinding Lights - The Weeknd";
 const TOP_RIGHT_MODE = "스피킹";
 
 // 기본값(쿼리가 없을 때)
 const DEFAULT_LEARNED_SONG_ID = 1;
+const DEFAULT_SITUATION = "daily_conversation";
+const DEFAULT_LOCATION = "cafe";
+const DEFAULT_SONG_ID = 1;
 const TOTAL_QUESTIONS = 3;
 const POINTS_PER_Q = 100;
 
@@ -45,10 +47,18 @@ const mmss = (sec: number) =>
 export default function SpeakingPage() {
   const [sp] = useSearchParams();
 
-  /** ✅ URL → learnedSongId만 파싱해서 사용 */
-  const learnedSongId = useMemo(() => {
-    const raw = Number(sp.get("learnedSongId"));
-    return Number.isFinite(raw) ? raw : DEFAULT_LEARNED_SONG_ID;
+  /** ✅ URL에서 필요한 파라미터들 파싱 */
+  const { learnedSongId, songId, situation, location } = useMemo(() => {
+    const lsid = Number(sp.get("learnedSongId"));
+    const rawSongId = sp.get("songId");
+    const songIdNum = Number(rawSongId);
+
+    return {
+      learnedSongId: Number.isFinite(lsid) ? lsid : DEFAULT_LEARNED_SONG_ID,
+      songId: Number.isFinite(songIdNum) ? songIdNum : DEFAULT_SONG_ID,
+      situation: sp.get("situation") ?? DEFAULT_SITUATION,
+      location: sp.get("location") ?? DEFAULT_LOCATION,
+    };
   }, [sp]);
 
   /** ✅ learnedSongId별로 진행 저장 키 분리 */
@@ -110,7 +120,10 @@ export default function SpeakingPage() {
 
     (async () => {
       const res = await evaluateSpeaking({
-        learnedSongId,          // ← 쿼리에서 받은 값
+        learnedSongId,
+        situation,
+        location,
+        songId,
         questionNumber: qNum,
       });
       setEvalData(res.data);
@@ -126,7 +139,7 @@ export default function SpeakingPage() {
       setLastScore(null);
       setLastRawScore(null);
     })();
-  }, [qNum, learnedSongId]);
+  }, [qNum, learnedSongId, songId, situation, location]);
 
   // 타이머
   useEffect(() => {
@@ -272,7 +285,9 @@ export default function SpeakingPage() {
           </button>
 
           <div className="hidden md:block rounded-md px-4 py-2.5 text-right">
-            <div className="text-xs">{TOP_RIGHT_SONG}</div>
+            <div className="text-xs">
+              {evalData ? `${evalData.title} - ${evalData.artists}` : "Loading..."}
+            </div>
             <div className="text-sm font-semibold">{TOP_RIGHT_MODE}</div>
           </div>
         </div>
