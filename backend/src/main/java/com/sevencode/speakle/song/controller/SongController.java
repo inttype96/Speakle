@@ -13,6 +13,7 @@ import com.sevencode.speakle.song.dto.response.SongRecommendationReasonResponse;
 import com.sevencode.speakle.song.service.SongService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/songs")
 @RequiredArgsConstructor
+@Slf4j
 public class SongController {
 
     private final SongService songService;

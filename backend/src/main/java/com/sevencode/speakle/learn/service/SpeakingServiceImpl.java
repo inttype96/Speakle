@@ -5,6 +5,7 @@ import com.sevencode.speakle.learn.domain.entity.LearnedSongEntity;
 import com.sevencode.speakle.learn.domain.entity.SpeakingEntity;
 import com.sevencode.speakle.learn.domain.entity.SpeakingResultEntity;
 import com.sevencode.speakle.learn.dto.request.SpeakingEvaluationRequest;
+import com.sevencode.speakle.learn.dto.request.SpeakingQuestionRequest;
 import com.sevencode.speakle.learn.dto.response.EtriPronunciationResponse;
 import com.sevencode.speakle.learn.dto.response.SpeakingCompleteResponse;
 import com.sevencode.speakle.learn.dto.response.SpeakingEvaluationResponse;
@@ -18,6 +19,8 @@ import com.sevencode.speakle.parser.entity.SentenceEntity;
 import com.sevencode.speakle.reward.dto.request.RewardUpdateRequest;
 import com.sevencode.speakle.reward.dto.response.RewardUpdateResponse;
 import com.sevencode.speakle.reward.service.RewardService;
+import com.sevencode.speakle.song.domain.Song;
+import com.sevencode.speakle.song.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +40,7 @@ public class SpeakingServiceImpl implements SpeakingService {
     private final SpeakingRepository speakingRepository;
     private final SpeakingResultRepository speakingResultRepository;
     private final SpeakingSentenceRepository speakingSentenceRepository;
+    private final SongRepository songRepository;
     private final RewardService rewardService;
     private final EtriPronunciationClient etriClient;
 
@@ -48,46 +52,50 @@ public class SpeakingServiceImpl implements SpeakingService {
      */
     @Override
     @Transactional
-    public SpeakingQuestionResponse getSpeakingQuestion(Long learnedSongId, Integer questionNumber, Long userId) {
+    public SpeakingQuestionResponse getSpeakingQuestion(SpeakingQuestionRequest req, Long userId) {
         // 1. 학습곡 존재 및 권한 확인
-        LearnedSongEntity learned = learnedSongRepository.findById(learnedSongId)
+        LearnedSongEntity learned = learnedSongRepository.findById(req.getLearnedSongId())
                 .orElseThrow(() -> new LearnedSongNotFoundException("존재하지 않는 학습곡입니다."));
 
         if (!Objects.equals(learned.getUserId(), userId)) {
             throw new UnauthorizedAccessException("접근할 수 있는 권한이 없습니다.");
         }
 
-        // 2. 기존에 동일한 learned_song_id와 question_number로 생성된 speaking 문제가 있는지 확인
+        // 2. Song 정보 조회 (title, artists를 위해)
+        Song song = songRepository.findById(req.getSongId())
+                .orElseThrow(() -> new SongNotFoundException("존재하지 않는 곡입니다."));
+
+        // 3. 기존에 동일한 learned_song_id와 question_number로 생성된 speaking 문제가 있는지 확인
         Optional<SpeakingEntity> existingSpeaking = speakingRepository
-                .findByLearnedSongIdAndQuestionNumber(learnedSongId, questionNumber);
+                .findByLearnedSongIdAndQuestionNumber(req.getLearnedSongId(), req.getQuestionNumber());
 
         if (existingSpeaking.isPresent()) {
             // 기존 데이터가 있으면 해당 데이터 반환
             SpeakingEntity speaking = existingSpeaking.get();
-            return new SpeakingQuestionResponse(
-                    speaking.getSpeakingId(),
-                    speaking.getLearnedSongId(),
-                    speaking.getSongId(),
-                    speaking.getOriginSentence()
-            );
+            return SpeakingQuestionResponse.builder()
+                    .speakingId(speaking.getSpeakingId())
+                    .learnedSongId(speaking.getLearnedSongId())
+                    .songId(speaking.getSongId())
+                    .title(song.getTitle())
+                    .artists(song.getArtists())
+                    .coreSentence(speaking.getOriginSentence())
+                    .build();
         }
 
-        // 3. 기존 데이터가 없으면 새로운 speaking 문제 생성
-        // 3-1. 문장 조회 (학습한 sentence에서 가져오기)
-        // TODO: SentenceEntity 수정되면 문장 조회 코드도 잘 동작되도록 수정하기
-        // List<SentenceEntity> sentences = speakingSentenceRepository.findByLearnedSongIdOrderByIdAsc(String.valueOf(learnedSongId));
-        List<SentenceEntity> sentences = speakingSentenceRepository.findBySongIdOrderByIdAsc(learned.getSongId());
+        // 4. 기존 데이터가 없으면 새로운 speaking 문제 생성
+        // 4-1. 문장 조회 (학습한 sentence에서 가져오기)
+        List<SentenceEntity> sentences = speakingSentenceRepository.findBySongIdAndSituationAndLocationOrderByIdAsc(req.getSongId(), req.getSituation(), req.getLocation());
 
-        // 3-2. 해당 학습곡의 문장 개수 확인
+        // 4-2. 해당 학습곡의 문장 개수 확인
         if (sentences.size() == 0) {
             throw new NoSentenceAvailableException("해당 학습 곡에서 추출할 문장이 없습니다.");
         }
 
         int index;
         if (sentences.size() >= 6) {
-            index = (questionNumber - 1) * 2;   // 스피킹 게임에 1, 3, 5번 문장 가져오기
+            index = (req.getQuestionNumber() - 1) * 2;   // 스피킹 게임에 1, 3, 5번 문장 가져오기
         } else {
-            index = questionNumber - 1;         // 스피킹 게임에 1, 2, 3번 문장 가져오기
+            index = req.getQuestionNumber() - 1;         // 스피킹 게임에 1, 2, 3번 문장 가져오기
         }
 
         if (index >= sentences.size()) {
@@ -96,25 +104,27 @@ public class SpeakingServiceImpl implements SpeakingService {
 
         String coreSentence = sentences.get(index).getSentence();
 
-        // 3-3. Speaking 엔티티 생성
+        // 4-3. Speaking 엔티티 생성
         SpeakingEntity speaking = SpeakingEntity.builder()
                 .learnedSongId(learned.getLearnedSongId())
                 .songId(learned.getSongId())
                 .originSentence(coreSentence)
                 .level(SpeakingEntity.Level.BEGINNER)
-                .questionNumber(questionNumber)
+                .questionNumber(req.getQuestionNumber())
                 .situation(learned.getSituation())
                 .location(learned.getLocation())
                 .build();
         speakingRepository.save(speaking);
 
-        // 3-4. 응답 데이터 생성
-        return new SpeakingQuestionResponse(
-                speaking.getSpeakingId(),
-                learned.getLearnedSongId(),
-                learned.getSongId(),
-                coreSentence
-        );
+        // 4-4. 응답 데이터 생성
+        return SpeakingQuestionResponse.builder()
+                .speakingId(speaking.getSpeakingId())
+                .learnedSongId(learned.getLearnedSongId())
+                .songId(learned.getSongId())
+                .title(song.getTitle())
+                .artists(song.getArtists())
+                .coreSentence(coreSentence)
+                .build();
     }
 
     /**

@@ -16,7 +16,7 @@ export type QuizGenerateReq = {
 export type QuizGenerateResData = {
   blankId: number;
   learnedSongId: number;
-  songId: number;
+  songId: string;         // 문자열 ID (예: "2gFvRmQiWg9fN9i74Q0aiw")
   title: string;          // "shape of you"
   artists: string;        // "Ed Sheeran"
   recommendationSentenceId: number;

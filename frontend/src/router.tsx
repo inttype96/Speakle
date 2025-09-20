@@ -15,6 +15,7 @@ import RecommendationsPage from "@/pages/RecommendationsPage";
 // import SongListPage from "@/pages/recommendation/songListPage/songListPage";
 // import SongDetailPage from "@/pages/recommendation/songDetailPage/songDetailPage";
 import SongDetailPage from "@/pages/SongDetailPage"
+import DictationPage from "@/pages/DictationPage";
 
 const router = createBrowserRouter([
     {
@@ -32,6 +33,10 @@ const router = createBrowserRouter([
     {
         path: "/learn/speaking",
         element: <SpeakingPage />,
+    },
+    {
+        path: "/learn/dictation",
+        element: <DictationPage />,
     },
     {
         path: "/signup",

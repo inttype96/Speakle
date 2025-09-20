@@ -55,6 +55,25 @@ function getInitialQ(search: string, storageKey: string): number {
 const mmss = (sec: number) =>
   `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 
+// 빈칸을 정답 단어 길이에 맞는 언더바로 변환하는 함수
+const formatQuestionWithBlanks = (question: string, correctAnswers: string[]): string => {
+  let result = question;
+  let answerIndex = 0;
+  
+  // "빈칸"을 정답 단어 길이에 맞는 언더바로 교체
+  result = result.replace(/빈칸/g, () => {
+    if (answerIndex < correctAnswers.length) {
+      const answer = correctAnswers[answerIndex];
+      const underscores = "_".repeat(Math.max(answer.length, 3)); // 최소 3글자
+      answerIndex++;
+      return underscores;
+    }
+    return "___"; // fallback
+  });
+  
+  return result;
+};
+
 /** ──────────────────────────────────────────────────────────────
  * 문장 내 '빈칸' 토큰 사이사이에 인라인 입력칸을 삽입하는 컴포넌트
  * props:
@@ -122,16 +141,16 @@ export default function QuizPage() {
       location: sp.get("location") ?? DEFAULT_LOCATION,
     };
     
-    console.log("URL Params parsed:", {
-      raw: {
-        learnedSongId: sp.get("learnedSongId"),
-        songId: sp.get("songId"),
-        situation: sp.get("situation"),
-        location: sp.get("location"),
-      },
-      parsed: result,
-      currentURL: window.location.href
-    });
+    // console.log("URL Params parsed:", {
+    //   raw: {
+    //     learnedSongId: sp.get("learnedSongId"),
+    //     songId: sp.get("songId"),
+    //     situation: sp.get("situation"),
+    //     location: sp.get("location"),
+    //   },
+    //   parsed: result,
+    //   currentURL: window.location.href
+    // });
     
     // songId가 없는 경우 경고
     if (!rawSongId) {
@@ -445,7 +464,9 @@ export default function QuizPage() {
             <div className="space-y-3 max-h-[50vh] overflow-auto pr-1">
               {complete?.results.map((r) => (
                 <div key={r.blankResultId} className="rounded-xl border p-3 text-sm">
-                  <div className="font-medium">{r.meta.question}</div>
+                  <div className="font-medium">
+                    {formatQuestionWithBlanks(r.meta.question, r.meta.correctAnswer)}
+                  </div>
                   <div className="mt-1">
                     <span>정답: </span>
                     {r.meta.correctAnswer.join(", ")}
@@ -469,7 +490,7 @@ export default function QuizPage() {
             <Button variant="secondary" onClick={() => setOpenSummary(false)}>
               닫기
             </Button>
-            <Button onClick={() => (window.location.href = "/learning")}>
+            <Button onClick={() => (window.location.href = `/songs/${songId}`)}>
               곡으로 돌아가기
             </Button>
           </DialogFooter>
