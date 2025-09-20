@@ -37,7 +37,7 @@ const DEFAULT_LOCATION = "cafe";
 const DEFAULT_SONG_ID = 1;
 
 const TOTAL_QUESTIONS = 3;
-const POINTS_PER_Q = 100; // 문제당 만점
+const POINTS_PER_Q = 5; // 문제당 만점
 
 function getInitialQ(search: string, storageKey: string): number {
   const sp = new URLSearchParams(search);
