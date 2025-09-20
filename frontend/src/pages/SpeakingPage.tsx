@@ -44,6 +44,13 @@ function getInitialQ(search: string, storageKey: string): number {
 const mmss = (sec: number) =>
   `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 
+// 발음 점수에 따른 평가 메시지
+const getSpeakingMessage = (score: number): string => {
+  if (score >= 4) return "훌륭한 발음입니다! 🌟";
+  if (score >= 3) return "괜찮은 발음입니다! 👍";
+  return "발음을 더 연습해보세요! 💪";
+};
+
 export default function SpeakingPage() {
   const [sp] = useSearchParams();
 
@@ -355,7 +362,7 @@ export default function SpeakingPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="text-gray-900 dark:text-gray-700 mb-3">
-              {lastIsCorrect ? "정답입니다! 🎉" : "오답입니다 😢"}
+              {lastScore !== null ? getSpeakingMessage(lastScore) : "발음 평가 중..."}
             </DialogTitle>
             <DialogDescription className="space-y-2">
               {evalData && (
