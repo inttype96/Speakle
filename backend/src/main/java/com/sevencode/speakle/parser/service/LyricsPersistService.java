@@ -139,6 +139,11 @@ public class LyricsPersistService {
 	/** Context-aware 저장 메서드 */
 	@Transactional
 	public void saveAllWithContext(String learnedSongId, ObjectNode parsed, String situation, String location) {
+		log.info("[DEBUG] saveAllWithContext called - songId={}, situation={}, location={}",
+			learnedSongId, situation, location);
+		log.debug("[DEBUG] situation is null? {}, location is null? {}",
+			situation == null, location == null);
+
 		saveWordsWithContext(learnedSongId, parsed.withArray("words"), situation, location);
 		saveExpressionsWithContext(learnedSongId, parsed.withArray("expressions"), situation, location);
 		saveIdiomsWithContext(learnedSongId, parsed.withArray("idioms"), situation, location);
@@ -152,6 +157,9 @@ public class LyricsPersistService {
 
 	/** Context-aware words 저장 */
 	private void saveWordsWithContext(String songId, ArrayNode arr, String situation, String location) {
+		log.debug("[DEBUG] saveWordsWithContext - songId={}, situation={}, location={}, words count={}",
+			songId, situation, location, arr.size());
+
 		for (JsonNode n : arr) {
 			String word = text(n, "word");
 			if (isBlank(word))
@@ -163,6 +171,9 @@ public class LyricsPersistService {
 			e.setSongId(songId);
 			e.setSituation(situation);
 			e.setLocation(location);
+
+			log.trace("[DEBUG] Saving word entity - word={}, situation={}, location={}",
+				word, e.getSituation(), e.getLocation());
 			e.setWord(word);
 			e.setPhonetic(text(n, "phonetic"));
 			e.setMeaning(text(n, "meaning"));

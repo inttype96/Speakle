@@ -58,6 +58,10 @@ const router = createBrowserRouter([
         element: <RecommendationsPage />,
     },
     {
+        path: "/search",
+        element: <RecommendationsPage />,
+    },
+    {
         path: "/songs/:songId",
         element: <SongDetailPage />,
     },

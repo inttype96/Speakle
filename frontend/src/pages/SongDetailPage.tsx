@@ -57,6 +57,12 @@ export default function SongDetailPage() {
   const [sp] = useSearchParams();
   const navigate = useNavigate();
 
+  console.log("SongDetailPage Debug:", {
+    songId,
+    url: window.location.href,
+    pathname: window.location.pathname
+  });
+
   // URL 쿼리(raw) -> situation/location이 없을 때 null이 넘어가면 백엔드에서 타입 에러가 날 수 있어서 안전하게 undefined로 정규화해서 전달:
 const situation = sp.get("situation") ?? undefined;
 const location  = sp.get("location") ?? undefined;
@@ -92,6 +98,9 @@ const handleOpenLearn = async () => {
 };
 
   useEffect(() => {
+    // 페이지 진입 시 스크롤을 최상단으로
+    window.scrollTo(0, 0);
+
     let alive = true;
     async function run() {
       setLoading(true);
@@ -203,10 +212,10 @@ const handleOpenLearn = async () => {
         </Card>
 
         {/* 탭 (스크린샷처럼 상단에 '가사 | 학습 내용' 탭 표시) */}
-        <Tabs defaultValue="lyrics" className="w-full">
+        <Tabs defaultValue="lyrics" className="w-full" onFocus={(e) => e.preventDefault()}>
           <TabsList className="mx-auto block w-fit">
-            <TabsTrigger value="lyrics">가사</TabsTrigger>
-            <TabsTrigger value="notes" disabled>학습 내용</TabsTrigger>
+            <TabsTrigger value="lyrics" tabIndex={-1}>가사</TabsTrigger>
+            <TabsTrigger value="notes" disabled tabIndex={-1}>학습 내용</TabsTrigger>
           </TabsList>
 
           <TabsContent value="lyrics" className="space-y-4">

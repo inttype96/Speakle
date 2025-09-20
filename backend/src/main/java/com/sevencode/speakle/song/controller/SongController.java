@@ -81,6 +81,13 @@ public class SongController {
             @PathVariable String songId,
             @RequestBody SaveLearnedSongRequest request,
             @AuthenticationPrincipal UserPrincipal me) {
+
+        // 디버깅 로그 추가
+        log.info("[DEBUG Controller] Received request - songId={}, request body situation='{}', location='{}'",
+            songId, request.getSituation(), request.getLocation());
+        log.info("[DEBUG Controller] situation is null? {}, location is null? {}",
+            request.getSituation() == null, request.getLocation() == null);
+
         request.setSongId(songId);
 
         SaveLearnedSongResponse data = songService.saveLearnedSong(me.userId(), request);

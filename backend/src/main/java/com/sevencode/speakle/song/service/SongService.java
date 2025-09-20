@@ -149,6 +149,12 @@ public class SongService {
         log.info("[SongService] 학습곡 저장 요청 - userId={}, songId={}, situation={}, location={}",
                 userId, request.getSongId(), request.getSituation(), request.getLocation());
 
+        // 디버깅용 로그 추가
+        log.debug("[DEBUG] Request situation is null? {}", request.getSituation() == null);
+        log.debug("[DEBUG] Request location is null? {}", request.getLocation() == null);
+        log.debug("[DEBUG] Request situation value: '{}'", request.getSituation());
+        log.debug("[DEBUG] Request location value: '{}'", request.getLocation());
+
         // 곡 존재 여부 검증
         Song song = songRepository.findById(request.getSongId())
                 .orElseThrow(() -> {
