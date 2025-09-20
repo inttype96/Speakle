@@ -469,7 +469,7 @@ export default function QuizPage() {
             <Button variant="secondary" onClick={() => setOpenSummary(false)}>
               닫기
             </Button>
-            <Button onClick={() => (window.location.href = `/song/${songId}`)}>
+            <Button onClick={() => (window.location.href = `/songs/${songId}`)}>
               곡으로 돌아가기
             </Button>
           </DialogFooter>
