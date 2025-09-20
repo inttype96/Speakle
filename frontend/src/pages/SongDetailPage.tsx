@@ -58,10 +58,10 @@ export default function SongDetailPage() {
   const navigate = useNavigate();
 
   // URL 쿼리(raw) -> situation/location이 없을 때 null이 넘어가면 백엔드에서 타입 에러가 날 수 있어서 안전하게 undefined로 정규화해서 전달:
-const situation = sp.get("situation") ?? undefined;
-const location  = sp.get("location") ?? undefined;
+  const situation = sp.get("situation") ?? undefined;
+  const location  = sp.get("location") ?? undefined;
 
-const useMock = (sp.get("mock") === "1"); // ✅ ?mock=1 이면 백엔드 호출 없이 샘플 사용
+  const useMock = (sp.get("mock") === "1"); // ✅ ?mock=1 이면 백엔드 호출 없이 샘플 사용
 
   const [data, setData] = useState<SongDetail | null>(null);
   const [loading, setLoading] = useState(true);

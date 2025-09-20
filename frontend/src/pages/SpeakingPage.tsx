@@ -25,7 +25,7 @@ const TOP_RIGHT_MODE = "스피킹";
 const DEFAULT_LEARNED_SONG_ID = 1;
 const DEFAULT_SITUATION = "daily_conversation";
 const DEFAULT_LOCATION = "cafe";
-const DEFAULT_SONG_ID = 1;
+const DEFAULT_SONG_ID = "1";
 const TOTAL_QUESTIONS = 3;
 const POINTS_PER_Q = 100;
 
@@ -51,11 +51,10 @@ export default function SpeakingPage() {
   const { learnedSongId, songId, situation, location } = useMemo(() => {
     const lsid = Number(sp.get("learnedSongId"));
     const rawSongId = sp.get("songId");
-    const songIdNum = Number(rawSongId);
 
     return {
       learnedSongId: Number.isFinite(lsid) ? lsid : DEFAULT_LEARNED_SONG_ID,
-      songId: Number.isFinite(songIdNum) ? songIdNum : DEFAULT_SONG_ID,
+      songId: rawSongId || DEFAULT_SONG_ID,  // 문자열 그대로 사용
       situation: sp.get("situation") ?? DEFAULT_SITUATION,
       location: sp.get("location") ?? DEFAULT_LOCATION,
     };

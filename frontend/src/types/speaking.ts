@@ -3,7 +3,7 @@ export type SpeakingEvalReq = {
   learnedSongId: number;
   situation: string;
   location: string;
-  songId: number;
+  songId: string;        // 문자열 ID
   questionNumber: number;
 };
 
