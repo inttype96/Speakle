@@ -8,29 +8,33 @@ import com.sevencode.speakle.learn.dto.request.DictationQuestionRequest;
 import com.sevencode.speakle.learn.dto.response.DictationCompleteResponse;
 import com.sevencode.speakle.learn.dto.response.DictationEvaluationResponse;
 import com.sevencode.speakle.learn.dto.response.DictationQuestionResponse;
-import com.sevencode.speakle.learn.exception.DictationNotFoundException;
-import com.sevencode.speakle.learn.exception.DictationResultNotFoundException;
-import com.sevencode.speakle.learn.exception.LearnedSongNotFoundException;
-import com.sevencode.speakle.learn.exception.UnauthorizedAccessException;
+import com.sevencode.speakle.learn.exception.*;
 import com.sevencode.speakle.learn.repository.DictationRepository;
 import com.sevencode.speakle.learn.repository.DictationResultRepository;
 import com.sevencode.speakle.learn.repository.LearnedSongRepository;
+import com.sevencode.speakle.song.domain.LyricChunk;
+import com.sevencode.speakle.song.domain.Song;
+import com.sevencode.speakle.song.repository.LyricChunkRepository;
+import com.sevencode.speakle.song.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class DictationServiceImpl implements DictationService{
 
     private final LearnedSongRepository learnedSongRepository;
     private final DictationRepository dictationRepository;
     private final DictationResultRepository dictationResultRepository;
+    private final SongRepository songRepository;
+    private final LyricChunkRepository lyricChunkRepository;
 
     /**
      * 딕테이션 문제 생성(조회)
@@ -45,13 +49,12 @@ public class DictationServiceImpl implements DictationService{
         DictationEntity dictation = findOrCreateDictation(request, learnedSong);
 
         // 3. 곡 정보 조회
-        // SongEntity song = songRepository.findById(learnedSong.getSongId())
-        //         .orElseThrow(() -> new RuntimeException("곡 정보를 찾을 수 없습니다."));
+         Song song = songRepository.findById(learnedSong.getSongId())
+                 .orElseThrow(() -> new RuntimeException("곡 정보를 찾을 수 없습니다."));
 
         // 4. 응답 데이터 생성
-        // DictationQuestionResponse res = buildDictationData(dictation, song); // TODO: song_lyrics 테이블 연결하면 주석 삭제하기
-        DictationQuestionResponse res = buildDictationData(dictation);  // TODO: song_lyrics 테이블 연결하면 삭제하기
-        return res;
+         DictationQuestionResponse res = buildDictationData(dictation, song);
+         return res;
     }
 
 
@@ -76,72 +79,103 @@ public class DictationServiceImpl implements DictationService{
     // 새로운 딕테이션 생성
     // ------------------------------------------------------------
     private DictationEntity createNewDictation(DictationQuestionRequest request, LearnedSongEntity learnedSong) {
-        // Long sondId = learnedSong.getSongId();
+        log.info("Creating dictation for learnedSongId: {}, questionNumber: {}",
+                request.getLearnedSongId(), request.getQuestionNumber());
+        String sondId = learnedSong.getSongId();
         // 2. 해당 songId의 모든 가사 조회
-        // TODO: sondId로 songs_lyrics 테이블에서 가사 데이터 가져오기
-        // List<SongsLyricsEntity> allLyrics = songsLyricsRepository.findBySongIdWithEnglishLyrics(sondId);
-        //
-        // if (allLyrics.isEmpty()) {
-        //     throw new NoSentenceAvailableException("사용 가능한 가사가 없습니다.");
-        // }
+         List<LyricChunk> allLyrics = lyricChunkRepository.findBySongSongIdAndEnglishIsNotNullOrderByStartTimeMsAsc(sondId);
+
+         if (allLyrics.isEmpty()) {
+             throw new NoSentenceAvailableException("사용 가능한 가사가 없습니다.");
+         }
 
         // 3. 이미 사용된 문장들 조회 (중복 방지)
-        // TODO: learnedSongId로 dictation 테이블에서 이미 출제된 가사 데이터 가져오기
-        // List<String> usedSentences = dictationRepository.findUsedSentencesByLearnedSongId(request.getLearnedSongId());
+         List<String> usedSentences = dictationRepository.findUsedSentencesByLearnedSongId(request.getLearnedSongId());
 
         // 4. 사용되지 않은 가사 필터링
-        // TODO: 사용되지 않은 가사 필터링하기
-        // List<SongsLyrics> availableLyrics = allLyrics.stream()
-        //         .filter(lyrics -> !usedSentences.contains(lyrics.getEnglish()))
-        //         .collect(Collectors.toList());
+         List<LyricChunk> availableLyrics = allLyrics.stream()
+                 .filter(lyrics -> !usedSentences.contains(lyrics.getEnglish()))
+                 .filter(this::isValidLyricForDictation)
+                 .collect(Collectors.toList());
 
-        // if (availableLyrics.isEmpty()) {
-        //     throw new RuntimeException("더 이상 사용 가능한 가사가 없습니다.");
-        // }
+         if (availableLyrics.isEmpty()) {
+             throw new RuntimeException("더 이상 사용 가능한 가사가 없습니다.");
+         }
 
         // 5. 랜덤으로 가사 선택
-        // TODO: 가사가 문제로 적합한지 검증 로직 추가하기(길이, 감탄사, 반복 문자의 여부)
-        // Random random = new Random();
-        // SongsLyrics selectedLyrics = availableLyrics.get(random.nextInt(availableLyrics.size()));
+         Random random = new Random();
+         LyricChunk selectedLyrics = availableLyrics.get(random.nextInt(availableLyrics.size()));
 
 
         // 6. 다음 가사 정보 조회하기
-        // Long selectedLyricsId = selectedLyrics.getSongLyricsId();
-        // SongLyrics nextLyrics = songsLyricsRepository.findBySongLyricsId(selectedLyricsId + 1);
+        Long endTime = calculateEndTime(selectedLyrics, allLyrics);
 
         // 7. 딕테이션 세션 생성
-        DictationEntity dictation = new DictationEntity();
-        dictation.setLearnedSongId(request.getLearnedSongId());
-        dictation.setSituation(learnedSong.getSituation());
-        dictation.setLocation(learnedSong.getLocation());
-        dictation.setSongId(learnedSong.getSongId());
-        // TODO: song_lyrics 테이블 연결하면 주석 삭제하기
-        // dictation.setStartTime(selectedLyrics.getStartTimeMs());
-        // dictation.setEndTime(nextLyrics.getStartTimeMs());
-        // dictation.setOriginSentence(selectedLyrics.getEnglish());
-        // dictation.setAnswer(selectedLyrics.getEnglish());
-        // TODO: song_lyrics 테이블 연결하면 삭제하기
-        dictation.setStartTime(50000L);
-        dictation.setEndTime(55000L);
-        dictation.setOriginSentence("The club isn't the best place to find a lover");
-        dictation.setAnswer("The club isn't the best place to find a lover");
-        //
-        dictation.setLevel(DictationEntity.Level.BEGINNER);
-        dictation.setCreatedAt(LocalDateTime.now());
-        dictation.setQuestionNumber(request.getQuestionNumber());
-
+        DictationEntity dictation = DictationEntity.builder()
+                .learnedSongId(request.getLearnedSongId())
+                .situation(learnedSong.getSituation())
+                .location(learnedSong.getLocation())
+                .songId(learnedSong.getSongId())
+                .startTime(selectedLyrics.getStartTimeMs())
+                .endTime(endTime)
+                .originSentence(selectedLyrics.getEnglish())
+                .answer(selectedLyrics.getEnglish())
+                .level(DictationEntity.Level.BEGINNER)
+                .questionNumber(request.getQuestionNumber())
+                .build();
         return dictationRepository.save(dictation);
+    }
+
+    // ------------------------------------------------------------
+    // 가사가 딕테이션 문제로 적합한지 검증
+    // ------------------------------------------------------------
+    private boolean isValidLyricForDictation(LyricChunk lyric) {
+        String english = lyric.getEnglish();
+
+        if (english == null || english.trim().isEmpty()) {
+            return false;
+        }
+
+        // 길이 검증 (너무 짧거나 긴 문장 제외)
+        int wordCount = english.trim().split("\\s+").length;
+        if (wordCount < 5 || wordCount > 30) {
+            return false;
+        }
+
+        // 감탄사나 반복 문자 패턴 제외
+        String lowerCase = english.toLowerCase();
+        if (lowerCase.matches(".*([a-z])\\1{3,}.*") || // 같은 문자 4번 이상 반복
+                lowerCase.matches(".*(oh+|ah+|yeah+|la+|na+).*") || // 감탄사 패턴
+                lowerCase.contains("...") || // 생략 부호
+                english.length() < 10) { // 너무 짧은 문장
+            return false;
+        }
+        return true;
+    }
+
+    // ------------------------------------------------------------
+    // endTime 계산 (다음 가사의 시작 시간 또는 기본 duration 추가)
+    // ------------------------------------------------------------
+    private Long calculateEndTime(LyricChunk selectedLyrics, List<LyricChunk> allLyrics) {
+        Long startTime = selectedLyrics.getStartTimeMs();
+
+        // 다음 가사 찾기
+        Optional<LyricChunk> nextLyric = allLyrics.stream()
+                .filter(lyric -> lyric.getStartTimeMs() > startTime)
+                .findFirst();
+
+        if (nextLyric.isPresent()) {
+            return nextLyric.get().getStartTimeMs();
+        } else {
+            // 다음 가사가 없으면 기본 10초 추가
+            return startTime + 5000L;
+        }
     }
 
     // ------------------------------------------------------------
     // 딕테이션 응답 데이터 생성
     // ------------------------------------------------------------
-    // private DictationQuestionResponse buildDictationData(DictationEntity dictation, Song song) { // TODO: song 테이블 연결하면 주석 삭제하기
-    private DictationQuestionResponse buildDictationData(DictationEntity dictation) {   // TODO: song 테이블 연결하면 삭제하기
-        // TODO: artists 추출
-        // String[] artists = parseArtistsFromJson(song.getArtists());
-        String[] artists = new String[]{"Ed Sheeran"};
-
+     private DictationQuestionResponse buildDictationData(DictationEntity dictation, Song song) {
         // duration 계산
         Long duration = dictation.getEndTime() - dictation.getStartTime();
 
@@ -150,12 +184,8 @@ public class DictationServiceImpl implements DictationService{
                 .questionNumber(dictation.getQuestionNumber())
                 .learnedSongId(dictation.getLearnedSongId())
                 .songId(dictation.getSongId())
-                // TODO: song 테이블 연결하면 주석 삭제하기
-                // .title(song.getTitle())
-                // TODO: song 테이블 연결하면 삭제하기
-                .title("shape of you")
-                //
-                .artists(artists)
+                .title(song.getTitle())
+                .artists(song.getArtists())
                 .coreSentence(dictation.getOriginSentence())
                 .startTime(dictation.getStartTime())
                 .duration(duration)
