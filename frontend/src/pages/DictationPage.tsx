@@ -151,11 +151,28 @@ export default function DictationPage() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, inputIdx: number) => {
     const key = e.key;
 
-    // Backspace로 이전 칸 이동
-    if (key === "Backspace" && !answers[inputIdx]) {
-      const prev = inputsRef.current[inputIdx - 1];
-      prev?.focus();
-      prev?.select?.();
+    // Backspace 처리
+    if (key === "Backspace") {
+      if (answers[inputIdx]) {
+        // 현재 칸에 글자가 있으면 현재 칸의 글자 지우기
+        setAnswers((prev) => {
+          const next = [...prev];
+          next[inputIdx] = "";
+          return next;
+        });
+      } else {
+        // 현재 칸에 글자가 없으면 이전 칸으로 이동하고 그 칸의 글자 지우기
+        const prev = inputsRef.current[inputIdx - 1];
+        if (prev) {
+          prev.focus();
+          prev.select?.();
+          setAnswers((prevAnswers) => {
+            const next = [...prevAnswers];
+            next[inputIdx - 1] = "";
+            return next;
+          });
+        }
+      }
       return;
     }
     // 좌우 이동
