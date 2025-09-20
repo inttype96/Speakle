@@ -14,7 +14,7 @@ export async function startDictation(params: DictationStartReq): Promise<Dictati
   }
   
   export async function submitDictation(req: DictationMarkingReq) {
-    const res = await http.post<DictationMarkingRes>("/learn/dictation/marking", req, {
+    const res = await http.post<DictationMarkingRes>("/learn/dictation/result", req, {
       headers: { "Content-Type": "application/json" },
     });
     return res.data.data;
