@@ -11,9 +11,9 @@ import MyPage from "@/pages/user/myPage";
 import NotFoundPage from "@/pages/common/notFoundPage";
 import ExplorePage from "@/pages/ExplorePage"
 import RecommendationsPage from "@/pages/RecommendationsPage";
-// import InputPage from "@/pages/recommendation/inputPage/inputPage";
-// import SongListPage from "@/pages/recommendation/songListPage/songListPage";
-// import SongDetailPage from "@/pages/recommendation/songDetailPage/songDetailPage";
+import DashboardPage from "@/pages/user/DashboardPage";
+import PlaylistsPage from "@/pages/user/PlaylistsPage";
+import PlaylistDetailPage from "@/pages/user/PlaylistDetailPage";
 import SongDetailPage from "@/pages/SongDetailPage"
 import DictationPage from "@/pages/DictationPage";
 
@@ -63,8 +63,20 @@ const router = createBrowserRouter([
         element: <RecommendationsPage />,
     },
     {
+        path: "/dashboard",
+        element: <DashboardPage />,
+    },
+    {
+        path: "/playlists",
+        element: <PlaylistsPage />,
+    },
+    {
+        path: "/playlists/:playlistId",
+        element: <PlaylistDetailPage />,
+    },
+    {
         path: "/search",
-        element: <RecommendationsPage />,
+        element: <RecommendationsPage />
     },
     {
         path: "/songs/:songId",
@@ -74,6 +86,9 @@ const router = createBrowserRouter([
         path: "*",
         element: <NotFoundPage />,
     },
+
+
+
 ]);
 
 export default router;
