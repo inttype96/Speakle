@@ -14,6 +14,8 @@ import RecommendationsPage from "@/pages/RecommendationsPage";
 import DashboardPage from "@/pages/user/DashboardPage";
 import PlaylistsPage from "@/pages/user/PlaylistsPage";
 import PlaylistDetailPage from "@/pages/user/PlaylistDetailPage";
+import SongDetailPage from "@/pages/SongDetailPage"
+import DictationPage from "@/pages/DictationPage";
 
 const router = createBrowserRouter([
     {
@@ -73,9 +75,20 @@ const router = createBrowserRouter([
         element: <PlaylistDetailPage />,
     },
     {
+        path: "/search",
+        element: <RecommendationsPage />
+    },
+    {
+        path: "/songs/:songId",
+        element: <SongDetailPage />,
+    },
+    {
         path: "*",
         element: <NotFoundPage />,
     },
+
+
+
 ]);
 
 export default router;
