@@ -32,9 +32,9 @@ export function SearchForm({ ...props }: React.ComponentProps<"form">) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="노래나 아티스트를 검색하세요"
-            className="pl-8"
+            className="pl-10 pr-6 py-7"
           />
-          <Search className="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 opacity-50 select-none" />
+          <Search className="pointer-events-none absolute top-1/2 left-2 size-6 -translate-y-1/2 opacity-50 select-none" />
         </SidebarGroupContent>
       </SidebarGroup>
     </form>

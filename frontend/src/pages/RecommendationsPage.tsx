@@ -9,6 +9,7 @@ import type { SearchSong, SearchResult } from "@/types/search";
 import Navbar from "@/components/common/navbar";
 import SongListView from "@/components/song/SongListView";
 import { recommendCache, searchCache } from "@/utils/cacheManager";
+import Loading from "@/components/common/loading";
 
 // shadcn
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ export default function RecommendationsPage() {
   const [keywords, setKeywords] = useState<{ words: string[]; phrases: string[] } | undefined>();
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [isLast, setIsLast] = useState(false);
 
   const [difficulty, setDifficulty] = useState<"ALL" | Difficulty>("ALL");
@@ -60,6 +62,7 @@ export default function RecommendationsPage() {
           setSongs(cached.content);
           setTotalCount(cached.totalElements);
           setCurrentPage(cached.currentPage);
+          setTotalPages(cached.totalPages);
           setIsLast(cached.isLast);
           setKeywords(undefined);
           return;
@@ -86,6 +89,7 @@ export default function RecommendationsPage() {
 
         setTotalCount(result.totalElements);
         setCurrentPage(result.currentPage);
+        setTotalPages(result.totalPages);
         setIsLast(result.isLast);
         setKeywords(undefined);
       } else {
@@ -151,6 +155,7 @@ export default function RecommendationsPage() {
           setSongs(cached.content);
           setTotalCount(cached.totalElements);
           setCurrentPage(cached.currentPage);
+          setTotalPages(cached.totalPages);
           setIsLast(cached.isLast);
           setKeywords(undefined);
           setLoading(false);
@@ -192,6 +197,39 @@ export default function RecommendationsPage() {
     setSortBy(newSort);
   }, []);
 
+  const handlePageChange = useCallback((page: number) => {
+    console.log('[handlePageChange] 페이지 변경:', page);
+    // 즉시 UI 상태 업데이트
+    setCurrentPage(page);
+
+    if (isSearchMode) {
+      // 검색 모드에서는 페이지 변경 시 API 호출
+      const sortKey = `${sortBy === 'recommend' ? 'popularity' : sortBy},desc`;
+      searchSongs({
+        keyword: searchQuery,
+        page,
+        size: 20,
+        sort: [sortKey]
+      }).then(result => {
+        console.log('[handlePageChange] API 응답:', {
+          requestedPage: page,
+          currentPage: result.currentPage,
+          totalPages: result.totalPages
+        });
+        setSongs(result.content);
+        setTotalCount(result.totalElements);
+        setTotalPages(result.totalPages);
+        setIsLast(result.isLast);
+        // API 응답의 currentPage와 요청한 page가 다르면 로그 출력
+        if (result.currentPage !== page) {
+          console.warn('[handlePageChange] 페이지 불일치! 요청:', page, '응답:', result.currentPage);
+        }
+      }).catch(err => {
+        console.error('[handlePageChange] API 에러:', err);
+      });
+    }
+  }, [isSearchMode, searchQuery, sortBy]);
+
   const getTitle = () => {
     if (isSearchMode) {
       return searchQuery ? `"${searchQuery}" 검색 결과` : "검색 결과";
@@ -231,12 +269,26 @@ export default function RecommendationsPage() {
     ? !isLast && totalCount > songs.length
     : totalCount > songs.length;
 
+  // 초기 로딩 상태일 때 (데이터가 없고 로딩 중일 때) 전체 화면 로딩 표시
+  if (loading && songs.length === 0 && (isSearchMode || isRecommendMode)) {
+    return (
+      <>
+        <Navbar />
+        <Loading
+          title={isSearchMode ? `"${searchQuery}" 검색 중` : "맞춤 음악 추천 생성 중"}
+          subtitle={isSearchMode ? "검색 결과를 찾고 있습니다" : "선택하신 조건에 맞는 최적의 곡들을 분석하고 있습니다"}
+          showProgress={true}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="bg-background text-foreground">
       <Navbar />
       <div aria-hidden className="h-16 md:h-20" />
 
-      <div className="mx-auto max-w-6xl px-4 py-6 space-y-6">
+      <div className={`mx-auto max-w-6xl px-4 space-y-6 ${isSearchMode ? 'py-12' : 'py-6'}`}>
         {/* 조건 태그 (추천 모드에서만) */}
         {isRecommendMode && (
           <div className="space-y-1">
@@ -255,7 +307,7 @@ export default function RecommendationsPage() {
           songs={songs}
           loading={loading}
           error={error}
-          showFeaturedSection={isRecommendMode}
+          showFeaturedSection={isRecommendMode || isSearchMode}
           showRecommendationKeywords={isRecommendMode}
           keywords={keywords}
           title={getTitle()}
@@ -271,6 +323,10 @@ export default function RecommendationsPage() {
           onShowMore={handleShowMore}
           situation={situation}
           location={location}
+          searchQuery={searchQuery}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
         />
       </div>
     </div>

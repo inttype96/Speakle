@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import Navbar from "@/components/common/navbar";
+import Loading from "@/components/common/loading";
 
 // lucide 아이콘 (필요에 따라 더 추가 가능)
 import {
@@ -71,7 +72,7 @@ export default function ExplorePage() {
     <div className="bg-background text-foreground">
         {/* Navbar + 스페이서 */}
         <Navbar />
-      <div aria-hidden className="h-16 md:h-20" />    
+        <div aria-hidden className="h-16 md:h-20" />
       {/* 상단 헤더 */}
       <div className="text-center space-y-2 mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">나만의 음악 찾기</h1>

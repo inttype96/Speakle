@@ -52,7 +52,7 @@ public class RecommendService {
         KeywordsResponse keywords = gmsAiClient.generateKeywords(
                 request.getSituation(),
                 request.getLocation(),
-                "gpt-4o"
+                "gpt-4o-mini"
         );
 
         // 2. FastAPI 요청 (더 많은 후보를 가져와서 필터링할 수 있도록)

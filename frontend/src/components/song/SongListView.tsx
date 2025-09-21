@@ -41,6 +41,11 @@ type SongListViewProps = {
   onShowMore?: () => void;
   situation?: string;
   location?: string;
+  searchQuery?: string;
+  // 페이지네이션 관련
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 };
 
 // utils
@@ -50,10 +55,11 @@ const msToMinSec = (ms: number) => {
   return `${m}:${s.toString().padStart(2, "0")}`;
 };
 
-const buildSongDetailLink = (songId: string, situation?: string, location?: string): string => {
+const buildSongDetailLink = (songId: string, situation?: string, location?: string, searchQuery?: string): string => {
   const params = new URLSearchParams();
   if (situation) params.append("situation", situation);
   if (location) params.append("location", location);
+  if (searchQuery) params.append("q", searchQuery);
   const queryString = params.toString();
   return `/songs/${songId}${queryString ? `?${queryString}` : ""}`;
 };
@@ -95,9 +101,13 @@ export default function SongListView({
   onShowMore,
   situation,
   location,
+  searchQuery,
+  currentPage = 0,
+  totalPages = 0,
+  onPageChange,
 }: SongListViewProps) {
   const filteredSorted = useMemo(() => {
-    const base = difficulty === "ALL" ? songs : songs.filter((s) => s.difficulty === difficulty);
+    const base = difficulty === "ALL" ? songs : songs.filter((s) => s.level === difficulty);
     const copy = [...base];
     copy.sort(sorters[sortBy]);
     return copy;
@@ -159,7 +169,7 @@ export default function SongListView({
             <div className="grid grid-cols-1 lg:grid-cols-3">
               {/* 왼쪽 메인 카드 */}
               <div className="p-4">
-                <FeaturedCard song={top} situation={situation} location={location} />
+                <FeaturedCard song={top} situation={situation} location={location} searchQuery={searchQuery} />
               </div>
 
               {/* 오른쪽 리스트 */}
@@ -168,7 +178,7 @@ export default function SongListView({
                 <ScrollArea className="max-h-[220px] pr-2">
                   <div className="space-y-2">
                     {rest.map((s) => (
-                      <TopResultItem key={s.songId} song={s} situation={situation} location={location} />
+                      <TopResultItem key={s.songId} song={s} situation={situation} location={location} searchQuery={searchQuery} />
                     ))}
                   </div>
                 </ScrollArea>
@@ -223,7 +233,7 @@ export default function SongListView({
 
       {/* 카드 그리드 */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(6)].map((_, i) => (
             <Card key={i} className="overflow-hidden">
               <Skeleton className="aspect-[4/3] w-full" />
@@ -236,14 +246,25 @@ export default function SongListView({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {gridList.map((s) => (
-              <SongCard key={s.songId} song={s} situation={situation} location={location} />
+              <SongCard key={s.songId} song={s} situation={situation} location={location} searchQuery={searchQuery} />
             ))}
           </div>
 
-          {/* 더 보기 */}
-          {showMoreButton && onShowMore && (
+          {/* 페이지네이션 */}
+          {totalPages > 1 && onPageChange && (
+            <div className="flex justify-center pt-6">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={onPageChange}
+              />
+            </div>
+          )}
+
+          {/* 더 보기 (페이지네이션이 없을 때만) */}
+          {showMoreButton && onShowMore && !onPageChange && (
             <div className="flex justify-center pt-6">
               <Button variant="outline" onClick={onShowMore}>
                 더 보기
@@ -256,9 +277,9 @@ export default function SongListView({
   );
 }
 
-function FeaturedCard({ song, situation, location }: { song: UnifiedSong; situation?: string; location?: string }) {
-  const diff = DIFFICULTY_MAP[song.difficulty];
-  const to = buildSongDetailLink(song.songId, situation, location);
+function FeaturedCard({ song, situation, location, searchQuery }: { song: UnifiedSong; situation?: string; location?: string; searchQuery?: string }) {
+  const diff = DIFFICULTY_MAP[song.level] || { label: "보통", variant: "default" as const };
+  const to = buildSongDetailLink(song.songId, situation, location, searchQuery);
 
   console.log("FeaturedCard Debug:", {
     title: song.title,
@@ -268,18 +289,23 @@ function FeaturedCard({ song, situation, location }: { song: UnifiedSong; situat
     linkTo: to
   });
 
+  // 앨범 이미지 유효성 검사
+  const hasValidImage = song.albumImgUrl &&
+    song.albumImgUrl !== "no" &&
+    song.albumImgUrl !== "null" &&
+    song.albumImgUrl !== "none" &&
+    song.albumImgUrl.trim() !== "";
+
   return (
     <Card className="overflow-hidden relative">
       <Link to={to} className="absolute inset-0 z-10" aria-label={`${song.title} 상세 보기`} />
 
-      <div className="aspect-[16/10] bg-muted relative">
-        {song.albumImgUrl ? (
-          <img src={song.albumImgUrl} alt={song.title} className="h-full w-full object-cover" />
-        ) : (
-          <div className="h-full w-full flex items-center justify-center">
-            <Music2 className="h-10 w-10" />
-          </div>
-        )}
+      <div className="aspect-square bg-muted relative">
+        <img
+          src={hasValidImage ? song.albumImgUrl : "/albumBasicCover.png"}
+          alt={song.title}
+          className="h-full w-full object-cover"
+        />
         <div className="absolute left-3 top-3">
           <Badge variant={diff.variant || "default"}>{diff.label}</Badge>
         </div>
@@ -307,9 +333,9 @@ function FeaturedCard({ song, situation, location }: { song: UnifiedSong; situat
   );
 }
 
-function TopResultItem({ song, situation, location }: { song: UnifiedSong; situation?: string; location?: string }) {
-  const diff = DIFFICULTY_MAP[song.difficulty];
-  const to = buildSongDetailLink(song.songId, situation, location);
+function TopResultItem({ song, situation, location, searchQuery }: { song: UnifiedSong; situation?: string; location?: string; searchQuery?: string }) {
+  const diff = DIFFICULTY_MAP[song.level] || { label: "보통", variant: "default" as const };
+  const to = buildSongDetailLink(song.songId, situation, location, searchQuery);
 
   console.log("TopResultItem Debug:", {
     title: song.title,
@@ -319,19 +345,24 @@ function TopResultItem({ song, situation, location }: { song: UnifiedSong; situa
     linkTo: to
   });
 
+  // 앨범 이미지 유효성 검사
+  const hasValidImage = song.albumImgUrl &&
+    song.albumImgUrl !== "no" &&
+    song.albumImgUrl !== "null" &&
+    song.albumImgUrl !== "none" &&
+    song.albumImgUrl.trim() !== "";
+
   return (
     <Link
       to={to}
       className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-accent focus:bg-accent outline-none"
     >
       <div className="h-12 w-12 rounded-md overflow-hidden bg-muted shrink-0">
-        {song.albumImgUrl ? (
-          <img src={song.albumImgUrl} alt={song.title} className="h-full w-full object-cover" />
-        ) : (
-          <div className="h-full w-full flex items-center justify-center">
-            <Music2 className="h-4 w-4" />
-          </div>
-        )}
+        <img
+          src={hasValidImage ? song.albumImgUrl : "/albumBasicCover.png"}
+          alt={song.title}
+          className="h-full w-full object-cover"
+        />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
@@ -345,9 +376,9 @@ function TopResultItem({ song, situation, location }: { song: UnifiedSong; situa
   );
 }
 
-function SongCard({ song, situation, location }: { song: UnifiedSong; situation?: string; location?: string }) {
-  const diff = DIFFICULTY_MAP[song.difficulty];
-  const to = buildSongDetailLink(song.songId, situation, location);
+function SongCard({ song, situation, location, searchQuery }: { song: UnifiedSong; situation?: string; location?: string; searchQuery?: string }) {
+  const diff = DIFFICULTY_MAP[song.level] || { label: "보통", variant: "default" as const };
+  const to = buildSongDetailLink(song.songId, situation, location, searchQuery);
 
   console.log("SongCard Debug:", {
     title: song.title,
@@ -357,18 +388,23 @@ function SongCard({ song, situation, location }: { song: UnifiedSong; situation?
     linkTo: to
   });
 
+  // 앨범 이미지 유효성 검사
+  const hasValidImage = song.albumImgUrl &&
+    song.albumImgUrl !== "no" &&
+    song.albumImgUrl !== "null" &&
+    song.albumImgUrl !== "none" &&
+    song.albumImgUrl.trim() !== "";
+
   return (
     <Card className="overflow-hidden relative">
       <Link to={to} className="absolute inset-0 z-10" aria-label={`${song.title} 상세 보기`} />
 
-      <div className="relative aspect-[4/3] bg-muted">
-        {song.albumImgUrl ? (
-          <img src={song.albumImgUrl} alt={song.title} className="h-full w-full object-cover" />
-        ) : (
-          <div className="h-full w-full flex items-center justify-center">
-            <Music2 className="h-8 w-8" />
-          </div>
-        )}
+      <div className="relative aspect-square bg-muted">
+        <img
+          src={hasValidImage ? song.albumImgUrl : "/albumBasicCover.png"}
+          alt={song.title}
+          className="h-full w-full object-cover"
+        />
         <div className="absolute left-3 top-3">
           <Badge variant={diff.variant || "default"}>{diff.label}</Badge>
         </div>
@@ -414,6 +450,100 @@ function FeaturedSkeleton({ showFeaturedSection }: { showFeaturedSection: boolea
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function Pagination({ currentPage, totalPages, onPageChange }: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  console.log('[Pagination] currentPage:', currentPage, 'totalPages:', totalPages);
+  const generatePageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisiblePages = 7;
+
+    if (totalPages <= maxVisiblePages) {
+      // 총 페이지가 7개 이하면 모두 표시
+      for (let i = 0; i < totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // 총 페이지가 많으면 현재 페이지 주변만 표시
+      if (currentPage <= 3) {
+        // 처음 부분
+        for (let i = 0; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push("...");
+        pages.push(totalPages - 1);
+      } else if (currentPage >= totalPages - 4) {
+        // 끝 부분
+        pages.push(0);
+        pages.push("...");
+        for (let i = totalPages - 5; i < totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // 중간 부분
+        pages.push(0);
+        pages.push("...");
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push("...");
+        pages.push(totalPages - 1);
+      }
+    }
+
+    return pages;
+  };
+
+  const pageNumbers = generatePageNumbers();
+
+  return (
+    <div className="flex items-center justify-center gap-2">
+      {/* 이전 버튼 */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 0}
+      >
+        이전
+      </Button>
+
+      {/* 페이지 번호들 */}
+      {pageNumbers.map((page, index) => (
+        <div key={index}>
+          {page === "..." ? (
+            <span className="px-3 py-2 text-sm text-muted-foreground">...</span>
+          ) : (
+            <Button
+              variant={currentPage === page ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                console.log('[Pagination] 버튼 클릭:', page, 'currentPage:', currentPage);
+                onPageChange(page as number);
+              }}
+              className="min-w-[40px]"
+            >
+              {(page as number) + 1}
+            </Button>
+          )}
+        </div>
+      ))}
+
+      {/* 다음 버튼 */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages - 1}
+      >
+        다음
+      </Button>
     </div>
   );
 }
