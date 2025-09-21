@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import { BentoCard } from '@/components/ui/bento-card'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { LearnedSong } from '@/services/mypage'
+import type { LearnedSong } from '@/services/mypage'
 import {
   TrendingUp,
   Calendar,
