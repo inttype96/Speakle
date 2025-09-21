@@ -30,9 +30,8 @@ public class LearnedSongEntity {
     @Column(name = "song_id")
     private String songId;
 
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "artists", columnDefinition = "text[]")
-    private List<String> artists;
+    @Column(name = "artists", columnDefinition = "TEXT")
+    private String artists;
 
     @Column(name = "situation", columnDefinition = "TEXT")
     private String situation;

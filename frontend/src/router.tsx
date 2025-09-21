@@ -33,6 +33,10 @@ const router = createBrowserRouter([
         element: <SpeakingPage />,
     },
     {
+        path: "/learn/dictation",
+        element: <DictationPage />,
+    },
+    {
         path: "/signup",
         element: <SignupPage />,
     },

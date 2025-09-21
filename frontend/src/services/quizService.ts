@@ -35,7 +35,9 @@ const MOCK_QUESTIONS: Array<QuizGenerateRes["data"]> = [
   {
     blankId: 1001,
     learnedSongId: 12345,
-    songId: 123,
+    songId: "123",
+    title: "Shape of You",
+    artists: "Ed Sheeran",
     recommendationSentenceId: 9001,
     originSentence: "The club isn't the best place to find a lover",
     korean: "클럽은 연인을 찾기에 최적의 장소가 아닙니다",
@@ -46,7 +48,9 @@ const MOCK_QUESTIONS: Array<QuizGenerateRes["data"]> = [
   {
     blankId: 1002,
     learnedSongId: 12345,
-    songId: 123,
+    songId: "123",
+    title: "Shape of You",
+    artists: "Ed Sheeran",
     recommendationSentenceId: 9002,
     originSentence: "I have this thing where I get older but just never wiser",
     korean: "나는 나이가 들어가지만 결코 현명해지지 않는다는 문제가 있어요",
@@ -57,7 +61,9 @@ const MOCK_QUESTIONS: Array<QuizGenerateRes["data"]> = [
   {
     blankId: 1003,
     learnedSongId: 12345,
-    songId: 123,
+    songId: "123",
+    title: "Shape of You",
+    artists: "Ed Sheeran",
     recommendationSentenceId: 9003,
     originSentence: "Life is what happens when you're busy making other plans",
     korean: "인생은 당신이 다른 계획을 세우느라 바쁠 때 일어나는 것입니다",

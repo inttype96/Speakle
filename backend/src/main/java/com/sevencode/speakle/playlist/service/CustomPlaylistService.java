@@ -23,8 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -441,8 +443,65 @@ public class CustomPlaylistService {
 	}
 
 	/**
-	 * 정렬 옵션에 따라 트랙을 조회하는 헬퍼 메서드
+	 * 여러 노래들이 사용자의 플레이리스트에 포함되어 있는지 확인
 	 */
+	@Transactional(readOnly = true)
+	public Map<String, Object> checkSongsInUserPlaylists(UserPrincipal auth, List<String> songIds) {
+		// 인증 정보 확인
+		if (auth == null) {
+			log.error("사용자 인증 정보가 null입니다");
+			return Map.of(
+				"status", 401,
+				"message", "사용자 인증이 필요합니다.",
+				"error", "Authentication required"
+			);
+		}
+
+		log.info("사용자 플레이리스트 내 노래 포함 여부 확인 - userId: {}, songCount: {}",
+			auth.userId(), songIds.size());
+
+		if (songIds.isEmpty()) {
+			return Map.of(
+				"status", 200,
+				"message", "확인할 노래가 없습니다.",
+				"data", Map.of("songs", Map.of())
+			);
+		}
+
+		try {
+			// 사용자의 모든 플레이리스트에서 해당 노래들이 포함된 것들 찾기
+			List<com.sevencode.speakle.playlist.entity.CustomPlaylistTrack> foundTracks =
+				trackRepository.findByUserIdAndSongIdIn(auth.userId(), songIds);
+
+			// 찾은 노래들의 ID만 Set으로 수집 (중복 제거)
+			Set<String> includedSongIds = foundTracks.stream()
+				.map(com.sevencode.speakle.playlist.entity.CustomPlaylistTrack::getSongId)
+				.collect(Collectors.toSet());
+
+			// 각 songId에 대해 포함 여부만 반환
+			Map<String, Boolean> songsInclusionStatus = new HashMap<>();
+			for (String songId : songIds) {
+				songsInclusionStatus.put(songId, includedSongIds.contains(songId));
+			}
+
+			log.info("노래 포함 여부 확인 완료 - userId: {}, totalSongs: {}, includedSongs: {}",
+				auth.userId(), songIds.size(), includedSongIds.size());
+
+			return Map.of(
+				"status", 200,
+				"message", "노래 포함 여부 확인이 완료되었습니다.",
+				"data", songsInclusionStatus
+			);
+		} catch (Exception e) {
+			log.error("노래 포함 여부 확인 실패 - userId: {}, error: {}", auth.userId(), e.getMessage(), e);
+			return Map.of(
+				"status", 500,
+				"message", "노래 포함 여부 확인 중 오류가 발생했습니다.",
+				"error", e.getMessage()
+			);
+		}
+	}
+
 	private Page<com.sevencode.speakle.playlist.entity.CustomPlaylistTrack> getTracksBySortOption(
 		Long playlistId, Pageable pageable, String sortBy, String order) {
 
@@ -468,5 +527,4 @@ public class CustomPlaylistService {
 				return trackRepository.findByPlaylistIdOrderByAddedAt(playlistId, pageable);
 		}
 	}
-
 }

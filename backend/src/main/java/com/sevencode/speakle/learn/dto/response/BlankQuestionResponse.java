@@ -15,6 +15,8 @@ public class BlankQuestionResponse {
     private Long blankId;
     private Long learnedSongId;
     private String songId;
+    private String title;
+    private String artists;
     private Long recommendationSentenceId;
     private String originSentence;
     private String korean;

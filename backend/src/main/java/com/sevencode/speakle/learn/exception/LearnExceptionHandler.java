@@ -18,6 +18,19 @@ import java.time.OffsetDateTime;
 public class LearnExceptionHandler {
     private static final String CORR_KEY = "corrId";
 
+    @ExceptionHandler(MemberNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleMemberNotFound(
+            MemberNotFoundException ex, WebRequest request) {
+        log.warn("회원 조회 불가 - 경로: {}, 메시지: {}", getRequestPath(request), ex.getMessage());
+
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "MEMBER_NOT_FOUND",
+                "회원을 찾을 수 없습니다."
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
     @ExceptionHandler(LearnedSongNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleLearnedSongNotFound(
             LearnedSongNotFoundException ex, WebRequest request) {
@@ -52,6 +65,20 @@ public class LearnExceptionHandler {
         ApiErrorResponse errorResponse = createErrorResponse(
                 "NO_SENTENCE_AVAILABLE",
                 "해당 학습 곡에서 추출할 문장이 없습니다."
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+
+    @ExceptionHandler(SongNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleSongNotFound(
+            SongNotFoundException ex, WebRequest request) {
+        log.warn("곡 조회 불가 - 경로: {}", getRequestPath(request));
+
+        ApiErrorResponse errorResponse = createErrorResponse(
+                "SONG_NOT_FOUND",
+                "곡을 찾을 수 없습니다."
         );
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);

@@ -8,9 +8,13 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SentenceRepository extends JpaRepository<SentenceEntity, Long> {
-	boolean existsByLearnedSongId(String learnedSongId);
+	boolean existsBySongId(String songId);
 
-	List<SentenceEntity> findAllByLearnedSongId(String learnedSongId);
+	boolean existsBySongIdAndSituationAndLocation(String songId, String situation, String location);
 
-	Optional<SentenceEntity> findByLearnedSongIdAndSentenceIgnoreCase(String learnedSongId, String sentence);
+	List<SentenceEntity> findAllBySongId(String songId);
+
+	List<SentenceEntity> findAllBySongIdAndSituationAndLocation(String songId, String situation, String location);
+
+	Optional<SentenceEntity> findBySongIdAndSentenceIgnoreCase(String songId, String sentence);
 }
