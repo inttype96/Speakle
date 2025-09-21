@@ -30,6 +30,18 @@ export function ElasticSlider({
   const sliderRef = useRef<HTMLDivElement>(null)
   const animationRef = useRef<number>()
 
+  const updateValue = useCallback((e: MouseEvent | React.MouseEvent) => {
+    if (!sliderRef.current) return
+
+    const rect = sliderRef.current.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const percentage = Math.max(0, Math.min(1, x / rect.width))
+    const newValue = Math.round((min + percentage * (max - min)) / step) * step
+
+    onChange(newValue)
+    setAnimatedValue(newValue)
+  }, [min, max, step, onChange])
+
   const animate = useCallback((targetValue: number) => {
     let currentValue = animatedValue
 
@@ -66,18 +78,6 @@ export function ElasticSlider({
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
   }, [])
-
-  const updateValue = useCallback((e: MouseEvent | React.MouseEvent) => {
-    if (!sliderRef.current) return
-
-    const rect = sliderRef.current.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const percentage = Math.max(0, Math.min(1, x / rect.width))
-    const newValue = Math.round((min + percentage * (max - min)) / step) * step
-
-    onChange(newValue)
-    animate(newValue)
-  }, [min, max, step, onChange, animate])
 
   React.useEffect(() => {
     if (isDragging) {
