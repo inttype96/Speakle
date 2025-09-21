@@ -28,7 +28,7 @@ export function ElasticSlider({
   const [isDragging, setIsDragging] = useState(false)
   const [animatedValue, setAnimatedValue] = useState(value)
   const sliderRef = useRef<HTMLDivElement>(null)
-  const animationRef = useRef<number | undefined>()
+  const animationRef = useRef<number | undefined>(undefined)
 
   const updateValue = useCallback((e: MouseEvent | React.MouseEvent) => {
     if (!sliderRef.current) return
