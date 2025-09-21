@@ -53,7 +53,7 @@ const SECTIONS: {
   }
 ];
 
-export default function LearningContentTabs({ learningContent, loading = false }: LearningContentTabsProps) {
+export default function LearningContentTabs({ learningContent }: LearningContentTabsProps) {
   const [currentSection, setCurrentSection] = useState<LearningSection>("words");
 
   const currentIndex = SECTIONS.findIndex(s => s.key === currentSection);

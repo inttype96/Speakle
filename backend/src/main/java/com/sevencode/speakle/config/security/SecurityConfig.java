@@ -74,6 +74,8 @@ public class SecurityConfig {
 					.requestMatchers("/user/**").authenticated()
 					.requestMatchers("/api/learn/**").authenticated()			// ay
 					.requestMatchers("/api/spotify/**").authenticated()			// spotify
+					.requestMatchers("/api/reward/**").authenticated()			// reward
+					.requestMatchers("/api/user/**").authenticated()			// user
 
 					// 그 외 필요 시 정책 추가
 					.anyRequest().permitAll()
