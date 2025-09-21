@@ -55,13 +55,13 @@ export function ElasticSlider({
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     setIsDragging(true)
     updateValue(e)
-  }, [])
+  }, [updateValue])
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isDragging) {
       updateValue(e)
     }
-  }, [isDragging])
+  }, [isDragging, updateValue])
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
