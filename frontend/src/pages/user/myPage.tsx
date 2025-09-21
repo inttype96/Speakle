@@ -244,7 +244,7 @@ export default function MyPage() {
       <div className="bg-background text-foreground">
         <Navbar />
 
-        <div className="relative isolate px-6 pt-14 lg:px-8">
+        <div className="relative isolate px-6 pt-24 lg:px-8">
           <div className="container mx-auto py-6 max-w-4xl">
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="text-center">

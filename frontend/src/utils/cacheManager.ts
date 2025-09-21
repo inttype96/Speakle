@@ -27,7 +27,6 @@ class CacheManager {
       }, {} as Record<string, any>);
 
     const key = this.prefix + btoa(encodeURIComponent(JSON.stringify(sortedParams)));
-    console.log('[CacheManager] Generated key:', { params: sortedParams, key });
     return key;
   }
 
@@ -45,7 +44,6 @@ class CacheManager {
         ttl
       };
       this.storage.setItem(key, JSON.stringify(cacheItem));
-      console.log('[CacheManager] Set cache:', { key, dataKeys: Object.keys(data as any) });
     } catch (error) {
       console.warn('Cache set error:', error);
       // 스토리지가 꽉 찼으면 오래된 캐시 정리
@@ -67,7 +65,6 @@ class CacheManager {
   get<T>(key: string): T | null {
     try {
       const cached = this.storage.getItem(key);
-      console.log('[CacheManager] Get cache:', { key, found: !!cached });
       if (!cached) return null;
 
       const cacheItem: CacheItem<T> = JSON.parse(cached);
@@ -75,12 +72,10 @@ class CacheManager {
 
       // TTL 체크
       if (now - cacheItem.timestamp > cacheItem.ttl) {
-        console.log('[CacheManager] Cache expired:', { key, age: now - cacheItem.timestamp, ttl: cacheItem.ttl });
         this.storage.removeItem(key);
         return null;
       }
 
-      console.log('[CacheManager] Cache valid:', { key, age: now - cacheItem.timestamp });
       return cacheItem.data;
     } catch (error) {
       console.warn('Cache get error:', error);

@@ -12,19 +12,15 @@ export default function SpotifyCallbackPage() {
   useEffect(() => {
     const code = searchParams.get('code');
     const error = searchParams.get('error');
-    const state = searchParams.get('state');
 
-    console.log('Spotify 콜백 파라미터:', { code, error, state });
 
     if (error) {
-      console.error('Spotify OAuth 에러:', error);
       setStatus('error');
       setMessage(`Spotify 연동이 취소되었습니다: ${error}`);
       return;
     }
 
     if (!code) {
-      console.error('Authorization code가 없습니다');
       setStatus('error');
       setMessage('올바르지 않은 응답입니다. 다시 시도해주세요.');
       return;

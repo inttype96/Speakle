@@ -40,6 +40,8 @@ public class SecurityConfig {
 				.authorizeHttpRequests(auth -> auth
 					.requestMatchers("/api/spotify/callback").permitAll()  // Spotify OAuth callback
 					.requestMatchers("/api/spotify/**").authenticated()    // Spotify API 인증 필요
+					.requestMatchers("/api/reward/**").authenticated()			// reward
+					.requestMatchers("/api/user/**").authenticated()			// user
 					.anyRequest().permitAll()  // 나머지는 모두 허용
 				);
 			http.addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useState } from "react"
-import { useAuthStore, getAccessToken } from "@/store/auth"
+import { useAuthStore } from "@/store/auth"
 import { loginAPI, getUserProfileAPI } from "@/services/auth"
 
 export function LoginForm({
@@ -25,64 +25,33 @@ export function LoginForm({
 
         try {
             const response = await loginAPI({ email, password });
-            console.log('Login response:', response);
-            console.log('Response status:', response.status);
-            console.log('Response data:', response.data);
 
             if (response.status === 200) {
                 const tokens = response.data.data;
-                console.log('Tokens to save:', tokens);
 
                 // 토큰 저장
                 login(tokens);
-                console.log('토큰 저장 완료, 저장된 토큰:', tokens);
 
                 // 토큰이 확실히 저장될 때까지 잠시 대기
                 await new Promise(resolve => setTimeout(resolve, 100));
 
-                // 저장 확인
-                const savedTokens = getAccessToken();
-                console.log('저장된 토큰 확인:', savedTokens ? savedTokens.substring(0, 20) + '...' : 'null');
-                const storedData = localStorage.getItem('auth-storage');
-                console.log('localStorage 확인:', storedData ? 'saved' : 'null');
 
                 try {
                     // 사용자 프로필 조회하여 userId 저장
-                    console.log('프로필 API 호출 시작...');
                     const profileResponse = await getUserProfileAPI();
-                    console.log('프로필 API 응답:', profileResponse);
 
                     const profileData = profileResponse.data?.data || profileResponse.data;
-                    console.log('추출된 프로필 데이터:', profileData);
 
                     if (profileData?.id) {
-                        console.log('userId 저장 시도 (백엔드 id를 userId로 매핑):', profileData.id);
                         setUserId(profileData.id);
 
                         // persist 저장이 완료될 때까지 잠시 대기
                         await new Promise(resolve => setTimeout(resolve, 200));
 
-                        console.log('setUserId 호출 후 - zustand 상태:', useAuthStore.getState());
-
-                        // localStorage에 직접 확인
-                        const stored = localStorage.getItem('auth-storage');
-                        console.log('localStorage auth-storage:', stored);
-
-                        // 파싱해서 userId 확인
-                        if (stored) {
-                            const parsedStorage = JSON.parse(stored);
-                            console.log('파싱된 localStorage:', parsedStorage);
-                            console.log('localStorage의 userId:', parsedStorage.state?.userId);
-                        }
-                    } else {
-                        console.error('profileData에 id가 없음:', profileData);
                     }
                 } catch (profileErr) {
-                    console.error('프로필 조회 실패:', profileErr);
                     // 프로필 조회 실패해도 로그인은 성공으로 처리
                 }
-
-                console.log('After login - auth state:', useAuthStore.getState());
 
                 // redirect 파라미터가 있으면 해당 경로로, 없으면 메인 페이지로
                 const redirectTo = searchParams.get('redirect') || '/';

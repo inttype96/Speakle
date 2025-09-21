@@ -34,20 +34,13 @@ export interface RankingResponse {
 }
 
 export async function getPointRankingAPI() {
-  console.log('[DEBUG] 랭킹 API 호출 시작');
-  try {
-    const res = await http.get<RankingResponse>("/reward/ranking", {
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      }
-    });
-    console.log('[DEBUG] 랭킹 API 성공:', res.data);
-    return res;
-  } catch (error) {
-    console.error('[DEBUG] 랭킹 API 실패:', error);
-    throw error;
-  }
+  const res = await http.get<RankingResponse>("/reward/ranking", {
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    }
+  });
+  return res;
 }
 
 // 회원 정보 수정

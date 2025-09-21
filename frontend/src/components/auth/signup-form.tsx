@@ -83,9 +83,6 @@ export function SignupForm({
 
         try {
             const response = await signupAPI(formData);
-            console.log('Signup response:', response);
-            console.log('Response status:', response.status);
-            console.log('Response data:', response.data);
 
             // HTTP 상태 코드 또는 응답 데이터의 status 필드 확인
             if (response.status === 201 || response.data?.status === 201) {
@@ -101,10 +98,8 @@ export function SignupForm({
                     if (loginResponse.status === 200) {
                         const tokens = loginResponse.data.data;
                         login(tokens);
-                        console.log('회원가입 후 자동 로그인 성공');
                     }
                 } catch (loginError) {
-                    console.warn('자동 로그인 실패:', loginError);
                     // 자동 로그인 실패해도 회원가입은 성공했으므로 계속 진행
                 }
 
