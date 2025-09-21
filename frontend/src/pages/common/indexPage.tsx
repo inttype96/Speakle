@@ -10,7 +10,7 @@ export default function IndexPage() {
             <Navbar />
             {/* Hero Section */}
             <div className="relative isolate px-6 pt-14 lg:px-8">
-                <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
+                <div className="mx-auto max-w-4xl py-32 sm:py-48 lg:py-56">
                     <div className="text-center">
                         <h1 className="text-5xl font-bold subpixel-antialiased tracking-tight text-balance sm:text-7xl">
                             Speakle
@@ -20,8 +20,8 @@ export default function IndexPage() {
                         </p>
                     </div>
                 </div>
-                <Footer />
             </div>
+            <Footer />
         </div>
     )
 }
