@@ -41,10 +41,10 @@ export default function Navbar() {
                             <Link to="/explore" className="px-3 py-1 rounded cursor-pointer transition-colors font-bold text-xl hover:text-gray-300">
                                 Learning
                             </Link>
-                            <Link to="/playlist" className="px-3 py-1 rounded cursor-pointer transition-colors font-bold text-xl hover:text-gray-300">
+                            <Link to="/playlists" className="px-3 py-1 rounded cursor-pointer transition-colors font-bold text-xl hover:text-gray-300">
                                 Playlist
                             </Link>
-                            <Link to="/rewarddashboard" className="px-3 py-1 rounded cursor-pointer transition-colors text-[#848484] hover:text-gray-300">
+                            <Link to="/dashboard" className="px-3 py-1 rounded cursor-pointer transition-colors text-[#848484] hover:text-gray-300">
                                 리워드 대시보드
                             </Link>
                             <Link to="/explore" className="px-3 py-1 rounded cursor-pointer transition-colors text-[#848484] hover:text-gray-300">
