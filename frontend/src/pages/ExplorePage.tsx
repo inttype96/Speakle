@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import Navbar from "@/components/common/navbar";
-import Loading from "@/components/common/loading";
 
 // lucide 아이콘 (필요에 따라 더 추가 가능)
 import {

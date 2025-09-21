@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Skeleton } from "@/components/ui/skeleton";
 
 // icons
-import { Music2, Clock, Flame, Play, ChevronLeft, Gamepad2, Type, MicVocal, Keyboard, ChevronRight } from "lucide-react";
+import { Clock, Flame, Play, ChevronLeft, Gamepad2, Type, MicVocal, Keyboard, ChevronRight } from "lucide-react";
 
 
 const SONG_DETAIL_SAMPLE: SongDetail = {
