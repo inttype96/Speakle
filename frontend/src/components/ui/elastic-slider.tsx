@@ -124,9 +124,9 @@ export function ElasticSlider({
 
       {/* Thumb */}
       <div
-        className="absolute top-1/2 w-4 h-4 bg-white border-2 border-green-500 rounded-full shadow-md transform -translate-y-1/2 transition-all duration-150 ease-out"
+        className="absolute top-1/2 w-4 h-4 bg-white border-2 border-green-500 rounded-full shadow-md transition-all duration-150 ease-out"
         style={{
-          left: `calc(${percentage}% - 8px)`,
+          left: `${percentage}%`,
           transform: `translate(-50%, -50%) scale(${isDragging ? 1.2 : 1})`,
           boxShadow: isDragging ? '0 4px 8px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.1)'
         }}
