@@ -23,7 +23,7 @@ export default function Navbar() {
         <>
             <header className="absolute inset-x-0 top-0 z-50">
                 <nav aria-label="Global">
-                    <div className="flex items-center justify-between p-6 ml-1">
+                    <div className="flex items-center justify-between p-6 pb-4 ml-1">
                         {/* 로고 */}
                         <div className="flex">
                             <Link to="/" className="-m-1.5 p-1.5">
