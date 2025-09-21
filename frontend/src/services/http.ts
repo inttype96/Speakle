@@ -16,7 +16,6 @@ export const http = axios.create({
 // 요청 인터셉터: accessToken 자동 부착
 http.interceptors.request.use((config) => {
   const token = getAccessToken();
-  const authState = useAuthStore.getState();
   const isFormData =
     typeof FormData !== "undefined" && config.data instanceof FormData;
 

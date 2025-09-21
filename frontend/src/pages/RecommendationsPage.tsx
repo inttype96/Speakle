@@ -206,7 +206,7 @@ export default function RecommendationsPage() {
         setTotalCount(result.totalElements);
         setTotalPages(result.totalPages);
         setIsLast(result.isLast);
-      }).catch(err => {
+      }).catch(() => {
         // Error handling can be added here if needed
       });
     }

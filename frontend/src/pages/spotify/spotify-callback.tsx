@@ -12,7 +12,6 @@ export default function SpotifyCallbackPage() {
   useEffect(() => {
     const code = searchParams.get('code');
     const error = searchParams.get('error');
-    const state = searchParams.get('state');
 
 
     if (error) {
