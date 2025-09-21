@@ -1,5 +1,3 @@
-"use client";
-
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import type { Song, Difficulty } from "@/types/recommend";
@@ -15,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 // icons
-import { Heart, Music2, Filter, Clock, Flame, ChevronRight } from "lucide-react";
+import { Heart, Music2, Filter, Clock, Flame } from "lucide-react";
 
 // types
 type UnifiedSong = Song | SearchSong;
