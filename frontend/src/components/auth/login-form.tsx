@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useState } from "react"
-import { useAuthStore, getAccessToken } from "@/store/auth"
+import { useAuthStore } from "@/store/auth"
 import { loginAPI, getUserProfileAPI } from "@/services/auth"
 
 export function LoginForm({

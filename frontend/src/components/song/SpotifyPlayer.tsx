@@ -26,8 +26,8 @@ export default function SpotifyPlayer({ trackId, trackName, artistName }: Spotif
   const [playbackState, setPlaybackState] = useState<SpotifyPlaybackState | null>(null)
   const [hasApiError, setHasApiError] = useState(false)
 
-  const volumeTimeoutRef = useRef<NodeJS.Timeout>()
-  const fetchTimeoutRef = useRef<NodeJS.Timeout>()
+  const volumeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   // 현재 재생 상태 조회
   const fetchPlaybackState = useCallback(async () => {

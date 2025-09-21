@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { connectSpotifyAPI } from "@/services/spotify";
-import { useAuthStore, getAccessToken } from "@/store/auth";
+import { useAuthStore } from "@/store/auth";
 import { AxiosError } from "axios";
 
 interface SpotifyConnectProps {
@@ -24,8 +24,6 @@ export function SpotifyConnect({ onSuccess, onError, className }: SpotifyConnect
       onError?.(errorMsg);
       return;
     }
-
-    const token = getAccessToken();
 
     setLoading(true);
     setError(null);
