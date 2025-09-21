@@ -12,7 +12,7 @@ export type Song = {
   artists: string;
   albumName: string;
   albumImgUrl: string;
-  difficulty: Difficulty;
+  level: Difficulty;
   durationMs: number;
   popularity: number;
   recommendScore: number;

@@ -1,5 +1,5 @@
 import { http } from "./http";
-import type { SongDetailRes, SongDetail } from "@/types/song";
+import type { SongDetailRes, SongDetail, LearningContent } from "@/types/song";
 
 export type LearnedReq = {
   songId: string;
@@ -56,5 +56,32 @@ export async function fetchSongDetail(
     }
   );
   // ApiResponse wrapper에서 실제 데이터 추출
+  return response.data.data;
+}
+
+export type ParsingResponse = {
+  status: number;
+  message: string;
+  data: LearningContent;
+};
+
+export async function fetchLearningContent(
+  songId: string,
+  params: { situation?: string; location?: string } = {},
+  accessToken?: string
+): Promise<LearningContent> {
+  const response = await http.post<ParsingResponse>(
+    `/parsing/${songId}`,
+    {
+      situation: params.situation || null,
+      location: params.location || null,
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+    }
+  );
   return response.data.data;
 }

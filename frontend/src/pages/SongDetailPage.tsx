@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/common/navbar";
-import { fetchSongDetail } from "@/services/songService";
-import type { SongDetail } from "@/types/song";
+import Loading from "@/components/common/loading";
+import { fetchSongDetail, fetchLearningContent } from "@/services/songService";
+import type { SongDetail, LearningContent } from "@/types/song";
 import { createLearnedSong } from "@/services/songService";
 
 // shadcn
@@ -14,11 +15,12 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 // import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import LearningContentTabs from "@/components/song/LearningContentTabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // icons
-import { Music2, Clock, Flame, Play, ChevronLeft, Gamepad2, Type, MicVocal, Keyboard } from "lucide-react";
+import { Music2, Clock, Flame, Play, ChevronLeft, Gamepad2, Type, MicVocal, Keyboard, ChevronRight } from "lucide-react";
 
 
 const SONG_DETAIL_SAMPLE: SongDetail = {
@@ -74,6 +76,12 @@ export default function SongDetailPage() {
   const [openLearn, setOpenLearn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 학습 내용 관련 상태
+  const [learningContent, setLearningContent] = useState<LearningContent | null>(null);
+  const [learningLoading, setLearningLoading] = useState(false);
+  const [learningError, setLearningError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("lyrics");
+
   // 컴포넌트 내부 상태
 const [initLearningLoading, setInitLearningLoading] = useState(false);
 const [learned, setLearned] = useState<null | { learnedSongId: number }>(null);
@@ -96,6 +104,59 @@ const handleOpenLearn = async () => {
     setInitLearningLoading(false);
   }
 };
+
+  // 학습 내용 탭이 활성화됐을 때 API 호출 (폴링으로 LLM 처리 완료 대기)
+  const fetchLearningContentData = async () => {
+    if (learningContent || learningLoading || !songId) return;
+
+    setLearningLoading(true);
+    setLearningError(null);
+
+    try {
+      const accessToken = localStorage.getItem("access_token") || undefined;
+
+      // 최대 30초 동안 3초마다 폴링하여 LLM 처리 완료 대기
+      const maxRetries = 10;
+      let retryCount = 0;
+
+      while (retryCount < maxRetries) {
+        try {
+          const content = await fetchLearningContent(songId, { situation, location }, accessToken);
+          setLearningContent(content);
+          return; // 성공하면 종료
+        } catch (e: any) {
+          retryCount++;
+
+          // LLM 처리 중이라는 메시지가 있으면 계속 대기
+          if (e?.message?.includes("처리 중") || e?.message?.includes("생성 중") || retryCount < maxRetries) {
+            console.log(`LLM 처리 대기 중... (${retryCount}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, 3000)); // 3초 대기
+            continue;
+          }
+
+          // 다른 에러는 바로 throw
+          throw e;
+        }
+      }
+
+      // 최대 재시도 횟수 초과
+      throw new Error("학습 내용 생성에 시간이 오래 걸리고 있어요. 잠시 후 다시 시도해주세요.");
+
+    } catch (e: any) {
+      console.error("Learning content fetch error:", e);
+      setLearningError(e?.message ?? "학습 내용을 불러오지 못했습니다.");
+    } finally {
+      setLearningLoading(false);
+    }
+  };
+
+  // 탭 변경 핸들러
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === "notes" && !learningContent && !learningLoading) {
+      fetchLearningContentData();
+    }
+  };
 
   useEffect(() => {
     // 페이지 진입 시 스크롤을 최상단으로
@@ -141,6 +202,26 @@ const handleOpenLearn = async () => {
 
   const qsRaw = sp.toString(); // 현재 쿼리를 그대로 다음 페이지로 넘길 때 사용
 
+  // 검색으로 온 경우와 추천으로 온 경우 구분
+  const searchQuery = sp.get("q");
+  const isFromSearch = Boolean(searchQuery);
+  const backUrl = isFromSearch ? `/search${qsRaw ? `?${qsRaw}` : ""}` : `/recommendations${qsRaw ? `?${qsRaw}` : ""}`;
+  const backText = isFromSearch ? "검색 결과로" : "추천 목록으로";
+
+  // 학습 내용 로딩 중일 때 전체 화면 로딩 표시
+  if (learningLoading && activeTab === "notes") {
+    return (
+      <>
+        <Navbar />
+        <Loading
+          title="AI가 학습 내용을 생성하고 있어요"
+          subtitle="이 곡의 단어, 문장, 표현, 관용구를 분석하고 있습니다"
+          showProgress={true}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="bg-background text-foreground">
       <Navbar />
@@ -150,8 +231,8 @@ const handleOpenLearn = async () => {
         {/* 상단 헤더 */}
         <div className="flex items-center justify-between">
           <Button variant="ghost" asChild>
-            <Link to={`/recommendations${qsRaw ? `?${qsRaw}` : ""}`}>
-              <ChevronLeft className="mr-1 h-4 w-4" /> 추천 목록으로
+            <Link to={backUrl}>
+              <ChevronLeft className="mr-1 h-4 w-4" /> {backText}
             </Link>
           </Button>
 
@@ -167,14 +248,25 @@ const handleOpenLearn = async () => {
           <div className="grid grid-cols-1 md:grid-cols-3">
             {/* 앨범 커버 */}
             <div className="p-4">
-              <div className="relative aspect-[16/10] md:aspect-square overflow-hidden rounded-md bg-muted">
+              <div className="relative aspect-square overflow-hidden rounded-md bg-muted">
                 {loading ? (
                   <Skeleton className="absolute inset-0" />
-                ) : data?.albumImgUrl ? (
-                  <img src={data.albumImgUrl} alt={data.title} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center"><Music2 className="h-8 w-8" /></div>
-                )}
+                ) : (() => {
+                  // 앨범 이미지 유효성 검사
+                  const hasValidImage = data?.albumImgUrl &&
+                    data.albumImgUrl !== "no" &&
+                    data.albumImgUrl !== "null" &&
+                    data.albumImgUrl !== "none" &&
+                    data.albumImgUrl.trim() !== "";
+
+                  return (
+                    <img
+                      src={hasValidImage ? data.albumImgUrl : "/albumBasicCover.png"}
+                      alt={data?.title || ""}
+                      className="h-full w-full object-cover"
+                    />
+                  );
+                })()}
                 {!loading && (
                   <Button size="icon" variant="secondary" className="absolute left-3 top-3 rounded-full h-9 w-9">
                     <Play className="h-5 w-5" />
@@ -212,10 +304,10 @@ const handleOpenLearn = async () => {
         </Card>
 
         {/* 탭 (스크린샷처럼 상단에 '가사 | 학습 내용' 탭 표시) */}
-        <Tabs defaultValue="lyrics" className="w-full" onFocus={(e) => e.preventDefault()}>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full" onFocus={(e) => e.preventDefault()}>
           <TabsList className="mx-auto block w-fit">
             <TabsTrigger value="lyrics" tabIndex={-1}>가사</TabsTrigger>
-            <TabsTrigger value="notes" disabled tabIndex={-1}>학습 내용</TabsTrigger>
+            <TabsTrigger value="notes" tabIndex={-1}>학습 내용</TabsTrigger>
           </TabsList>
 
           <TabsContent value="lyrics" className="space-y-4">
@@ -267,8 +359,22 @@ const handleOpenLearn = async () => {
           </TabsContent>
 
           <TabsContent value="notes">
-            {/* 학습 내용 탭은 이후 연동 */}
-            <Card><CardContent className="py-10 text-sm text-muted-foreground">학습 내용은 추후 제공될 예정입니다.</CardContent></Card>
+            {/* 학습 내용 탭 */}
+            {learningError ? (
+              <Card>
+                <CardContent className="py-10 text-center space-y-3">
+                  <p className="text-sm text-destructive">{learningError}</p>
+                  <Button variant="outline" onClick={fetchLearningContentData}>
+                    다시 시도
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <LearningContentTabs
+                learningContent={learningContent || undefined}
+                loading={false}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </div>
