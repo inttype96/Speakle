@@ -60,11 +60,6 @@ export default function SongDetailPage() {
   const [sp] = useSearchParams();
   const navigate = useNavigate();
 
-  console.log("SongDetailPage Debug:", {
-    songId,
-    url: window.location.href,
-    pathname: window.location.pathname
-  });
 
   // URL 쿼리(raw) -> situation/location이 없을 때 null이 넘어가면 백엔드에서 타입 에러가 날 수 있어서 안전하게 undefined로 정규화해서 전달:
   const situation = sp.get("situation") ?? undefined;
@@ -130,7 +125,6 @@ export default function SongDetailPage() {
 
           // LLM 처리 중이라는 메시지가 있으면 계속 대기
           if (e?.message?.includes("처리 중") || e?.message?.includes("생성 중") || retryCount < maxRetries) {
-            console.log(`LLM 처리 대기 중... (${retryCount}/${maxRetries})`);
             await new Promise(resolve => setTimeout(resolve, 3000)); // 3초 대기
             continue;
           }

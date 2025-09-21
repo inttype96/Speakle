@@ -141,24 +141,7 @@ export default function QuizPage() {
       location: sp.get("location") ?? DEFAULT_LOCATION,
     };
     
-    // console.log("URL Params parsed:", {
-    //   raw: {
-    //     learnedSongId: sp.get("learnedSongId"),
-    //     songId: sp.get("songId"),
-    //     situation: sp.get("situation"),
-    //     location: sp.get("location"),
-    //   },
-    //   parsed: result,
-    //   currentURL: window.location.href
-    // });
     
-    // songId가 없는 경우 경고
-    if (!rawSongId) {
-      console.warn("⚠️ songId가 URL에 없습니다:", {
-        rawSongId,
-        currentURL: window.location.href
-      });
-    }
     
     return result;
   }, [sp]);
@@ -202,7 +185,6 @@ export default function QuizPage() {
         location,
         questionNumber: qNum,
       };
-      console.log("Quiz API Request:", requestData);
       
       const res = await generateQuiz(requestData);
       setQuestion(res.data);
