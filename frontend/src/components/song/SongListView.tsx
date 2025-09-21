@@ -93,7 +93,7 @@ export default function SongListView({
   onEmptyAction,
   difficulty = "ALL",
   onDifficultyChange,
-  sortBy = "popularity",
+  sortBy = "popularity", // 검색에서는 기본적으로 인기순
   onSortChange,
   showMoreButton = false,
   onShowMore,
@@ -201,7 +201,7 @@ export default function SongListView({
                     <SelectValue placeholder="정렬" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="recommend">추천순</SelectItem>
+                    {!searchQuery && <SelectItem value="recommend">추천순</SelectItem>}
                     <SelectItem value="popularity">인기순</SelectItem>
                     <SelectItem value="duration">재생시간</SelectItem>
                     <SelectItem value="learn">학습수</SelectItem>
