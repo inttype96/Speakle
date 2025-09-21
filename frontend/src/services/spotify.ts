@@ -67,3 +67,27 @@ export async function skipToPreviousAPI() {
   return res;
 }
 
+export async function playTrackAPI(trackId: string) {
+  const res = await http.post("/spotify/player/play", {
+    trackId: trackId
+  });
+  return res;
+}
+
+export async function setVolumeAPI(volumePercent: number) {
+  const res = await http.post("/spotify/player/volume", {
+    volume: volumePercent
+  });
+  return res;
+}
+
+export type SpotifyPlaybackState = {
+  isPlaying: boolean;
+  trackId: string | null;
+  trackName: string | null;
+  artistName: string | null;
+  volumePercent: number;
+  progressMs: number;
+  durationMs: number;
+}
+
