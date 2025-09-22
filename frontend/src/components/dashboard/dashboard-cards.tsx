@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button'
 import { BentoCard } from '@/components/ui/bento-card'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import type { LearnedSong } from '@/services/mypage'
 import {
   TrendingUp,
   Calendar,
@@ -156,7 +157,7 @@ export function ExploreCard() {
 }
 
 interface RecentSongsCardProps {
-  recentSongs: any[]
+  recentSongs: LearnedSong[]
   error: boolean
 }
 
@@ -187,15 +188,26 @@ export function RecentSongsCard({ recentSongs, error }: RecentSongsCardProps) {
               className="flex items-center gap-3 p-3 rounded-lg bg-white/50 dark:bg-green-900/10 hover:bg-white/80 dark:hover:bg-green-900/20 transition-colors cursor-pointer"
               onClick={() => navigate(`/songs/${song.songId}`)}
             >
-              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                <Music className="w-5 h-5 text-green-600" />
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center overflow-hidden">
+                {song.albumImgUrl ? (
+                  <img
+                    src={song.albumImgUrl}
+                    alt={song.album}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Music className="w-5 h-5 text-green-600" />
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{song.title}</p>
-                <p className="text-sm text-muted-foreground truncate">{song.artist}</p>
+                <p className="text-sm text-muted-foreground truncate">{song.artists}</p>
               </div>
               <div className="text-sm text-muted-foreground">
-                {song.learnedDate}
+                {new Date(song.createdAt).toLocaleDateString('ko-KR', {
+                  month: 'short',
+                  day: 'numeric'
+                })}
               </div>
             </div>
           ))}

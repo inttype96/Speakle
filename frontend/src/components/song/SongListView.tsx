@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 // icons
-import { Heart, Music2, Filter, Clock, Flame } from "lucide-react";
+import { Heart, Filter, Clock, Flame } from "lucide-react";
 
 // types
 type UnifiedSong = Song | SearchSong;
@@ -279,14 +279,6 @@ function FeaturedCard({ song, situation, location, searchQuery }: { song: Unifie
   const diff = DIFFICULTY_MAP[song.level] || { label: "보통", variant: "default" as const };
   const to = buildSongDetailLink(song.songId, situation, location, searchQuery);
 
-  console.log("FeaturedCard Debug:", {
-    title: song.title,
-    songId: song.songId,
-    situation,
-    location,
-    linkTo: to
-  });
-
   // 앨범 이미지 유효성 검사
   const hasValidImage = song.albumImgUrl &&
     song.albumImgUrl !== "no" &&
@@ -335,14 +327,6 @@ function TopResultItem({ song, situation, location, searchQuery }: { song: Unifi
   const diff = DIFFICULTY_MAP[song.level] || { label: "보통", variant: "default" as const };
   const to = buildSongDetailLink(song.songId, situation, location, searchQuery);
 
-  console.log("TopResultItem Debug:", {
-    title: song.title,
-    songId: song.songId,
-    situation,
-    location,
-    linkTo: to
-  });
-
   // 앨범 이미지 유효성 검사
   const hasValidImage = song.albumImgUrl &&
     song.albumImgUrl !== "no" &&
@@ -378,13 +362,6 @@ function SongCard({ song, situation, location, searchQuery }: { song: UnifiedSon
   const diff = DIFFICULTY_MAP[song.level] || { label: "보통", variant: "default" as const };
   const to = buildSongDetailLink(song.songId, situation, location, searchQuery);
 
-  console.log("SongCard Debug:", {
-    title: song.title,
-    songId: song.songId,
-    situation,
-    location,
-    linkTo: to
-  });
 
   // 앨범 이미지 유효성 검사
   const hasValidImage = song.albumImgUrl &&
@@ -457,7 +434,6 @@ function Pagination({ currentPage, totalPages, onPageChange }: {
   totalPages: number;
   onPageChange: (page: number) => void;
 }) {
-  console.log('[Pagination] currentPage:', currentPage, 'totalPages:', totalPages);
   const generatePageNumbers = () => {
     const pages: (number | string)[] = [];
     const maxVisiblePages = 7;
@@ -521,10 +497,7 @@ function Pagination({ currentPage, totalPages, onPageChange }: {
             <Button
               variant={currentPage === page ? "default" : "outline"}
               size="sm"
-              onClick={() => {
-                console.log('[Pagination] 버튼 클릭:', page, 'currentPage:', currentPage);
-                onPageChange(page as number);
-              }}
+              onClick={() => onPageChange(page as number)}
               className="min-w-[40px]"
             >
               {(page as number) + 1}

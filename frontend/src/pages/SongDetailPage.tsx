@@ -16,11 +16,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 // import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import LearningContentTabs from "@/components/song/LearningContentTabs";
+import SpotifyPlayer from "@/components/song/SpotifyPlayer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // icons
-import { Music2, Clock, Flame, Play, ChevronLeft, Gamepad2, Type, MicVocal, Keyboard, ChevronRight } from "lucide-react";
+import { Clock, Flame, Play, ChevronLeft, Gamepad2, Type, MicVocal, Keyboard } from "lucide-react";
 
 
 const SONG_DETAIL_SAMPLE: SongDetail = {
@@ -36,14 +37,14 @@ I just wanna take you higher
 Throw your hands up in the sky
 Let's set this party off right`,
   lyricChunks: [
-    { id: "2gFv..._0",  startTimeMs: 20,    english: "Tonight",                                        korean: "한국어 가사" },
-    { id: "2gFv..._1",  startTimeMs: 4540,  english: "I just wanna take you higher",                   korean: "한국어 가사" },
-    { id: "2gFv..._2",  startTimeMs: 9050,  english: "Throw your hands up in the sky",                 korean: "한국어 가사" },
-    { id: "2gFv..._3",  startTimeMs: 13040, english: "Let's set this party off right",                 korean: "한국어 가사" },
-    { id: "2gFv..._4",  startTimeMs: 23570, english: "Put your pinky rings up to the moon",            korean: "한국어 가사" },
-    { id: "2gFv..._5",  startTimeMs: 28390, english: "Girls, what y'all tryna do?",                    korean: "한국어 가사" },
-    { id: "2gFv..._6",  startTimeMs: 32060, english: "24-karat magic in the air",                      korean: "한국어 가사" },
-    { id: "2gFv..._7",  startTimeMs: 37990, english: "Head to toe so player",                          korean: "한국어 가사" },
+    { id: "2gFv..._0", startTimeMs: 20, english: "Tonight", korean: "한국어 가사" },
+    { id: "2gFv..._1", startTimeMs: 4540, english: "I just wanna take you higher", korean: "한국어 가사" },
+    { id: "2gFv..._2", startTimeMs: 9050, english: "Throw your hands up in the sky", korean: "한국어 가사" },
+    { id: "2gFv..._3", startTimeMs: 13040, english: "Let's set this party off right", korean: "한국어 가사" },
+    { id: "2gFv..._4", startTimeMs: 23570, english: "Put your pinky rings up to the moon", korean: "한국어 가사" },
+    { id: "2gFv..._5", startTimeMs: 28390, english: "Girls, what y'all tryna do?", korean: "한국어 가사" },
+    { id: "2gFv..._6", startTimeMs: 32060, english: "24-karat magic in the air", korean: "한국어 가사" },
+    { id: "2gFv..._7", startTimeMs: 37990, english: "Head to toe so player", korean: "한국어 가사" },
   ],
 };
 
@@ -59,15 +60,10 @@ export default function SongDetailPage() {
   const [sp] = useSearchParams();
   const navigate = useNavigate();
 
-  console.log("SongDetailPage Debug:", {
-    songId,
-    url: window.location.href,
-    pathname: window.location.pathname
-  });
 
   // URL 쿼리(raw) -> situation/location이 없을 때 null이 넘어가면 백엔드에서 타입 에러가 날 수 있어서 안전하게 undefined로 정규화해서 전달:
   const situation = sp.get("situation") ?? undefined;
-  const location  = sp.get("location") ?? undefined;
+  const location = sp.get("location") ?? undefined;
 
   const useMock = (sp.get("mock") === "1"); // ✅ ?mock=1 이면 백엔드 호출 없이 샘플 사용
 
@@ -83,27 +79,27 @@ export default function SongDetailPage() {
   const [activeTab, setActiveTab] = useState("lyrics");
 
   // 컴포넌트 내부 상태
-const [initLearningLoading, setInitLearningLoading] = useState(false);
-const [learned, setLearned] = useState<null | { learnedSongId: number }>(null);
+  const [initLearningLoading, setInitLearningLoading] = useState(false);
+  const [learned, setLearned] = useState<null | { learnedSongId: number }>(null);
 
-// 버튼 onClick 핸들러 교체
-const handleOpenLearn = async () => {
-  setOpenLearn(true);               // 모달 열기
-  setInitLearningLoading(true);     // 모달 상단에 로딩 표시용
-  try {
-    const accessToken = localStorage.getItem("access_token") || undefined;
-    const r = await createLearnedSong(
-      { songId, situation, location },
-      accessToken
-    );
-    setLearned({ learnedSongId: r.learnedSongId });
-  } catch (e) {
-    console.error(e);
-    // 필요하면 토스트/에러 UI 추가
-  } finally {
-    setInitLearningLoading(false);
-  }
-};
+  // 버튼 onClick 핸들러 교체
+  const handleOpenLearn = async () => {
+    setOpenLearn(true);               // 모달 열기
+    setInitLearningLoading(true);     // 모달 상단에 로딩 표시용
+    try {
+      const accessToken = localStorage.getItem("access_token") || undefined;
+      const r = await createLearnedSong(
+        { songId, situation, location },
+        accessToken
+      );
+      setLearned({ learnedSongId: r.learnedSongId });
+    } catch (e) {
+      console.error(e);
+      // 필요하면 토스트/에러 UI 추가
+    } finally {
+      setInitLearningLoading(false);
+    }
+  };
 
   // 학습 내용 탭이 활성화됐을 때 API 호출 (폴링으로 LLM 처리 완료 대기)
   const fetchLearningContentData = async () => {
@@ -129,7 +125,6 @@ const handleOpenLearn = async () => {
 
           // LLM 처리 중이라는 메시지가 있으면 계속 대기
           if (e?.message?.includes("처리 중") || e?.message?.includes("생성 중") || retryCount < maxRetries) {
-            console.log(`LLM 처리 대기 중... (${retryCount}/${maxRetries})`);
             await new Promise(resolve => setTimeout(resolve, 3000)); // 3초 대기
             continue;
           }
@@ -168,11 +163,11 @@ const handleOpenLearn = async () => {
       setError(null);
       try {
         if (useMock) {
-        // ✅ 백엔드 대신 로컬 샘플
-        if (!alive) return;
-        setData(SONG_DETAIL_SAMPLE);
-        return;
-      }
+          // ✅ 백엔드 대신 로컬 샘플
+          if (!alive) return;
+          setData(SONG_DETAIL_SAMPLE);
+          return;
+        }
         const detail = await fetchSongDetail(songId, { situation, location });
         if (!alive) return;
         setData(detail);
@@ -291,11 +286,20 @@ const handleOpenLearn = async () => {
                     <CardTitle className="text-2xl truncate">{data.title}</CardTitle>
                     <div className="text-sm text-muted-foreground truncate">{data.artists} · {data.album}</div>
                   </CardHeader>
-                  <CardContent className="p-0 mt-3 flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" />{msToMinSec(data.durationMs)}</span>
-                    <span className="inline-flex items-center gap-1"><Flame className="h-4 w-4" />{data.popularity}</span>
-                    {situation && <Badge variant="outline">{situation}</Badge>}
-                    {location && <Badge variant="outline">{location}</Badge>}
+                  <CardContent className="p-0 mt-3 space-y-4">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" />{msToMinSec(data.durationMs)}</span>
+                      <span className="inline-flex items-center gap-1"><Flame className="h-4 w-4" />{data.popularity}</span>
+                      {situation && <Badge variant="outline">{situation}</Badge>}
+                      {location && <Badge variant="outline">{location}</Badge>}
+                    </div>
+
+                    {/* 스포티파이 플레이어 */}
+                    <SpotifyPlayer
+                      trackId={data.songId}
+                      trackName={data.title}
+                      artistName={data.artists}
+                    />
                   </CardContent>
                 </>
               ) : null}
@@ -380,28 +384,28 @@ const handleOpenLearn = async () => {
       </div>
 
       {/* 학습 모달 */}
-    <LearnDialog
+      <LearnDialog
         open={openLearn}
         initializing={initLearningLoading}
         learnedId={learned?.learnedSongId}
         onOpenChange={setOpenLearn}
         onSelect={(mode) => {
-            const path =
+          const path =
             mode === "cloze" ? "/learn/quiz" :
-            mode === "speaking" ? "/learn/speaking" :
-            "/learn/dictation";
+              mode === "speaking" ? "/learn/speaking" :
+                "/learn/dictation";
 
-            const qs = new URLSearchParams();
-            qs.set("songId", songId);                         // ✅ 필수
-            if (learned?.learnedSongId)
+          const qs = new URLSearchParams();
+          qs.set("songId", songId);                         // ✅ 필수
+          if (learned?.learnedSongId)
             qs.set("learnedSongId", String(learned.learnedSongId)); // ✅ 세션 id
-            if (situation) qs.set("situation", situation);    // ✅ 선택값 유지
-            if (location)  qs.set("location", location);      // ✅ 선택값 유지
+          if (situation) qs.set("situation", situation);    // ✅ 선택값 유지
+          if (location) qs.set("location", location);      // ✅ 선택값 유지
 
-            navigate(`${path}?${qs.toString()}`);
+          navigate(`${path}?${qs.toString()}`);
 
         }}
-    />
+      />
     </div>
   );
 }

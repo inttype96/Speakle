@@ -5,6 +5,5 @@ export async function fetchRecommendations(params: RecommendReq): Promise<Recomm
   const res = await http.post<RecommendRes>("/recommend/hybrid/enhanced", params, {
     headers: { "Content-Type": "application/json" },
   });
-  console.log(res)
   return res.data.data; // { recommendedSongs, keywords, totalCount }
 }

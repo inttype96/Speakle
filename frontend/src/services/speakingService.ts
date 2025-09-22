@@ -67,7 +67,6 @@ export async function submitSpeakingResult(
     script: body.script,
     audio: (body as any).audio ?? (body as any).audioBase64, // 호출부가 audioBase64로 넘겨도 audio로 매핑
   };
-  console.log(payload.audio)
   const res = await http.post<SpeakingSubmitRes>("/learn/speaking/result", payload, {
     headers: {
       "Content-Type": "application/json",
@@ -201,9 +200,7 @@ export async function blobToPCM16kBase64RAWWithDebug(blob: Blob): Promise<{
   const srcSr = decoded.sampleRate;
   const frames = decoded.length;
   const channels = decoded.numberOfChannels;
-  
-  console.log(`원본: ${srcSr}Hz, ${channels}ch, ${frames} frames`);
-  
+
   let monoF32 = new Float32Array(frames);
   
   if (channels === 1) {
@@ -241,8 +238,6 @@ export async function blobToPCM16kBase64RAWWithDebug(blob: Blob): Promise<{
       }
     }
   }
-  
-  console.log(`리샘플링 후: 16000Hz, 1ch, ${resampledF32.length} frames`);
 
   const int16Array = new Int16Array(resampledF32.length);
   

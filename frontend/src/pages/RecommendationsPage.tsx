@@ -63,7 +63,6 @@ export default function RecommendationsPage() {
         const cached = searchCache.get(searchQuery, page, sortKey) as SearchResult;
 
         if (cached && !append) {
-          console.log('[Cache Hit] 검색 결과 캐시 사용:', searchQuery);
           setSongs(cached.content);
           setTotalCount(cached.totalElements);
           setCurrentPage(cached.currentPage);
@@ -103,7 +102,6 @@ export default function RecommendationsPage() {
         const cached = recommendCache.get(situation, location) as RecommendData;
 
         if (cached && !append) {
-          console.log('[Cache Hit] 추천 결과 캐시 사용:', { situation, location });
           setSongs(cached.recommendedSongs ?? []);
           setKeywords(cached.keywords);
           setTotalCount(cached.totalCount ?? 0);
@@ -143,7 +141,6 @@ export default function RecommendationsPage() {
 
   useEffect(() => {
     if (isSearchMode || isRecommendMode) {
-      console.log('[RecommendationsPage] useEffect triggered:', { situation, location, searchQuery, sortBy });
       setCurrentPage(0);
 
       // 정렬이 바뀌면 캐시를 무시하고 다시 가져오기
@@ -156,12 +153,10 @@ export default function RecommendationsPage() {
         }
         const sortKey = `${actualSortBy},desc`;
         const cached = searchCache.get(searchQuery, page, sortKey) as SearchResult | null;
-        console.log('[Search Cache Check]', { searchQuery, cached: !!cached });
         if (!cached) {
           fetchData();
         } else {
           // 캐시가 있으면 바로 사용
-          console.log('[Search Cache Hit] Using cached search results');
           setSongs(cached.content);
           setTotalCount(cached.totalElements);
           setCurrentPage(cached.currentPage);
@@ -172,13 +167,10 @@ export default function RecommendationsPage() {
         }
       } else {
         const cached = recommendCache.get(situation, location) as RecommendData | null;
-        console.log('[Recommend Cache Check]', { situation, location, cached: !!cached });
         if (!cached) {
-          console.log('[Cache Miss] Fetching from API');
           fetchData();
         } else {
           // 캐시가 있으면 바로 사용
-          console.log('[Recommend Cache Hit] Using cached recommendations');
           setSongs(cached.recommendedSongs ?? []);
           setKeywords(cached.keywords);
           setTotalCount(cached.totalCount ?? 0);
@@ -208,7 +200,6 @@ export default function RecommendationsPage() {
   }, []);
 
   const handlePageChange = useCallback((page: number) => {
-    console.log('[handlePageChange] 페이지 변경:', page);
     // 즉시 UI 상태 업데이트
     setCurrentPage(page);
 
@@ -226,21 +217,12 @@ export default function RecommendationsPage() {
         size: 20,
         sort: [sortKey]
       }).then(result => {
-        console.log('[handlePageChange] API 응답:', {
-          requestedPage: page,
-          currentPage: result.currentPage,
-          totalPages: result.totalPages
-        });
         setSongs(result.content);
         setTotalCount(result.totalElements);
         setTotalPages(result.totalPages);
         setIsLast(result.isLast);
-        // API 응답의 currentPage와 요청한 page가 다르면 로그 출력
-        if (result.currentPage !== page) {
-          console.warn('[handlePageChange] 페이지 불일치! 요청:', page, '응답:', result.currentPage);
-        }
-      }).catch(err => {
-        console.error('[handlePageChange] API 에러:', err);
+      }).catch(() => {
+        // Error handling can be added here if needed
       });
     }
   }, [isSearchMode, searchQuery, sortBy]);

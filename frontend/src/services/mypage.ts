@@ -34,7 +34,12 @@ export interface RankingResponse {
 }
 
 export async function getPointRankingAPI() {
-  const res = await http.get<RankingResponse>("/reward/ranking");
+  const res = await http.get<RankingResponse>("/reward/ranking", {
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    }
+  });
   return res;
 }
 
