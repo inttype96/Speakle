@@ -43,6 +43,7 @@ public class SecurityConfig {
 					.requestMatchers("/api/spotify/**").authenticated()    // Spotify API 인증 필요
 					.requestMatchers("/api/reward/**").authenticated()			// reward
 					.requestMatchers("/api/user/**").authenticated()			// user
+					.requestMatchers("/api/attendance/**").authenticated()		// attendance
 					.anyRequest().permitAll()  // 나머지는 모두 허용
 				);
 			http.addFilterBefore(new JwtAuthenticationFilter(jwtProvider, eventPublisher), UsernamePasswordAuthenticationFilter.class);
@@ -79,6 +80,7 @@ public class SecurityConfig {
 					.requestMatchers("/api/spotify/**").authenticated()			// spotify
 					.requestMatchers("/api/reward/**").authenticated()			// reward
 					.requestMatchers("/api/user/**").authenticated()			// user
+					.requestMatchers("/api/attendance/**").authenticated()		// attendance
 
 					// 그 외 필요 시 정책 추가
 					.anyRequest().permitAll()

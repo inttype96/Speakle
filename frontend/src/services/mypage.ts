@@ -107,35 +107,42 @@ export async function getUserPlaylistsAPI() {
   return res;
 }
 
-// 출석 체크
-export interface CheckinRequest {
-  userId: number;
-  localDate: string;
-}
-
-export interface CheckinResponse {
+// 출석 정보 조회
+export interface AttendanceResponse {
   status: number;
   message: string;
   data: {
-    userId: number;
+    checkedToday: boolean;
+    lastCheckDate: string;
     currentStreak: number;
-    longestStreak: number;
-    totalDays: number;
-    totalPoints: number;
-    lastCheckinDate: string;
+    totalAttendanceDays: number;
+    pointsEarnedToday: number;
   };
 }
 
-export async function checkinAPI(payload: CheckinRequest) {
-  const res = await http.post<CheckinResponse>("/reward/checkin", payload, {
-    headers: { "Content-Type": "application/json" },
-  });
+// 출석 통계 조회
+export interface AttendanceStatsResponse {
+  status: number;
+  message: string;
+  data: {
+    totalAttendanceDays: number;
+    currentStreak: number;
+    maxStreak: number;
+    thisMonthAttendance: number;
+    firstAttendanceDate: string;
+    lastAttendanceDate: string;
+  };
+}
+
+// 출석 정보 조회 (자동 출석체크는 JWT 인증 시 자동으로 처리됨)
+export async function getAttendanceAPI() {
+  const res = await http.get<AttendanceResponse>("/attendance");
   return res;
 }
 
-// 출석 정보 조회 (GET 요청으로 체크인 정보 가져오기)
-export async function getCheckinInfoAPI(userId: number, localDate: string) {
-  const res = await http.get<CheckinResponse>(`/reward/checkin?userId=${userId}&localDate=${localDate}`);
+// 출석 통계 조회
+export async function getAttendanceStatsAPI() {
+  const res = await http.get<AttendanceStatsResponse>("/attendance/stats");
   return res;
 }
 
