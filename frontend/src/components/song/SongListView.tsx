@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Song, Difficulty } from "@/types/recommend";
 import type { SearchSong } from "@/types/search";
+import { usePlaylistSave } from "@/hooks/usePlaylistSave";
 
 // shadcn
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 // icons
-import { Heart, Filter, Clock, Flame } from "lucide-react";
+import { Heart, Filter, Clock, Flame, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 
 // types
 type UnifiedSong = Song | SearchSong;
@@ -104,6 +105,9 @@ export default function SongListView({
   totalPages = 0,
   onPageChange,
 }: SongListViewProps) {
+  const [showKeywords, setShowKeywords] = useState(false);
+  const [keywordPage, setKeywordPage] = useState(0);
+
   const filteredSorted = useMemo(() => {
     const base = difficulty === "ALL" ? songs : songs.filter((s) => s.level === difficulty);
     const copy = [...base];
@@ -131,17 +135,73 @@ export default function SongListView({
 
       {/* 추천 키워드 (추천 페이지에서만) */}
       {showRecommendationKeywords && keywords && (
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="bg-gradient-to-r from-[#4B2199]/10 to-[#7070BA]/10 border-[#4B2199]/20">
+          <CardContent className="pt-5 pb-4">
             <div className="space-y-3">
-              <h3 className="text-sm font-medium">이런 표현을 배울 수 있어요</h3>
-              <div className="flex flex-wrap gap-2">
-                {[...keywords.words, ...keywords.phrases].map((keyword, idx) => (
-                  <Badge key={idx} variant="outline" className="text-xs">
-                    {keyword}
-                  </Badge>
-                ))}
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-foreground">이런 표현을 배울 수 있어요</h3>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setShowKeywords(!showKeywords)}
+                  className="bg-[#4B2199] hover:bg-[#B5A6E0] hover:text-black text-white"
+                >
+                  {showKeywords ? (
+                    <>
+                      접기 <ChevronUp className="ml-1 h-4 w-4" />
+                    </>
+                  ) : (
+                    <>
+                      보러 가기 <ChevronDown className="ml-1 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
               </div>
+              {showKeywords && (() => {
+                const allKeywords = [...keywords.words, ...keywords.phrases];
+                const totalPages = Math.ceil(allKeywords.length / 10);
+                const currentKeywords = allKeywords.slice(keywordPage * 10, (keywordPage + 1) * 10);
+
+                return (
+                  <div className="pt-2">
+                    <div className="flex flex-wrap gap-2">
+                      {currentKeywords.map((keyword, idx) => (
+                        <Badge
+                          key={idx}
+                          className="bg-[#B5A6E0] text-black hover:bg-[#4B2199] hover:text-white text-sm px-3 py-1"
+                        >
+                          {keyword}
+                        </Badge>
+                      ))}
+                    </div>
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-2 mt-3">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setKeywordPage(Math.max(0, keywordPage - 1))}
+                          disabled={keywordPage === 0}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          {keywordPage + 1} / {totalPages}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setKeywordPage(Math.min(totalPages - 1, keywordPage + 1))}
+                          disabled={keywordPage === totalPages - 1}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </CardContent>
         </Card>
@@ -164,16 +224,16 @@ export default function SongListView({
               )}
             </div>
           ) : showFeaturedSection && top ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3">
-              {/* 왼쪽 메인 카드 */}
-              <div className="p-4">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-0">
+              {/* 왼쪽 메인 카드 - 크기 축소 */}
+              <div className="p-3">
                 <FeaturedCard song={top} situation={situation} location={location} searchQuery={searchQuery} />
               </div>
 
               {/* 오른쪽 리스트 */}
-              <div className="lg:col-span-2 p-4">
-                <div className="px-1 pt-2 pb-3 text-sm font-medium">상위 결과</div>
-                <ScrollArea className="max-h-[220px] pr-2">
+              <div className="lg:col-span-3 p-3">
+                <div className="px-1 pt-1 pb-2 text-sm font-medium">상위 결과</div>
+                <ScrollArea className="max-h-[180px] pr-2">
                   <div className="space-y-2">
                     {rest.map((s) => (
                       <TopResultItem key={s.songId} song={s} situation={situation} location={location} searchQuery={searchQuery} />
@@ -278,6 +338,7 @@ export default function SongListView({
 function FeaturedCard({ song, situation, location, searchQuery }: { song: UnifiedSong; situation?: string; location?: string; searchQuery?: string }) {
   const diff = DIFFICULTY_MAP[song.level] || { label: "보통", variant: "default" as const };
   const to = buildSongDetailLink(song.songId, situation, location, searchQuery);
+  const { isSaved, isLoading, saveToPlaylist } = usePlaylistSave();
 
   // 앨범 이미지 유효성 검사
   const hasValidImage = song.albumImgUrl &&
@@ -285,6 +346,12 @@ function FeaturedCard({ song, situation, location, searchQuery }: { song: Unifie
     song.albumImgUrl !== "null" &&
     song.albumImgUrl !== "none" &&
     song.albumImgUrl.trim() !== "";
+
+  const handleSaveToPlaylist = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    await saveToPlaylist(song.songId);
+  };
 
   return (
     <Card className="overflow-hidden relative">
@@ -296,27 +363,33 @@ function FeaturedCard({ song, situation, location, searchQuery }: { song: Unifie
           alt={song.title}
           className="h-full w-full object-cover"
         />
-        <div className="absolute left-3 top-3">
-          <Badge variant={diff.variant || "default"}>{diff.label}</Badge>
+        <div className="absolute left-2 top-2">
+          <Badge variant={diff.variant || "default" } className="text-xs">{diff.label}</Badge>
         </div>
       </div>
-      <CardHeader className="pb-2">
-        <CardTitle className="truncate">{song.title}</CardTitle>
-        <p className="text-sm text-muted-foreground truncate">곡 · {song.artists.replace(/[\[\]']/g, '')}</p>
+      <CardHeader className="pb-1 p-3">
+        <CardTitle className="text-sm truncate">{song.title}</CardTitle>
+        <p className="text-xs text-muted-foreground truncate">{song.artists.replace(/[\[\]']/g, '')}</p>
       </CardHeader>
-      <CardContent className="pt-0 flex items-center justify-between text-sm text-muted-foreground">
-        <div className="flex items-center gap-3">
+      <CardContent className="pt-0 p-3 flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1">
-            <Clock className="h-4 w-4" />
+            <Clock className="h-3 w-3" />
             {msToMinSec(song.durationMs)}
           </span>
           <span className="inline-flex items-center gap-1">
-            <Flame className="h-4 w-4" />
+            <Flame className="h-3 w-3" />
             {song.popularity}
           </span>
         </div>
-        <Button size="icon" variant="ghost" className="rounded-full z-20 relative" onClick={(e) => e.stopPropagation()}>
-          <Heart className="h-5 w-5" />
+        <Button
+          size="icon"
+          variant="ghost"
+          className="rounded-full z-20 relative h-7 w-7"
+          onClick={handleSaveToPlaylist}
+          disabled={isLoading}
+        >
+          <Heart className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
         </Button>
       </CardContent>
     </Card>
@@ -361,7 +434,7 @@ function TopResultItem({ song, situation, location, searchQuery }: { song: Unifi
 function SongCard({ song, situation, location, searchQuery }: { song: UnifiedSong; situation?: string; location?: string; searchQuery?: string }) {
   const diff = DIFFICULTY_MAP[song.level] || { label: "보통", variant: "default" as const };
   const to = buildSongDetailLink(song.songId, situation, location, searchQuery);
-
+  const { isSaved, isLoading, saveToPlaylist } = usePlaylistSave();
 
   // 앨범 이미지 유효성 검사
   const hasValidImage = song.albumImgUrl &&
@@ -369,6 +442,12 @@ function SongCard({ song, situation, location, searchQuery }: { song: UnifiedSon
     song.albumImgUrl !== "null" &&
     song.albumImgUrl !== "none" &&
     song.albumImgUrl.trim() !== "";
+
+  const handleSaveToPlaylist = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    await saveToPlaylist(song.songId);
+  };
 
   return (
     <Card className="overflow-hidden relative">
@@ -383,8 +462,14 @@ function SongCard({ song, situation, location, searchQuery }: { song: UnifiedSon
         <div className="absolute left-3 top-3">
           <Badge variant={diff.variant || "default"}>{diff.label}</Badge>
         </div>
-        <Button size="icon" variant="secondary" className="absolute right-3 top-3 rounded-full h-8 w-8 z-20" onClick={(e) => e.stopPropagation()}>
-          <Heart className="h-4 w-4" />
+        <Button
+          size="icon"
+          variant="secondary"
+          className="absolute right-3 top-3 rounded-full h-8 w-8 z-20"
+          onClick={handleSaveToPlaylist}
+          disabled={isLoading}
+        >
+          <Heart className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
         </Button>
       </div>
       <CardHeader className="pb-2">

@@ -155,6 +155,18 @@ export const playlistService = {
     return response.data;
   },
 
+  // 플레이리스트에 트랙 추가
+  async addTracksToPlaylist(
+    playlistId: string,
+    uris: string[]
+  ): Promise<any> {
+    const response = await http.post(
+      `/playlists/${playlistId}/songs`,
+      { uris }
+    );
+    return response.data;
+  },
+
   // 플레이리스트에서 트랙 삭제
   async deleteTracksFromPlaylist(
     playlistId: string,
