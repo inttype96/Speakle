@@ -13,13 +13,13 @@ import Navbar from '@/components/common/navbar'
 import Footer from '@/pages/common/footer'
 import {
   getPointProfileAPI,
-  getCheckinInfoAPI,
+  getAttendanceAPI,
   getRecentLearnedSongsAPI,
   getPointRankingAPI,
-  checkinAPI,
   type PointProfile,
   type LearnedSong,
-  type RankingUser
+  type RankingUser,
+  type AttendanceResponse
 } from '@/services/mypage'
 import { toast } from 'sonner'
 
@@ -37,7 +37,6 @@ export default function DashboardPage() {
     recentSongs: false,
     ranking: false
   })
-  const [checkinLoading, setCheckinLoading] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -53,11 +52,10 @@ export default function DashboardPage() {
   const loadDashboardData = async () => {
     try {
       setLoading(true)
-      const today = new Date().toISOString().split('T')[0]
 
-      const [pointResult, checkinResult, recentSongsResult, rankingResult] = await Promise.allSettled([
+      const [pointResult, attendanceResult, recentSongsResult, rankingResult] = await Promise.allSettled([
         getPointProfileAPI(userId!),
-        getCheckinInfoAPI(userId!, today),
+        getAttendanceAPI(),
         getRecentLearnedSongsAPI(1, 5),
         getPointRankingAPI()
       ])
@@ -72,11 +70,11 @@ export default function DashboardPage() {
       }
 
       // 출석 정보 처리
-      if (checkinResult.status === 'fulfilled') {
-        setCheckinInfo(checkinResult.value.data.data)
+      if (attendanceResult.status === 'fulfilled') {
+        setCheckinInfo(attendanceResult.value.data.data)
         setErrors(prev => ({ ...prev, checkin: false }))
       } else {
-        console.error('출석 정보 로딩 실패:', checkinResult.reason)
+        console.error('출석 정보 로딩 실패:', attendanceResult.reason)
         setErrors(prev => ({ ...prev, checkin: true }))
       }
 
@@ -106,52 +104,8 @@ export default function DashboardPage() {
   }
 
 
-  const handleCheckin = async () => {
-    if (!userId) return
-
-    try {
-      setCheckinLoading(true)
-      const today = new Date().toISOString().split('T')[0]
-
-      const response = await checkinAPI({
-        userId: userId,
-        localDate: today
-      })
-
-      if (response.data.data) {
-        setCheckinInfo(response.data.data)
-        toast.success('출석 체크가 완료되었습니다!')
-
-        // 포인트 정보도 업데이트
-        loadDashboardData()
-      }
-    } catch (error: any) {
-      console.error('출석 체크 실패:', error)
-      const status = error.response?.status
-      const message = error.response?.data?.message
-
-      switch (status) {
-        case 400:
-          toast.error(message || '요청 값이 올바르지 않습니다.')
-          break
-        case 409:
-          toast.error(message || '이미 오늘 출석체크를 완료했습니다.')
-          break
-        case 500:
-          toast.error(message || '출석 처리 중 오류가 발생했습니다.')
-          break
-        default:
-          toast.error('출석 체크에 실패했습니다. 다시 시도해주세요.')
-      }
-    } finally {
-      setCheckinLoading(false)
-    }
-  }
-
   const isCheckedInToday = () => {
-    if (!checkinInfo?.lastCheckinDate) return false
-    const today = new Date().toISOString().split('T')[0]
-    return checkinInfo.lastCheckinDate === today
+    return checkinInfo?.checkedToday || false
   }
 
   if (loading) {
@@ -192,11 +146,13 @@ export default function DashboardPage() {
             {/* 연속 출석일 카드 */}
             <StreakCard
               currentStreak={checkinInfo?.currentStreak || 0}
-              longestStreak={checkinInfo?.longestStreak || 0}
-              totalDays={checkinInfo?.totalDays || 0}
-              onCheckin={handleCheckin}
+              longestStreak={checkinInfo?.totalAttendanceDays || 0}
+              totalDays={checkinInfo?.totalAttendanceDays || 0}
+              onCheckin={() => {
+                toast.info('출석체크는 로그인 시 자동으로 처리됩니다!')
+              }}
               isCheckedIn={isCheckedInToday()}
-              loading={checkinLoading}
+              loading={false}
             />
 
             {/* 포인트 카드 */}
