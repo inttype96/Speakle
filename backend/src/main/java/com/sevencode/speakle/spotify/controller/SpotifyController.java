@@ -176,4 +176,11 @@ public class SpotifyController {
 		spotifyService.skipToPrevious(auth);
 		return ResponseEntity.ok(Map.of("message", "이전 트랙으로 이동했습니다."));
 	}
+
+	@Operation(summary="Spotify 액세스 토큰 조회", description="Web Playback SDK용 Spotify 액세스 토큰 반환")
+	@GetMapping("/token")
+	public ResponseEntity<Map<String, String>> getSpotifyToken(@AuthenticationPrincipal UserPrincipal auth) {
+		String accessToken = spotifyService.getSpotifyAccessToken(auth);
+		return ResponseEntity.ok(Map.of("accessToken", accessToken));
+	}
 }

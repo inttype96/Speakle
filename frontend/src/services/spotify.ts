@@ -91,3 +91,8 @@ export type SpotifyPlaybackState = {
   durationMs: number;
 }
 
+export async function getSpotifyTokenAPI() {
+  const res = await http.get<{ accessToken: string }>("/spotify/token");
+  return res;
+}
+
