@@ -16,7 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 // import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import LearningContentTabs from "@/components/song/LearningContentTabs";
-import SpotifyPlayer from "@/components/song/SpotifyPlayer";
+import SpotifyWebPlayer from "@/components/song/SpotifyWebPlayer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -295,7 +295,7 @@ export default function SongDetailPage() {
                     </div>
 
                     {/* 스포티파이 플레이어 */}
-                    <SpotifyPlayer
+                    <SpotifyWebPlayer
                       trackId={data.songId}
                       trackName={data.title}
                       artistName={data.artists}

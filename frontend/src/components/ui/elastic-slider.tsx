@@ -113,7 +113,7 @@ export function ElasticSlider({
 
       {/* Active track with elastic animation */}
       <div
-        className="absolute top-0 bg-green-500 rounded-full transition-all duration-75 ease-out"
+        className="absolute top-0 bg-primary rounded-full transition-all duration-75 ease-out"
         style={{
           width: `${percentage}%`,
           height,
@@ -124,7 +124,7 @@ export function ElasticSlider({
 
       {/* Thumb */}
       <div
-        className="absolute top-1/2 w-4 h-4 bg-white border-2 border-green-500 rounded-full shadow-md transition-all duration-150 ease-out"
+        className="absolute top-1/2 w-4 h-4 bg-white border-2 border-primary rounded-full shadow-md transition-all duration-150 ease-out"
         style={{
           left: `${percentage}%`,
           transform: `translate(-50%, -50%) scale(${isDragging ? 1.2 : 1})`,

@@ -447,4 +447,20 @@ public class SpotifyService {
 			throw new SpotifyApiException("이전 트랙 이동에 실패했습니다.", 500, e);
 		}
 	}
+
+	public String getSpotifyAccessToken(UserPrincipal auth) {
+		try {
+			if (auth == null || auth.userId() == null) {
+				throw new IllegalArgumentException("사용자 인증 정보가 필요합니다.");
+			}
+
+			return spotifyTokenService.resolveValidAccessToken(auth.userId());
+
+		} catch (SpotifyNotLinkedException e) {
+			throw e;
+		} catch (Exception e) {
+			log.error("Spotify 액세스 토큰 조회 실패 - userId: {}", auth != null ? auth.userId() : "null", e);
+			throw new SpotifyApiException("Spotify 액세스 토큰 조회에 실패했습니다.", 500, e);
+		}
+	}
 }
