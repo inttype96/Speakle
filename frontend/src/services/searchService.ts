@@ -9,7 +9,7 @@ export async function searchSongs(params: SearchRequest): Promise<SearchResult> 
     maxPopularity: params.maxPopularity,
     page: params.page || 0,
     size: params.size || 20,
-    sort: params.sort || ["popularity,desc"]
+    sort: params.sort || ["popularity,desc"] // 기본적으로 인기도 내림차순
   });
 
   return response.data.data;

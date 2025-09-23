@@ -39,11 +39,11 @@ export default function RecommendationsPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [isLast, setIsLast] = useState(false);
 
-  const [difficulty, setDifficulty] = useState<"ALL" | Difficulty>("ALL");
-  const [sortBy, setSortBy] = useState<SortKey>("recommend");
-
   const isSearchMode = Boolean(searchQuery);
   const isRecommendMode = Boolean(situation && location);
+
+  const [difficulty, setDifficulty] = useState<"ALL" | Difficulty>("ALL");
+  const [sortBy, setSortBy] = useState<SortKey>(isSearchMode ? "popularity" : "recommend");
 
   const fetchData = useCallback(async (append = false) => {
     if (!isSearchMode && !isRecommendMode) return;
@@ -52,7 +52,12 @@ export default function RecommendationsPage() {
       if (isSearchMode) {
         // 검색 모드
         const page = append ? currentPage + 1 : 0;
-        const sortKey = `${sortBy === 'recommend' ? 'popularity' : sortBy},desc`;
+        // 검색 모드에서는 추천순이 없으므로 인기도로 변환, 나머지는 그대로
+        let actualSortBy = sortBy;
+        if (sortBy === 'recommend') {
+          actualSortBy = 'popularity'; // 검색에서는 추천순 대신 인기순
+        }
+        const sortKey = `${actualSortBy},desc`;
 
         // 캐시 확인
         const cached = searchCache.get(searchQuery, page, sortKey) as SearchResult;
@@ -141,7 +146,12 @@ export default function RecommendationsPage() {
       // 정렬이 바뀌면 캐시를 무시하고 다시 가져오기
       if (isSearchMode) {
         const page = 0;
-        const sortKey = `${sortBy === 'recommend' ? 'popularity' : sortBy},desc`;
+        // useEffect 내부에서도 동일한 로직 적용
+        let actualSortBy = sortBy;
+        if (sortBy === 'recommend') {
+          actualSortBy = 'popularity';
+        }
+        const sortKey = `${actualSortBy},desc`;
         const cached = searchCache.get(searchQuery, page, sortKey) as SearchResult | null;
         if (!cached) {
           fetchData();
@@ -195,7 +205,12 @@ export default function RecommendationsPage() {
 
     if (isSearchMode) {
       // 검색 모드에서는 페이지 변경 시 API 호출
-      const sortKey = `${sortBy === 'recommend' ? 'popularity' : sortBy},desc`;
+      // handlePageChange에서도 동일한 로직 적용
+      let actualSortBy = sortBy;
+      if (sortBy === 'recommend') {
+        actualSortBy = 'popularity';
+      }
+      const sortKey = `${actualSortBy},desc`;
       searchSongs({
         keyword: searchQuery,
         page,

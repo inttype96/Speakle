@@ -44,12 +44,13 @@ export default function Navbar() {
                             <Link to="/playlists" className="px-3 py-1 rounded cursor-pointer transition-colors font-bold text-xl hover:text-gray-300">
                                 Playlist
                             </Link>
-                            <Link to="/dashboard" className="px-3 py-1 rounded cursor-pointer transition-colors text-[#848484] hover:text-gray-300">
+                            <Link to="/dashboard" className="px-3 py-1 rounded cursor-pointer transition-colors text-[#FFFFF] hover:text-gray-300">
                                 리워드 대시보드
                             </Link>
-                            <Link to="/explore" className="px-3 py-1 rounded cursor-pointer transition-colors text-[#848484] hover:text-gray-300">
+                            <Link to="/explore" className="px-3 py-1 rounded cursor-pointer transition-colors text-[#FFFFF] hover:text-gray-300">
                                 서비스 둘러보기
                             </Link>
+                            {/* 848484 */}
                         </div>
 
                         {/* 검색창 + 다크모드 토글 */}
