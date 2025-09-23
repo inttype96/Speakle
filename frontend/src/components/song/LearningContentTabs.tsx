@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChevronLeft, ChevronRight, BookOpen, MessageSquare, Lightbulb, Sparkles } from "lucide-react";
+import { BookOpen, MessageSquare, Lightbulb, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LearningContent, WordEntity, SentenceEntity, ExpressionEntity, IdiomEntity } from "@/types/song";
 
@@ -56,30 +56,14 @@ const SECTIONS: {
 export default function LearningContentTabs({ learningContent }: LearningContentTabsProps) {
   const [currentSection, setCurrentSection] = useState<LearningSection>("words");
 
-  const currentIndex = SECTIONS.findIndex(s => s.key === currentSection);
-  const currentSectionData = SECTIONS[currentIndex];
-
-  const handlePrevious = () => {
-    const prevIndex = currentIndex > 0 ? currentIndex - 1 : SECTIONS.length - 1;
-    setCurrentSection(SECTIONS[prevIndex].key);
-  };
-
-  const handleNext = () => {
-    const nextIndex = currentIndex < SECTIONS.length - 1 ? currentIndex + 1 : 0;
-    setCurrentSection(SECTIONS[nextIndex].key);
-  };
-
   const getCurrentData = (): (WordEntity | SentenceEntity | ExpressionEntity | IdiomEntity)[] => {
     if (!learningContent) return [];
     return learningContent[currentSection] || [];
   };
 
-  // 로딩은 상위 컴포넌트에서 전체 화면으로 처리하므로 여기서는 제거
-
   const currentData = getCurrentData();
   const hasData = currentData.length > 0;
 
-  // 섹션별 데이터 렌더링 함수
   const renderEntityItem = (item: WordEntity | SentenceEntity | ExpressionEntity | IdiomEntity, index: number) => {
     const getDisplayText = () => {
       switch (currentSection) {
@@ -159,93 +143,67 @@ export default function LearningContentTabs({ learningContent }: LearningContent
 
   return (
     <div className="space-y-6">
-      {/* 슬라이드 헤더 */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className={cn("p-2 rounded-lg bg-muted", currentSectionData.color)}>
-            <currentSectionData.icon className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold">{currentSectionData.label}</h3>
-            <p className="text-sm text-muted-foreground">{currentSectionData.description}</p>
-          </div>
-        </div>
+      {/* 탭 버튼들 */}
+      <div className="flex gap-3 flex-wrap">
+        {SECTIONS.map((section) => {
+          const Icon = section.icon;
+          const isActive = currentSection === section.key;
 
-        {/* 네비게이션 버튼 */}
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={handlePrevious}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Badge variant="secondary" className="min-w-[60px] justify-center">
-            {currentIndex + 1} / {SECTIONS.length}
-          </Badge>
-          <Button size="sm" variant="outline" onClick={handleNext}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* 섹션 인디케이터 */}
-      <div className="flex justify-center gap-2">
-        {SECTIONS.map((section, index) => (
-          <button
-            key={section.key}
-            onClick={() => setCurrentSection(section.key)}
-            className={cn(
-              "w-3 h-3 rounded-full transition-all duration-200",
-              index === currentIndex
-                ? "bg-primary scale-110"
-                : "bg-muted hover:bg-muted-foreground/20"
-            )}
-            aria-label={`${section.label} 섹션으로 이동`}
-          />
-        ))}
+          return (
+            <Button
+              key={section.key}
+              onClick={() => setCurrentSection(section.key)}
+              variant={isActive ? "default" : "outline"}
+              className={cn(
+                "flex items-center gap-2 transition-all",
+                isActive ? "shadow-md" : "hover:bg-accent"
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {section.label}
+              {learningContent?.[section.key] && (
+                <Badge
+                  variant={isActive ? "secondary" : "outline"}
+                  className="ml-1"
+                >
+                  {learningContent[section.key].length}
+                </Badge>
+              )}
+            </Button>
+          );
+        })}
       </div>
 
       {/* 컨텐츠 영역 */}
       <Card className="min-h-[400px]">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base flex items-center gap-2">
-            <currentSectionData.icon className={cn("h-4 w-4", currentSectionData.color)} />
-            {currentSectionData.label}
-            {hasData && (
-              <Badge variant="outline" className="ml-auto">
-                {currentData.length}개
-              </Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {hasData ? (
-            <ScrollArea className="h-[320px] pr-3">
+            <ScrollArea className="h-[400px] pr-3">
               <div className="space-y-3">
                 {currentData.map((item, index) => renderEntityItem(item, index))}
               </div>
             </ScrollArea>
           ) : (
-            <div className="flex flex-col items-center justify-center h-[320px] text-center space-y-3">
+            <div className="flex flex-col items-center justify-center h-[400px] text-center space-y-3">
               <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                <currentSectionData.icon className="h-8 w-8 text-muted-foreground" />
+                {(() => {
+                  const section = SECTIONS.find(s => s.key === currentSection);
+                  const Icon = section?.icon || BookOpen;
+                  return <Icon className="h-8 w-8 text-muted-foreground" />;
+                })()}
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">
-                  {currentSectionData.label} 데이터가 없습니다
+                  {SECTIONS.find(s => s.key === currentSection)?.label} 데이터가 없습니다
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  이 곡에는 {currentSectionData.label} 학습 내용이 아직 준비되지 않았어요
+                  이 곡에는 {SECTIONS.find(s => s.key === currentSection)?.label} 학습 내용이 아직 준비되지 않았어요
                 </p>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* 하단 안내 */}
-      <div className="text-center">
-        <p className="text-xs text-muted-foreground">
-          좌우 버튼이나 인디케이터를 클릭해서 다른 학습 내용을 확인해보세요
-        </p>
-      </div>
     </div>
   );
 }
