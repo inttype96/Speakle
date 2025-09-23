@@ -4,6 +4,7 @@ import { ElasticSlider } from '@/components/ui/elastic-slider'
 import { Play, Pause, Volume2, VolumeX, SkipForward, SkipBack } from 'lucide-react'
 import { toast } from 'sonner'
 import { getAccessToken } from '@/store/auth'
+import { getSpotifyTokenAPI } from '@/services/spotify'
 
 // Spotify Web Playback SDK 타입 정의
 declare global {
@@ -87,7 +88,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
   const [player, setPlayer] = useState<SpotifyPlayer | null>(null)
   const [deviceId, setDeviceId] = useState<string>('')
   const [currentTrack, setCurrentTrack] = useState<SpotifyTrack | null>(null)
-  const [setPosition] = useState(0)
+  const [position, setPosition] = useState(0)
   const [duration, setDuration] = useState(0)
   const [isSDKReady, setIsSDKReady] = useState(false)
 
@@ -110,10 +111,13 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
 
       const spotifyPlayer = new window.Spotify.Player({
         name: 'Speakle Web Player',
-        getOAuthToken: (cb) => {
-          const currentToken = getAccessToken()
-          if (currentToken) {
-            cb(currentToken)
+        getOAuthToken: async (cb) => {
+          try {
+            const response = await getSpotifyTokenAPI()
+            cb(response.data.accessToken)
+          } catch (error) {
+            console.error('Spotify 토큰 조회 실패:', error)
+            toast.error('Spotify 토큰을 가져올 수 없습니다')
           }
         },
         volume: volume / 100
@@ -208,11 +212,8 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
 
     try {
       setLoading(true)
-      const token = getAccessToken()
-      if (!token) {
-        toast.error('인증 토큰이 없습니다')
-        return
-      }
+      const tokenResponse = await getSpotifyTokenAPI()
+      const spotifyToken = tokenResponse.data.accessToken
 
       const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
         method: 'PUT',
@@ -221,7 +222,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
         }),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${spotifyToken}`
         }
       })
 
@@ -357,6 +358,22 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
         <p className="text-sm text-muted-foreground truncate">
           {currentTrack?.artists[0]?.name || artistName}
         </p>
+        {duration > 0 && (
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-xs text-muted-foreground">
+              {Math.floor(position / 1000 / 60)}:{String(Math.floor((position / 1000) % 60)).padStart(2, '0')}
+            </span>
+            <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+              <div
+                className="bg-green-500 h-1 rounded-full transition-all duration-1000"
+                style={{ width: `${(position / duration) * 100}%` }}
+              />
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {Math.floor(duration / 1000 / 60)}:{String(Math.floor((duration / 1000) % 60)).padStart(2, '0')}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* 볼륨 컨트롤 */}
