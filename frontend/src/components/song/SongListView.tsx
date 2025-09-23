@@ -302,7 +302,7 @@ function FeaturedCard({ song, situation, location, searchQuery }: { song: Unifie
       </div>
       <CardHeader className="pb-2">
         <CardTitle className="truncate">{song.title}</CardTitle>
-        <p className="text-sm text-muted-foreground truncate">곡 · {song.artists}</p>
+        <p className="text-sm text-muted-foreground truncate">곡 · {song.artists.replace(/[\[\]']/g, '')}</p>
       </CardHeader>
       <CardContent className="pt-0 flex items-center justify-between text-sm text-muted-foreground">
         <div className="flex items-center gap-3">
@@ -351,7 +351,7 @@ function TopResultItem({ song, situation, location, searchQuery }: { song: Unifi
           <span className="truncate font-medium">{song.title}</span>
           <Badge variant={diff.variant || "default"}>{diff.label}</Badge>
         </div>
-        <div className="truncate text-sm text-muted-foreground">{song.artists}</div>
+        <div className="truncate text-sm text-muted-foreground">{song.artists.replace(/[\[\]']/g, '')}</div>
       </div>
       <div className="text-xs text-muted-foreground">{msToMinSec(song.durationMs)}</div>
     </Link>
@@ -389,7 +389,7 @@ function SongCard({ song, situation, location, searchQuery }: { song: UnifiedSon
       </div>
       <CardHeader className="pb-2">
         <CardTitle className="text-base leading-tight line-clamp-1">{song.title}</CardTitle>
-        <p className="text-sm text-muted-foreground line-clamp-1">{song.artists}</p>
+        <p className="text-sm text-muted-foreground line-clamp-1">{song.artists.replace(/[\[\]']/g, '')}</p>
       </CardHeader>
       <CardContent className="pt-0 flex items-center justify-between text-sm text-muted-foreground">
         <span className="inline-flex items-center gap-1">
