@@ -19,12 +19,21 @@ http.interceptors.request.use((config) => {
   const isFormData =
     typeof FormData !== "undefined" && config.data instanceof FormData;
 
+  // Authorization 헤더가 명시적으로 빈 문자열이면 토큰을 붙이지 않음
+  const skipAuth = config.headers?.Authorization === '';
 
-  if (token) {
+  console.log('Interceptor - URL:', config.url, 'skipAuth:', skipAuth, 'hasToken:', !!token);
+
+  if (token && !skipAuth) {
     config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
+  } else if (skipAuth) {
+    // 빈 문자열로 설정된 경우 헤더 제거
+    delete config.headers?.Authorization;
   }
-  
+
+  console.log('Interceptor - Final Authorization header:', config.headers?.Authorization);
+
   if (isFormData) {
       // FormData면 Content-Type 제거 (브라우저가 boundary 포함 자동 설정)
       if (config.headers) delete (config.headers as any)["Content-Type"];

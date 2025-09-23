@@ -68,9 +68,9 @@ public class SecurityConfig {
 					.requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh").permitAll()
 					.requestMatchers(HttpMethod.POST, "/api/user").permitAll()
 					.requestMatchers(HttpMethod.POST, "/api/user/temp-password").permitAll()
-					.requestMatchers(HttpMethod.POST, "/api/user/verify", "/api/user/verify/send").permitAll()
+					.requestMatchers(HttpMethod.POST, "/api/user/verify-email", "/api/user/verify-email/send").permitAll()
 
-					// 파일 다운로드는 공개 금지 
+					// 파일 다운로드는 공개 금지
 					.requestMatchers("/files/**").authenticated()
 
 					// ── 보호 경로
