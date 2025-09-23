@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { ElasticSlider } from '@/components/ui/elastic-slider'
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react'
@@ -92,7 +92,6 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
   const [duration, setDuration] = useState(0)
   const [isSDKReady, setIsSDKReady] = useState(false)
 
-  const volumeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   // 시간 포맷팅 함수
   const formatTime = (ms: number) => {
