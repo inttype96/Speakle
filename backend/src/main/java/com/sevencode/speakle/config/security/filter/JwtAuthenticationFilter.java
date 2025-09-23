@@ -15,6 +15,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.sevencode.speakle.config.security.UserPrincipal;
 import com.sevencode.speakle.config.security.provider.JwtProvider;
+import com.sevencode.speakle.event.dto.UserLoginEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -25,9 +27,11 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private final JwtProvider jwtProvider;
+	private final ApplicationEventPublisher eventPublisher;
 
-	public JwtAuthenticationFilter(JwtProvider jwtProvider) {
+	public JwtAuthenticationFilter(JwtProvider jwtProvider, ApplicationEventPublisher eventPublisher) {
 		this.jwtProvider = jwtProvider;
+		this.eventPublisher = eventPublisher;
 	}
 
 	@Override
@@ -53,6 +57,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 					var auth = new UsernamePasswordAuthenticationToken(principal, null, List.of());
 					SecurityContextHolder.getContext().setAuthentication(auth);
 					System.out.println("JWT Filter - Authentication set successfully");
+
+					// 사용자 로그인 이벤트 발행
+					try {
+						UserLoginEvent loginEvent = UserLoginEvent.fromJwtVerification(userId, username);
+						eventPublisher.publishEvent(loginEvent);
+						System.out.println("JWT Filter - Published UserLoginEvent for user: " + userId);
+					} catch (Exception e) {
+						System.err.println("JWT Filter - Failed to publish UserLoginEvent for user " + userId + ": " + e.getMessage());
+					}
 				} else {
 					System.out.println("JWT Filter - Token is invalid");
 				}
