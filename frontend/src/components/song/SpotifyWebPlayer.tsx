@@ -332,9 +332,9 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
 
   if (!isSDKReady) {
     return (
-      <div className="flex items-center gap-4 p-4 rounded-lg">
+      <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
         <div className="flex items-center justify-center w-12 h-12">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2"></div>
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
         </div>
         <div className="flex-1">
           <p className="font-medium text-muted-foreground">Spotify 플레이어 초기화 중...</p>
@@ -345,16 +345,16 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
   }
 
   return (
-    <div className="flex items-center gap-4 p-4 rounded-lg">
+    <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
       {/* 재생/일시정지 버튼 */}
       <Button
         onClick={handlePlayPause}
         disabled={loading}
         size="lg"
-        className="bg-green-500 text-white disabled:opacity-50"
+        className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
       >
         {loading ? (
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2"></div>
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-foreground"></div>
         ) : isPlaying ? (
           <Pause className="w-5 h-5" />
         ) : (
@@ -376,11 +376,11 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
               {formatTime(position)}
             </span>
             <div
-              className="flex-1 rounded-full h-2 cursor-pointer hover:h-3 transition-all duration-200"
+              className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 cursor-pointer hover:h-3 transition-all duration-200"
               onClick={handleProgressClick}
             >
               <div
-                className="h-full rounded-full transition-all duration-300 hover:bg-green-400"
+                className="bg-primary hover:bg-primary/90 h-full rounded-full transition-all duration-300"
                 style={{ width: `${Math.min((position / duration) * 100, 100)}%` }}
               />
             </div>
@@ -397,7 +397,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
           variant="ghost"
           size="sm"
           onClick={toggleMute}
-          className="p-2"
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           {isMuted || volume === 0 ? (
             <VolumeX className="w-4 h-4" />
