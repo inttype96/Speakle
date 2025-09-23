@@ -102,13 +102,13 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
   }
 
-  // 진행률 바 클릭 핸들러
+  // 진행률 바 클릭 핸들러 (SDK API 사용)
   const handleProgressClick = async (e: React.MouseEvent<HTMLDivElement>) => {
     if (!player || !duration) return
 
     const rect = e.currentTarget.getBoundingClientRect()
     const clickX = e.clientX - rect.left
-    const percentage = clickX / rect.width
+    const percentage = Math.max(0, Math.min(1, clickX / rect.width))
     const newPosition = Math.floor(duration * percentage)
 
     try {
@@ -211,24 +211,27 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
     }
   }, [])
 
-  // 볼륨 변경 디바운싱
-  const debouncedVolumeChange = useCallback(async (volumeValue: number) => {
-    if (!player) return
-
-    if (volumeTimeoutRef.current) {
-      clearTimeout(volumeTimeoutRef.current)
+  // 실시간 position 업데이트
+  useEffect(() => {
+    if (!isPlaying || !duration) {
+      return
     }
 
-    volumeTimeoutRef.current = setTimeout(async () => {
-      try {
-        await player.setVolume(volumeValue / 100)
-        setIsMuted(volumeValue === 0)
-      } catch (error) {
-        console.error('볼륨 조절 실패:', error)
-        toast.error('볼륨 조절에 실패했습니다')
-      }
-    }, 300)
-  }, [player])
+    const interval = setInterval(() => {
+      setPosition((prev) => {
+        const newPosition = prev + 100
+        // 트랙 끝에 도달하면 정지
+        if (newPosition >= duration) {
+          setIsPlaying(false)
+          return duration
+        }
+        return newPosition
+      })
+    }, 100)
+
+    return () => clearInterval(interval)
+  }, [isPlaying, duration])
+
 
   // 트랙 재생
   const playTrack = async (trackUri: string) => {
@@ -292,25 +295,47 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
   }
 
 
-  // 볼륨 변경
-  const handleVolumeChange = (volumeValue: number) => {
+  // 볼륨 변경 (SDK API 사용)
+  const handleVolumeChange = async (volumeValue: number) => {
     setVolume(volumeValue)
-    debouncedVolumeChange(volumeValue)
+
+    if (!player) return
+
+    try {
+      await player.setVolume(volumeValue / 100)
+      setIsMuted(volumeValue === 0)
+    } catch (error) {
+      console.error('볼륨 조절 실패:', error)
+      toast.error('볼륨 조절에 실패했습니다')
+    }
   }
 
-  // 음소거 토글
-  const toggleMute = () => {
-    const newVolume = isMuted ? 50 : 0
-    setVolume(newVolume)
-    setIsMuted(!isMuted)
-    debouncedVolumeChange(newVolume)
+  // 음소거 토글 (SDK API 사용)
+  const toggleMute = async () => {
+    if (!player) return
+
+    try {
+      if (isMuted) {
+        const newVolume = 50
+        await player.setVolume(newVolume / 100)
+        setVolume(newVolume)
+        setIsMuted(false)
+      } else {
+        await player.setVolume(0)
+        setVolume(0)
+        setIsMuted(true)
+      }
+    } catch (error) {
+      console.error('음소거 토글 실패:', error)
+      toast.error('음소거 설정에 실패했습니다')
+    }
   }
 
   if (!isSDKReady) {
     return (
-      <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <div className="flex items-center gap-4 p-4 rounded-lg">
         <div className="flex items-center justify-center w-12 h-12">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2"></div>
         </div>
         <div className="flex-1">
           <p className="font-medium text-muted-foreground">Spotify 플레이어 초기화 중...</p>
@@ -321,16 +346,16 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
   }
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+    <div className="flex items-center gap-4 p-4 rounded-lg">
       {/* 재생/일시정지 버튼 */}
       <Button
         onClick={handlePlayPause}
         disabled={loading}
         size="lg"
-        className="bg-green-500 hover:bg-green-600 text-white disabled:opacity-50"
+        className="bg-green-500 text-white disabled:opacity-50"
       >
         {loading ? (
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2"></div>
         ) : isPlaying ? (
           <Pause className="w-5 h-5" />
         ) : (
@@ -352,11 +377,11 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
               {formatTime(position)}
             </span>
             <div
-              className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 cursor-pointer hover:h-3 transition-all duration-200"
+              className="flex-1 rounded-full h-2 cursor-pointer hover:h-3 transition-all duration-200"
               onClick={handleProgressClick}
             >
               <div
-                className="bg-green-500 h-full rounded-full transition-all duration-300 hover:bg-green-400"
+                className="h-full rounded-full transition-all duration-300 hover:bg-green-400"
                 style={{ width: `${Math.min((position / duration) * 100, 100)}%` }}
               />
             </div>
@@ -373,7 +398,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
           variant="ghost"
           size="sm"
           onClick={toggleMute}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="p-2"
         >
           {isMuted || volume === 0 ? (
             <VolumeX className="w-4 h-4" />
