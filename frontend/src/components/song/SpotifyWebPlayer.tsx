@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { ElasticSlider } from '@/components/ui/elastic-slider'
-import { Play, Pause, Volume2, VolumeX, SkipForward, SkipBack } from 'lucide-react'
+import { Play, Pause, Volume2, VolumeX } from 'lucide-react'
 import { toast } from 'sonner'
 import { getAccessToken } from '@/store/auth'
 import { getSpotifyTokenAPI } from '@/services/spotify'
@@ -93,6 +93,33 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
   const [isSDKReady, setIsSDKReady] = useState(false)
 
   const volumeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+
+  // 시간 포맷팅 함수
+  const formatTime = (ms: number) => {
+    const seconds = Math.floor(ms / 1000)
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+  }
+
+  // 진행률 바 클릭 핸들러
+  const handleProgressClick = async (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!player || !duration) return
+
+    const rect = e.currentTarget.getBoundingClientRect()
+    const clickX = e.clientX - rect.left
+    const percentage = clickX / rect.width
+    const newPosition = Math.floor(duration * percentage)
+
+    try {
+      await player.seek(newPosition)
+      setPosition(newPosition)
+      toast.success(`${formatTime(newPosition)}로 이동했습니다`)
+    } catch (error) {
+      console.error('위치 이동 실패:', error)
+      toast.error('위치 이동에 실패했습니다')
+    }
+  }
 
   // Spotify SDK 초기화
   useEffect(() => {
@@ -264,26 +291,6 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
     }
   }
 
-  // 다음/이전 트랙
-  const handleNext = async () => {
-    if (!player) return
-    try {
-      await player.nextTrack()
-    } catch (error) {
-      console.error('다음 트랙 이동 실패:', error)
-      toast.error('다음 트랙으로 이동할 수 없습니다')
-    }
-  }
-
-  const handlePrevious = async () => {
-    if (!player) return
-    try {
-      await player.previousTrack()
-    } catch (error) {
-      console.error('이전 트랙 이동 실패:', error)
-      toast.error('이전 트랙으로 이동할 수 없습니다')
-    }
-  }
 
   // 볼륨 변경
   const handleVolumeChange = (volumeValue: number) => {
@@ -302,11 +309,12 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
   if (!isSDKReady) {
     return (
       <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-        <div className="flex-1 text-center">
-          <p className="text-sm text-muted-foreground">
-            Spotify 플레이어를 초기화하는 중...
-          </p>
-          <div className="mt-2 animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mx-auto"></div>
+        <div className="flex items-center justify-center w-12 h-12">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
+        </div>
+        <div className="flex-1">
+          <p className="font-medium text-muted-foreground">Spotify 플레이어 초기화 중...</p>
+          <p className="text-sm text-muted-foreground">잠시만 기다려주세요</p>
         </div>
       </div>
     )
@@ -314,16 +322,6 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
 
   return (
     <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-      {/* 이전 트랙 버튼 */}
-      <Button
-        onClick={handlePrevious}
-        variant="ghost"
-        size="sm"
-        className="p-2"
-      >
-        <SkipBack className="w-4 h-4" />
-      </Button>
-
       {/* 재생/일시정지 버튼 */}
       <Button
         onClick={handlePlayPause}
@@ -340,16 +338,6 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
         )}
       </Button>
 
-      {/* 다음 트랙 버튼 */}
-      <Button
-        onClick={handleNext}
-        variant="ghost"
-        size="sm"
-        className="p-2"
-      >
-        <SkipForward className="w-4 h-4" />
-      </Button>
-
       {/* 트랙 정보 */}
       <div className="flex-1 min-w-0">
         <p className="font-medium truncate">
@@ -359,18 +347,21 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
           {currentTrack?.artists[0]?.name || artistName}
         </p>
         {duration > 0 && (
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs text-muted-foreground">
-              {Math.floor(position / 1000 / 60)}:{String(Math.floor((position / 1000) % 60)).padStart(2, '0')}
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-xs text-muted-foreground font-mono min-w-[35px]">
+              {formatTime(position)}
             </span>
-            <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+            <div
+              className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 cursor-pointer hover:h-3 transition-all duration-200"
+              onClick={handleProgressClick}
+            >
               <div
-                className="bg-green-500 h-1 rounded-full transition-all duration-1000"
-                style={{ width: `${(position / duration) * 100}%` }}
+                className="bg-green-500 h-full rounded-full transition-all duration-300 hover:bg-green-400"
+                style={{ width: `${Math.min((position / duration) * 100, 100)}%` }}
               />
             </div>
-            <span className="text-xs text-muted-foreground">
-              {Math.floor(duration / 1000 / 60)}:{String(Math.floor((duration / 1000) % 60)).padStart(2, '0')}
+            <span className="text-xs text-muted-foreground font-mono min-w-[35px]">
+              {formatTime(duration)}
             </span>
           </div>
         )}
@@ -382,7 +373,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
           variant="ghost"
           size="sm"
           onClick={toggleMute}
-          className="p-2"
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           {isMuted || volume === 0 ? (
             <VolumeX className="w-4 h-4" />
