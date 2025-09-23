@@ -357,6 +357,22 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
         <p className="text-sm text-muted-foreground truncate">
           {currentTrack?.artists[0]?.name || artistName}
         </p>
+        {duration > 0 && (
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-xs text-muted-foreground">
+              {Math.floor(position / 1000 / 60)}:{String(Math.floor((position / 1000) % 60)).padStart(2, '0')}
+            </span>
+            <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+              <div
+                className="bg-green-500 h-1 rounded-full transition-all duration-1000"
+                style={{ width: `${(position / duration) * 100}%` }}
+              />
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {Math.floor(duration / 1000 / 60)}:{String(Math.floor((duration / 1000) % 60)).padStart(2, '0')}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* 볼륨 컨트롤 */}
