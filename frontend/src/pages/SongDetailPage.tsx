@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Skeleton } from "@/components/ui/skeleton";
 
 // icons
-import { Clock, Flame, Play, ChevronLeft, Gamepad2, Type, MicVocal, Keyboard } from "lucide-react";
+import { Clock, Flame, ChevronLeft, Gamepad2, Type, MicVocal, Keyboard } from "lucide-react";
 
 
 const SONG_DETAIL_SAMPLE: SongDetail = {
@@ -250,7 +250,7 @@ export default function SongDetailPage() {
                   data.albumImgUrl !== "null" &&
                   data.albumImgUrl !== "none" &&
                   data.albumImgUrl.trim() !== "";
-                  
+
                 return (
                   <img
                     src={hasValidImage ? data.albumImgUrl : "/albumBasicCover.png"}
