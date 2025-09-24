@@ -4,12 +4,12 @@ import HeadphoneImage from '@/assets/images/headset2.png'
 import BallonImage from '@/assets/images/ballon.png'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { useTheme } from "@/components/theme-provider"
+// import { useTheme } from "@/components/theme-provider"
 import { useNavigate } from "react-router-dom"
 import SplashCursor from '@/lib/splashCursor'
 
 export default function IndexPage() {
-  const { theme } = useTheme()
+  // const { theme } = useTheme()
   const navigate = useNavigate()
 
   return (
@@ -32,7 +32,7 @@ export default function IndexPage() {
               Speakle
             </h1>
           </div>
-          <p className="-mt-8 text-lg text-gray-300 leading-relaxed">
+          <p className="mt-8 text-lg text-gray-300 leading-relaxed">
             음악처럼 스며드는 영어학습 <br />
             듣고, 따라하고, 오래 남는 영어
           </p>

@@ -63,7 +63,7 @@ export const createTrackColumns = (
       return (
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-muted rounded flex items-center justify-center overflow-hidden">
-            {track.album.images.length > 0 ? (
+            {track.album.images && track.album.images.length > 0 ? (
               <img
                 src={track.album.images[0].url}
                 alt={track.album.name}
@@ -81,7 +81,7 @@ export const createTrackColumns = (
               {track.name}
             </div>
             <div className="text-sm text-muted-foreground truncate">
-              {track.artists.map(artist => artist.name).join(', ')}
+              {track.artists ? track.artists.map(artist => artist.name).join(', ') : '알 수 없는 아티스트'}
             </div>
           </div>
         </div>
