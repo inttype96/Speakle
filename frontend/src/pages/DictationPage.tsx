@@ -250,8 +250,25 @@ export default function DictationPage() {
 
   // 곡 상세로
   const goSong = () => {
-    const to = `/songs/${item?.songId || songIdFromQuery || ""}`;
-    navigate(to || "/");
+    const songId = item?.songId || songIdFromQuery || "";
+    if (!songId) {
+      navigate("/");
+      return;
+    }
+
+    // 현재 URL의 쿼리 파라미터들을 가져와서 유지
+    const currentParams = new URLSearchParams(window.location.search);
+    const situation = currentParams.get("situation");
+    const location = currentParams.get("location");
+    
+    // 쿼리 파라미터 구성
+    const queryParams = new URLSearchParams();
+    if (situation) queryParams.set("situation", situation);
+    if (location) queryParams.set("location", location);
+    
+    const queryString = queryParams.toString();
+    const to = `/songs/${songId}${queryString ? `?${queryString}` : ""}`;
+    navigate(to);
   };
 
   return (
