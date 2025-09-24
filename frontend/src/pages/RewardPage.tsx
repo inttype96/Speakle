@@ -3,13 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore, isAuthenticated } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Progress } from '@/components/ui/progress'
-import { Separator } from '@/components/ui/separator'
 import Navbar from '@/components/common/navbar'
 import Footer from '@/pages/common/footer'
-import TwoColumnTabLayout from '@/components/user/my-page-tabs/TwoColumnTabLayout'
 import { getUserProfileAPI } from '@/services/auth'
 import { getPointProfileAPI, type PointProfile } from '@/services/mypage'
 import type { UserProfile } from '@/types/auth'
@@ -55,7 +50,6 @@ export default function RewardPage() {
     const [pointProfile, setPointProfile] = useState<PointProfile | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [activeTab, setActiveTab] = useState('overview')
 
     // 사용자 통계
     const [userStats] = useState({
