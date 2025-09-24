@@ -184,7 +184,7 @@ export function RecentSongsCard({ recentSongs, error }: RecentSongsCardProps) {
         </div>
       ) : recentSongs.length > 0 ? (
         <div className="space-y-3">
-          {recentSongs.slice(0, 3).map((song, index) => (
+          {recentSongs.slice(0, 5).map((song, index) => (
             <div
               key={song.learnedSongId || index}
               className="flex items-center gap-3 p-3 rounded-lg bg-white/50 dark:bg-green-900/10 hover:bg-white/80 dark:hover:bg-green-900/20 transition-colors cursor-pointer"
