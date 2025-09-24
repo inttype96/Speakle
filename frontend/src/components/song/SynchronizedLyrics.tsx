@@ -6,7 +6,7 @@ interface LyricChunk {
   id: string;
   startTimeMs: number;
   english: string;
-  korean: string;
+  korean: string | null;
 }
 
 interface SynchronizedLyricsProps {
@@ -17,8 +17,7 @@ interface SynchronizedLyricsProps {
 
 export default function SynchronizedLyrics({
   lyricChunks,
-  currentTime,
-  isPlaying = false
+  currentTime
 }: SynchronizedLyricsProps) {
   const [currentLineIndex, setCurrentLineIndex] = useState(-1);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
