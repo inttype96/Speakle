@@ -39,7 +39,7 @@ public class AttendanceEventListener {
             // Redis에서 오늘 이미 로그인 처리했는지 확인
             Boolean alreadyProcessed = redisTemplate.hasKey(dailyLoginKey);
 
-            if (Boolean.TRUE.equals(alreadyProcessed)) {
+            if (alreadyProcessed) {
                 log.debug("User {} already processed first login today", event.getUserId());
                 return;
             }
@@ -79,7 +79,10 @@ public class AttendanceEventListener {
             return 24 * 60 * 60;
         } else {
             // 다음 자정까지 남은 시간
-            return now.until(midnight.plusHours(24), ChronoUnit.SECONDS);
+            long secondsUntilMidnight = now.until(midnight.plusHours(24), ChronoUnit.SECONDS);
+
+            // Redis setex 명령어는 0 이하의 값을 허용하지 않으므로 최소 1초 보장
+            return Math.max(secondsUntilMidnight, 1L);
         }
     }
 }

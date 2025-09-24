@@ -78,9 +78,10 @@ interface SpotifyWebPlayerProps {
   trackId: string
   trackName: string
   artistName: string
+  onTimeUpdate?: (currentTime: number, isPlaying: boolean) => void
 }
 
-export default function SpotifyWebPlayer({ trackId, trackName, artistName }: SpotifyWebPlayerProps) {
+export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTimeUpdate }: SpotifyWebPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(50)
   const [isMuted, setIsMuted] = useState(false)
@@ -169,6 +170,9 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
         setIsPlaying(!state.paused)
         setPosition(state.position)
         setDuration(state.track_window.current_track.duration_ms)
+
+        // 상위 컴포넌트에 시간 업데이트 알림
+        onTimeUpdate?.(state.position, !state.paused)
       })
 
       spotifyPlayer.addListener('initialization_error', ({ message }) => {
@@ -222,8 +226,11 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName }: Spo
         // 트랙 끝에 도달하면 정지
         if (newPosition >= duration) {
           setIsPlaying(false)
+          onTimeUpdate?.(duration, false)
           return duration
         }
+        // 상위 컴포넌트에 시간 업데이트 알림
+        onTimeUpdate?.(newPosition, true)
         return newPosition
       })
     }, 100)

@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/common/navbar";
 import Loading from "@/components/common/loading";
 import { fetchSongDetail, fetchLearningContent } from "@/services/songService";
 import type { SongDetail, LearningContent } from "@/types/song";
 import { createLearnedSong } from "@/services/songService";
+import SynchronizedLyrics from "@/components/song/SynchronizedLyrics";
 
 // shadcn
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 // import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import LearningContentTabs from "@/components/song/LearningContentTabs";
@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Skeleton } from "@/components/ui/skeleton";
 
 // icons
-import { Clock, Flame, Play, ChevronLeft, Gamepad2, Type, MicVocal, Keyboard } from "lucide-react";
+import { Clock, Flame, ChevronLeft, Gamepad2, Type, MicVocal, Keyboard } from "lucide-react";
 
 
 const SONG_DETAIL_SAMPLE: SongDetail = {
@@ -81,6 +81,17 @@ export default function SongDetailPage() {
   // 컴포넌트 내부 상태
   const [initLearningLoading, setInitLearningLoading] = useState(false);
   const [learned, setLearned] = useState<null | { learnedSongId: number }>(null);
+
+  // 가사 동기화를 위한 상태
+  const [currentPlayTime, setCurrentPlayTime] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // 스포티파이 플레이어 시간 업데이트 핸들러
+  const handleTimeUpdate = (currentTime: number, playing: boolean) => {
+    console.log('🎧 Spotify time update:', { currentTime, playing });
+    setCurrentPlayTime(currentTime);
+    setIsPlaying(playing);
+  };
 
   // 버튼 onClick 핸들러 교체
   const handleOpenLearn = async () => {
@@ -165,11 +176,15 @@ export default function SongDetailPage() {
         if (useMock) {
           // ✅ 백엔드 대신 로컬 샘플
           if (!alive) return;
+          console.log('🧪 Using mock data:', SONG_DETAIL_SAMPLE);
+          console.log('🎼 Mock lyric chunks count:', SONG_DETAIL_SAMPLE?.lyricChunks?.length || 0);
           setData(SONG_DETAIL_SAMPLE);
           return;
         }
         const detail = await fetchSongDetail(songId, { situation, location });
         if (!alive) return;
+        console.log('📊 Song detail loaded:', detail);
+        console.log('🎼 Lyric chunks count:', detail?.lyricChunks?.length || 0);
         setData(detail);
       } catch (e: any) {
         if (!alive) return;
@@ -182,18 +197,7 @@ export default function SongDetailPage() {
     return () => { alive = false; };
   }, [songId, situation, location]);
 
-  // 왼쪽: 원문 영어 가사
-  const englishOnly = useMemo(() => (data?.lyrics || "").trim(), [data]);
-
-  // 오른쪽: 영어 1줄 + 한국어 1줄
-  const biLines = useMemo(() => {
-    const chunks = data?.lyricChunks ?? [];
-    return chunks.map((c) => ({
-      id: c.id,
-      en: (c.english || "").trim(),
-      ko: (c.korean || "").trim(), // 없으면 빈 문자열
-    }));
-  }, [data]);
+  // 이제 SynchronizedLyrics 컴포넌트에서 직접 lyricChunks를 사용합니다
 
   const qsRaw = sp.toString(); // 현재 쿼리를 그대로 다음 페이지로 넘길 때 사용
 
@@ -234,79 +238,75 @@ export default function SongDetailPage() {
 
         {/* 상단: 앨범/타이틀/메타 */}
         <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-0">
-            {/* 앨범 커버 */}
-            <div className="p-4 md:pr-2">
-              <div className="relative aspect-square overflow-hidden rounded-md bg-muted max-w-[200px] mx-auto md:mx-0">
-                {loading ? (
-                  <Skeleton className="absolute inset-0" />
-                ) : (() => {
-                  // 앨범 이미지 유효성 검사
-                  const hasValidImage = data?.albumImgUrl &&
-                    data.albumImgUrl !== "no" &&
-                    data.albumImgUrl !== "null" &&
-                    data.albumImgUrl !== "none" &&
-                    data.albumImgUrl.trim() !== "";
-
-                  return (
-                    <img
-                      src={hasValidImage ? data.albumImgUrl : "/albumBasicCover.png"}
-                      alt={data?.title || ""}
-                      className="h-full w-full object-cover"
-                    />
-                  );
-                })()}
-                {!loading && (
-                  <Button size="icon" variant="secondary" className="absolute left-3 top-3 rounded-full h-9 w-9">
-                    <Play className="h-5 w-5" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* 타이틀/아티스트/메타 */}
-            <div className="p-4">
+          {/* 앨범 커버 */}
+          <div className="p-4 md:pr-2">
+            <div className="relative aspect-square overflow-hidden rounded-md bg-muted max-w-[200px] mx-auto md:mx-0">
               {loading ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-7 w-2/3" />
-                  <Skeleton className="h-5 w-1/3" />
-                  <Skeleton className="h-4 w-24" />
-                </div>
-              ) : error ? (
-                <div className="text-destructive text-sm">{error}</div>
-              ) : data ? (
-                <>
-                  <CardHeader className="p-0">
-                    <CardTitle className="text-xl truncate">{data.title}</CardTitle>
-                    <div className="text-sm text-muted-foreground truncate">
-                      {data.artists.replace(/[\[\]']/g, '')} · {data.album}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0 mt-2 space-y-3">
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                      <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" />{msToMinSec(data.durationMs)}</span>
-                      <span className="inline-flex items-center gap-1"><Flame className="h-4 w-4" />{data.popularity}</span>
-                      {situation && <Badge variant="outline">{situation}</Badge>}
-                      {location && <Badge variant="outline">{location}</Badge>}
-                    </div>
+                <Skeleton className="absolute inset-0" />
+              ) : (() => {
+                // 앨범 이미지 유효성 검사
+                const hasValidImage = data?.albumImgUrl &&
+                  data.albumImgUrl !== "no" &&
+                  data.albumImgUrl !== "null" &&
+                  data.albumImgUrl !== "none" &&
+                  data.albumImgUrl.trim() !== "";
 
-                    {/* 스포티파이 플레이어 */}
-                    <div className="max-w-md">
-                      <SpotifyWebPlayer
-                        trackId={data.songId}
-                        trackName={data.title}
-                        artistName={data.artists}
-                      />
-                    </div>
-
-                    {/* 학습 버튼 */}
-                    <Button size="lg" className="max-w-md" onClick={() => handleOpenLearn()}>
-                      <Gamepad2 className="mr-2 h-5 w-5" />
-                      Speakle과 집중 학습하기
-                    </Button>
-                  </CardContent>
-                </>
-              ) : null}
+                return (
+                  <img
+                    src={hasValidImage ? data.albumImgUrl : "/albumBasicCover.png"}
+                    alt={data?.title || ""}
+                    className="h-full w-full object-cover"
+                  />
+                );
+              })()}
             </div>
+          </div>
+
+          {/* 타이틀/아티스트/메타 */}
+          <div className="p-4">
+            {loading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-7 w-2/3" />
+                <Skeleton className="h-5 w-1/3" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            ) : error ? (
+              <div className="text-destructive text-sm">{error}</div>
+            ) : data ? (
+              <>
+                <CardHeader className="p-0">
+                  <CardTitle className="text-xl truncate">{data.title}</CardTitle>
+                  <div className="text-sm text-muted-foreground truncate">
+                    {data.artists.replace(/[\[\]']/g, '')} · {data.album}
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0 mt-2 space-y-3">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" />{msToMinSec(data.durationMs)}</span>
+                    <span className="inline-flex items-center gap-1"><Flame className="h-4 w-4" />{data.popularity}</span>
+                    {situation && <Badge variant="outline">{situation}</Badge>}
+                    {location && <Badge variant="outline">{location}</Badge>}
+                  </div>
+
+                  {/* 스포티파이 플레이어 */}
+                  <div className="max-w-md">
+                    <SpotifyWebPlayer
+                      trackId={data.songId}
+                      trackName={data.title}
+                      artistName={data.artists}
+                      onTimeUpdate={handleTimeUpdate}
+                    />
+                  </div>
+
+                  {/* 학습 버튼 */}
+                  <Button size="lg" className="max-w-md" onClick={() => handleOpenLearn()}>
+                    <Gamepad2 className="mr-2 h-5 w-5" />
+                    Speakle과 집중 학습하기
+                  </Button>
+                </CardContent>
+              </>
+            ) : null}
+          </div>
         </div>
 
         {/* 탭 (스크린샷처럼 상단에 '가사 | 학습 내용' 탭 표시) */}
@@ -317,51 +317,54 @@ export default function SongDetailPage() {
           </TabsList>
 
           <TabsContent value="lyrics" className="space-y-4">
-            {/* 두 컬럼: 왼쪽 영어 전체 / 오른쪽 영-한 한 줄씩 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 왼쪽: 영어 전체 */}
-              <Card className="bg-muted/40">
-                <CardHeader>
-                  <CardTitle className="text-base">영어 가사</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <div className="space-y-2">
-                      {[...Array(10)].map((_, i) => <Skeleton key={i} className="h-4 w-full" />)}
-                    </div>
-                  ) : (
-                    <ScrollArea className="h-[60vh] pr-3">
-                      <pre className="whitespace-pre-wrap leading-7 text-sm">{englishOnly}</pre>
-                    </ScrollArea>
+            {/* 시간 동기화된 영한 가사 */}
+            <Card className="bg-muted/40">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  영어 동기화 가사
+                  {isPlaying && (
+                    <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                   )}
-                </CardContent>
-              </Card>
-
-              {/* 오른쪽: 영-한 줄바꿈 */}
-              <Card className="bg-muted/40">
-                <CardHeader>
-                  <CardTitle className="text-base">영·한 가사</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <div className="space-y-2">
-                      {[...Array(10)].map((_, i) => <Skeleton key={i} className="h-4 w-full" />)}
-                    </div>
-                  ) : (
-                    <ScrollArea className="h-[60vh] pr-3">
-                      <div className="space-y-3">
-                        {biLines.map(({ id, en, ko }) => (
-                          <div key={id}>
-                            <div className="text-sm">{en}</div>
-                            <div className="text-sm text-muted-foreground">{ko || " "}</div>
-                          </div>
-                        ))}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-4">
+                    {[...Array(8)].map((_, i) => (
+                      <div key={i} className="space-y-2">
+                        <Skeleton className="h-5 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
                       </div>
-                    </ScrollArea>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                    ))}
+                  </div>
+                ) : data?.lyricChunks && data.lyricChunks.length > 0 ? (
+                  <>
+                    {console.log('🚀 Rendering SynchronizedLyrics with:', {
+                      chunksCount: data.lyricChunks.length,
+                      currentTime: currentPlayTime,
+                      isPlaying
+                    })}
+                    <SynchronizedLyrics
+                      lyricChunks={data.lyricChunks}
+                      currentTime={currentPlayTime}
+                      isPlaying={isPlaying}
+                    />
+                  </>
+                ) : (
+                  <>
+                    {console.log('❌ No lyrics available:', {
+                      hasData: !!data,
+                      hasLyricChunks: !!data?.lyricChunks,
+                      lyricChunksLength: data?.lyricChunks?.length,
+                      lyricChunks: data?.lyricChunks
+                    })}
+                    <div className="flex items-center justify-center h-[60vh] text-muted-foreground">
+                      <p>동기화된 가사를 불러올 수 없습니다.</p>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="notes">
