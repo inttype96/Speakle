@@ -1,6 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { useTranslationWebSocket, type TranslationUpdateEvent } from '@/hooks/useTranslationWebSocket';
 
 interface LyricChunk {
   id: string;
@@ -10,47 +11,74 @@ interface LyricChunk {
 }
 
 interface SynchronizedLyricsProps {
+  songId: string; // 실시간 번역을 위한 songId
   lyricChunks: LyricChunk[];
   currentTime: number; // 현재 재생 시간 (밀리초)
   isPlaying?: boolean;
 }
 
 export default function SynchronizedLyrics({
+  songId,
   lyricChunks,
   currentTime
 }: SynchronizedLyricsProps) {
   const [currentLineIndex, setCurrentLineIndex] = useState(-1);
+  const [realtimeLyrics, setRealtimeLyrics] = useState<LyricChunk[]>(lyricChunks);
+  const [showTranslationProgress, setShowTranslationProgress] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const currentLineRef = useRef<HTMLDivElement>(null);
 
+  // 실시간 번역 WebSocket 연결
+  const handleTranslationUpdate = useCallback((event: TranslationUpdateEvent) => {
+    console.log('🔄 Translation update received:', event);
+
+    if (event.status === 'STARTED') {
+      setShowTranslationProgress(true);
+    } else if (event.status === 'PROGRESS' && event.chunkId && event.korean) {
+      // 해당 청크의 한국어 번역 업데이트
+      setRealtimeLyrics(prev => prev.map(chunk =>
+        chunk.id === event.chunkId
+          ? { ...chunk, korean: event.korean || null }
+          : chunk
+      ));
+    } else if (event.status === 'COMPLETED') {
+      setShowTranslationProgress(false);
+      console.log('✅ Translation completed!');
+    } else if (event.status === 'ERROR') {
+      setShowTranslationProgress(false);
+      console.error('❌ Translation failed');
+    }
+  }, []);
+
+  const { isConnected, translationProgress } = useTranslationWebSocket({
+    songId,
+    onTranslationUpdate: handleTranslationUpdate
+  });
+
+  // lyricChunks가 변경되면 realtimeLyrics 업데이트
+  useEffect(() => {
+    setRealtimeLyrics(lyricChunks);
+  }, [lyricChunks]);
+
   // 빈 가사를 제외한 유효한 가사만 필터링
-  const validLyrics = lyricChunks
+  const validLyrics = realtimeLyrics
     .filter(chunk => {
       if (!chunk.english || chunk.english.trim() === '') return false;
 
       // 음악 기호나 의미 없는 텍스트 제외
       const text = chunk.english.trim();
       if (text === '♪' || text === '♫' || text === '🎵' || text === '🎶') return false;
-      if (text.length <= 2 && /^[♪♫🎵🎶\-_~\s]*$/.test(text)) return false;
+      return !(text.length <= 2 && /^[♪♫🎵🎶\-_~\s]*$/.test(text));
 
-      return true;
+
     })
     // 중복 제거 (같은 시간대의 중복 가사 제거)
     .filter((chunk, index, array) => {
       const prevChunk = array[index - 1];
-      if (prevChunk &&
+      return !(prevChunk &&
           chunk.english === prevChunk.english &&
-          Math.abs(chunk.startTimeMs - prevChunk.startTimeMs) < 5000) {
-        return false; // 같은 가사이고 5초 이내 차이면 제거
-      }
-      return true;
+          Math.abs(chunk.startTimeMs - prevChunk.startTimeMs) < 5000);
     });
-
-  console.log('🎵 SynchronizedLyrics Debug:');
-  console.log('📝 Original lyricChunks:', lyricChunks);
-  console.log('✅ Valid lyrics:', validLyrics);
-  console.log('⏰ Current time:', currentTime);
-  console.log('📍 Current line index:', currentLineIndex);
 
   // 현재 재생 시간에 따른 가사 라인 인덱스 계산
   useEffect(() => {
@@ -120,53 +148,102 @@ export default function SynchronizedLyrics({
   }
 
   return (
-    <ScrollArea ref={scrollAreaRef} className="h-[60vh] pr-3">
-      <div className="space-y-6 py-4">
-        {validLyrics.map((chunk, index) => {
-          const isCurrent = index === currentLineIndex;
-          const isPast = index < currentLineIndex;
-          const isFuture = index > currentLineIndex;
-
-          return (
+    <div>
+      {/* 번역 진행 상황 표시 */}
+      {showTranslationProgress && (
+        <div className="mb-4 p-3 bg-muted/50 rounded-lg border">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">실시간 번역 중...</span>
+            <span className="text-sm text-muted-foreground">
+              {translationProgress.completedChunks}/{translationProgress.totalChunks}
+            </span>
+          </div>
+          <div className="w-full bg-muted rounded-full h-2">
             <div
-              key={chunk.id}
-              ref={isCurrent ? currentLineRef : undefined}
-              className={cn(
-                "transition-all duration-500 ease-in-out p-4 rounded-lg cursor-pointer",
-                "hover:bg-muted/50",
-                isCurrent && [
-                  "bg-primary/15 border-l-4 border-primary",
-                  "transform scale-105 shadow-md",
-                  "ring-2 ring-primary/20"
-                ],
-                isPast && "opacity-50",
-                isFuture && "opacity-70"
-              )}
-            >
-              {/* 영어 가사만 표시 */}
-              <div className={cn(
-                "text-base leading-relaxed transition-all duration-500",
-                isCurrent && [
-                  "text-primary font-bold text-xl",
-                  "text-shadow-sm"
-                ],
-                isPast && "text-muted-foreground font-normal",
-                isFuture && "text-foreground/80 font-medium"
-              )}>
-                {chunk.english}
-              </div>
+              className="bg-primary h-2 rounded-full transition-all duration-300"
+              style={{ width: `${translationProgress.progressPercentage}%` }}
+            />
+          </div>
+        </div>
+      )}
 
-              {/* 타임스탬프 (디버그용 - 필요시 제거) */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="text-xs text-muted-foreground/50 mt-1">
-                  {Math.floor(chunk.startTimeMs / 1000)}s
+      {/* WebSocket 연결 상태 (디버그용) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mb-2 text-xs text-muted-foreground">
+          WebSocket: {isConnected ? '🟢 연결됨' : '🔴 연결 안됨'}
+        </div>
+      )}
+
+      <ScrollArea ref={scrollAreaRef} className="h-[60vh] pr-3">
+        <div className="space-y-6 py-4">
+          {validLyrics.map((chunk, index) => {
+            const isCurrent = index === currentLineIndex;
+            const isPast = index < currentLineIndex;
+            const isFuture = index > currentLineIndex;
+
+            return (
+              <div
+                key={chunk.id}
+                ref={isCurrent ? currentLineRef : undefined}
+                className={cn(
+                  "transition-all duration-500 ease-in-out p-4 rounded-lg cursor-pointer",
+                  "hover:bg-muted/50",
+                  isCurrent && [
+                    "bg-primary/15 border-l-4 border-primary",
+                    "transform scale-105 shadow-md",
+                    "ring-2 ring-primary/20"
+                  ],
+                  isPast && "opacity-50",
+                  isFuture && "opacity-70"
+                )}
+              >
+                {/* 영어 가사 */}
+                <div className={cn(
+                  "text-base leading-relaxed transition-all duration-500",
+                  isCurrent && [
+                    "text-primary font-bold text-xl",
+                    "text-shadow-sm"
+                  ],
+                  isPast && "text-muted-foreground font-normal",
+                  isFuture && "text-foreground/80 font-medium"
+                )}>
+                  {chunk.english}
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </ScrollArea>
+
+                {/* 한국어 번역 */}
+                {chunk.korean && (
+                  <div className={cn(
+                    "mt-2 text-sm leading-relaxed transition-all duration-500",
+                    isCurrent && [
+                      "text-primary/80 font-medium text-base",
+                      "opacity-90"
+                    ],
+                    isPast && "text-muted-foreground/60",
+                    isFuture && "text-muted-foreground/70"
+                  )}>
+                    {chunk.korean}
+                  </div>
+                )}
+
+                {/* 번역 중 표시 */}
+                {!chunk.korean && showTranslationProgress && (
+                  <div className="mt-2 text-xs text-muted-foreground/50 italic">
+                    번역 중...
+                  </div>
+                )}
+
+                {/* 타임스탬프 (디버그용 - 필요시 제거) */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="text-xs text-muted-foreground/50 mt-1">
+                    {Math.floor(chunk.startTimeMs / 1000)}s
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </ScrollArea>
+    </div>
   );
 }
 
