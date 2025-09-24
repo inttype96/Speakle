@@ -472,7 +472,13 @@ export default function QuizPage() {
             <Button variant="secondary" onClick={() => setOpenSummary(false)}>
               닫기
             </Button>
-            <Button onClick={() => (window.location.href = `/songs/${songId}`)}>
+            <Button onClick={() => {
+              const params = new URLSearchParams();
+              if (situation) params.set('situation', situation);
+              if (location) params.set('location', location);
+              const queryString = params.toString();
+              window.location.href = `/songs/${songId}${queryString ? `?${queryString}` : ''}`;
+            }}>
               곡으로 돌아가기
             </Button>
           </DialogFooter>
