@@ -238,75 +238,75 @@ export default function SongDetailPage() {
 
         {/* 상단: 앨범/타이틀/메타 */}
         <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-0">
-            {/* 앨범 커버 */}
-            <div className="p-4 md:pr-2">
-              <div className="relative aspect-square overflow-hidden rounded-md bg-muted max-w-[200px] mx-auto md:mx-0">
-                {loading ? (
-                  <Skeleton className="absolute inset-0" />
-                ) : (() => {
-                  // 앨범 이미지 유효성 검사
-                  const hasValidImage = data?.albumImgUrl &&
-                    data.albumImgUrl !== "no" &&
-                    data.albumImgUrl !== "null" &&
-                    data.albumImgUrl !== "none" &&
-                    data.albumImgUrl.trim() !== "";
-
-                  return (
-                    <img
-                      src={hasValidImage ? data.albumImgUrl : "/albumBasicCover.png"}
-                      alt={data?.title || ""}
-                      className="h-full w-full object-cover"
-                    />
-                  );
-                })()}
-              </div>
-            </div>
-
-            {/* 타이틀/아티스트/메타 */}
-            <div className="p-4">
+          {/* 앨범 커버 */}
+          <div className="p-4 md:pr-2">
+            <div className="relative aspect-square overflow-hidden rounded-md bg-muted max-w-[200px] mx-auto md:mx-0">
               {loading ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-7 w-2/3" />
-                  <Skeleton className="h-5 w-1/3" />
-                  <Skeleton className="h-4 w-24" />
-                </div>
-              ) : error ? (
-                <div className="text-destructive text-sm">{error}</div>
-              ) : data ? (
-                <>
-                  <CardHeader className="p-0">
-                    <CardTitle className="text-xl truncate">{data.title}</CardTitle>
-                    <div className="text-sm text-muted-foreground truncate">
-                      {data.artists.replace(/[\[\]']/g, '')} · {data.album}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0 mt-2 space-y-3">
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                      <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" />{msToMinSec(data.durationMs)}</span>
-                      <span className="inline-flex items-center gap-1"><Flame className="h-4 w-4" />{data.popularity}</span>
-                      {situation && <Badge variant="outline">{situation}</Badge>}
-                      {location && <Badge variant="outline">{location}</Badge>}
-                    </div>
-
-                    {/* 스포티파이 플레이어 */}
-                    <div className="max-w-md">
-                      <SpotifyWebPlayer
-                        trackId={data.songId}
-                        trackName={data.title}
-                        artistName={data.artists}
-                        onTimeUpdate={handleTimeUpdate}
-                      />
-                    </div>
-
-                    {/* 학습 버튼 */}
-                    <Button size="lg" className="max-w-md" onClick={() => handleOpenLearn()}>
-                      <Gamepad2 className="mr-2 h-5 w-5" />
-                      Speakle과 집중 학습하기
-                    </Button>
-                  </CardContent>
-                </>
-              ) : null}
+                <Skeleton className="absolute inset-0" />
+              ) : (() => {
+                // 앨범 이미지 유효성 검사
+                const hasValidImage = data?.albumImgUrl &&
+                  data.albumImgUrl !== "no" &&
+                  data.albumImgUrl !== "null" &&
+                  data.albumImgUrl !== "none" &&
+                  data.albumImgUrl.trim() !== "";
+                  
+                return (
+                  <img
+                    src={hasValidImage ? data.albumImgUrl : "/albumBasicCover.png"}
+                    alt={data?.title || ""}
+                    className="h-full w-full object-cover"
+                  />
+                );
+              })()}
             </div>
+          </div>
+
+          {/* 타이틀/아티스트/메타 */}
+          <div className="p-4">
+            {loading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-7 w-2/3" />
+                <Skeleton className="h-5 w-1/3" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            ) : error ? (
+              <div className="text-destructive text-sm">{error}</div>
+            ) : data ? (
+              <>
+                <CardHeader className="p-0">
+                  <CardTitle className="text-xl truncate">{data.title}</CardTitle>
+                  <div className="text-sm text-muted-foreground truncate">
+                    {data.artists.replace(/[\[\]']/g, '')} · {data.album}
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0 mt-2 space-y-3">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" />{msToMinSec(data.durationMs)}</span>
+                    <span className="inline-flex items-center gap-1"><Flame className="h-4 w-4" />{data.popularity}</span>
+                    {situation && <Badge variant="outline">{situation}</Badge>}
+                    {location && <Badge variant="outline">{location}</Badge>}
+                  </div>
+
+                  {/* 스포티파이 플레이어 */}
+                  <div className="max-w-md">
+                    <SpotifyWebPlayer
+                      trackId={data.songId}
+                      trackName={data.title}
+                      artistName={data.artists}
+                      onTimeUpdate={handleTimeUpdate}
+                    />
+                  </div>
+
+                  {/* 학습 버튼 */}
+                  <Button size="lg" className="max-w-md" onClick={() => handleOpenLearn()}>
+                    <Gamepad2 className="mr-2 h-5 w-5" />
+                    Speakle과 집중 학습하기
+                  </Button>
+                </CardContent>
+              </>
+            ) : null}
+          </div>
         </div>
 
         {/* 탭 (스크린샷처럼 상단에 '가사 | 학습 내용' 탭 표시) */}
