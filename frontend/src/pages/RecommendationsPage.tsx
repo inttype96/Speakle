@@ -285,10 +285,10 @@ export default function RecommendationsPage() {
       <Navbar />
       <div aria-hidden className="h-16 md:h-20" />
 
-      <div className={`mx-auto max-w-6xl px-4 space-y-6 ${isSearchMode ? 'py-12' : 'py-6'}`}>
+      <div className={`mx-auto max-w-6xl px-4 ${isSearchMode ? 'py-12' : 'py-6'}`}>
         {/* 조건 태그 (추천 모드에서만) */}
         {isRecommendMode && (
-          <div className="space-y-1">
+          <div className="space-y-1 pt-6 mb-1">
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline">{situation || "상황 없음"}</Badge>
               <Badge variant="outline">{location || "장소 없음"}</Badge>

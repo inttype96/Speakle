@@ -52,7 +52,7 @@ export default function Loading({
               {/* 회전하는 원 */}
               <div className="w-20 h-20 border-4 border-primary/20 rounded-full animate-spin border-t-primary"></div>
               {/* 중앙 로고 */}
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center bg-black rounded-full">
                 <img
                   src="/speakle_logo.png"
                   alt="Speakle"
@@ -90,8 +90,8 @@ export default function Loading({
           {/* 로딩 메시지들 */}
           <div className="space-y-1 text-xs text-muted-foreground">
             <p>🎵 음악 데이터 분석 중...</p>
-            <p>🤖 AI가 맞춤 추천을 준비하고 있어요</p>
-            <p>✨ 곧 완성됩니다!</p>
+            <p> AI가 맞춤 추천을 준비하고 있어요</p>
+            <p> 곧 완성됩니다!</p>
           </div>
         </div>
       </div>
@@ -113,7 +113,7 @@ export function FullScreenLoading({
             {/* 회전하는 원 */}
             <div className="w-24 h-24 border-4 border-primary/20 rounded-full animate-spin border-t-primary"></div>
             {/* 중앙 로고 */}
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center bg-black rounded-full">
               <img
                 src="/speakle_logo.png"
                 alt="Speakle"

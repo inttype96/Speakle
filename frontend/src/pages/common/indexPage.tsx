@@ -13,22 +13,22 @@ export default function IndexPage() {
   const navigate = useNavigate()
 
   return (
-    <div className="bg-background text-white min-h-screen flex flex-col">
+    <div className="bg-background min-h-screen flex flex-col">
       <Navbar />
       <SplashCursor />
 
       {/* Main Content */}
-      <div className="flex-1 w-full px-12 pt-32 pb-16 grid grid-cols-1 lg:grid-cols-2 gap-16 items-start max-w-screen-2xl mx-auto">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_1fr]">
 
-        {/* 왼쪽 섹션 */}
-        <div className="relative flex flex-col items-center text-center -mt-8">
+        {/* 왼쪽 섹션 - 검정 배경 */}
+        <div className="bg-black flex flex-col items-center justify-center text-center py-32 -ml-[100vw] pl-[100vw] pr-12">
           <div className="relative">
             <img
               src={HeadphoneImage}
               alt="Headset"
               className="w-[28rem] h-[28rem] object-contain mx-auto"
             />
-            <h1 className="absolute inset-0 flex items-center justify-center text-8xl font-extrabold font-poppins">
+            <h1 className="absolute inset-0 flex items-center justify-center text-8xl font-extrabold font-poppins text-white">
               Speakle
             </h1>
           </div>
@@ -39,7 +39,7 @@ export default function IndexPage() {
         </div>
 
         {/* 오른쪽 섹션 */}
-        <div className="flex flex-col space-y-6">
+        <div className="flex flex-col space-y-6 px-12 py-32">
           {/* 오늘의 기분 카드 */}
           <Card className="bg-[#B5A6E0] text-black rounded-2xl shadow-lg">
             <CardContent className="py-2 px-6">
@@ -72,7 +72,7 @@ export default function IndexPage() {
           <div className="mt-6 space-y-6">
             <div className="flex items-center justify-end space-x-2">
               <img src={BallonImage} alt="Balloon" className="w-8 h-8" />
-              <p className="font-bold text-xl">왜 Speakle인가 ?</p>
+              <p className="font-bold text-xl text-gray-900 dark:text-white">왜 Speakle인가 ?</p>
             </div>
 
             {/* 대화형 말풍선 */}
