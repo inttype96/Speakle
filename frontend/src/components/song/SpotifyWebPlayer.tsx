@@ -79,9 +79,11 @@ interface SpotifyWebPlayerProps {
   trackName: string
   artistName: string
   onTimeUpdate?: (currentTime: number, isPlaying: boolean) => void
+  startTime?: number // 시작 시간 (밀리초)
+  endTime?: number   // 종료 시간 (밀리초)
 }
 
-export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTimeUpdate }: SpotifyWebPlayerProps) {
+export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTimeUpdate, startTime, endTime }: SpotifyWebPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(50)
   const [isMuted, setIsMuted] = useState(false)
@@ -171,6 +173,14 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         setPosition(state.position)
         setDuration(state.track_window.current_track.duration_ms)
 
+        // endTime이 설정되어 있고 도달하면 정지
+        if (endTime && !state.paused && state.position >= endTime) {
+          spotifyPlayer.pause()
+          setIsPlaying(false)
+          onTimeUpdate?.(endTime, false)
+          return
+        }
+
         // 상위 컴포넌트에 시간 업데이트 알림
         onTimeUpdate?.(state.position, !state.paused)
       })
@@ -223,12 +233,24 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
     const interval = setInterval(() => {
       setPosition((prev) => {
         const newPosition = prev + 100
+        
+        // endTime이 설정되어 있고 도달하면 정지
+        if (endTime && newPosition >= endTime) {
+          if (player) {
+            player.pause()
+          }
+          setIsPlaying(false)
+          onTimeUpdate?.(endTime, false)
+          return endTime
+        }
+        
         // 트랙 끝에 도달하면 정지
         if (newPosition >= duration) {
           setIsPlaying(false)
           onTimeUpdate?.(duration, false)
           return duration
         }
+        
         // 상위 컴포넌트에 시간 업데이트 알림
         onTimeUpdate?.(newPosition, true)
         return newPosition
@@ -236,11 +258,11 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
     }, 100)
 
     return () => clearInterval(interval)
-  }, [isPlaying, duration])
+  }, [isPlaying, duration, endTime, onTimeUpdate, player])
 
 
   // 트랙 재생
-  const playTrack = async (trackUri: string) => {
+  const playTrack = async (trackUri: string, seekTo?: number) => {
     if (!deviceId) {
       toast.error('플레이어가 준비되지 않았습니다')
       return
@@ -251,11 +273,18 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
       const tokenResponse = await getSpotifyTokenAPI()
       const spotifyToken = tokenResponse.data.accessToken
 
+      const playBody: any = {
+        uris: [trackUri.startsWith('spotify:track:') ? trackUri : `spotify:track:${trackUri}`]
+      }
+
+      // startTime이 있으면 해당 위치로 이동
+      if (seekTo !== undefined) {
+        playBody.position_ms = seekTo
+      }
+
       const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
         method: 'PUT',
-        body: JSON.stringify({
-          uris: [trackUri.startsWith('spotify:track:') ? trackUri : `spotify:track:${trackUri}`]
-        }),
+        body: JSON.stringify(playBody),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${spotifyToken}`
@@ -266,7 +295,10 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      toast.success(`${trackName} 재생을 시작했습니다`)
+      const message = seekTo !== undefined 
+        ? `${trackName} 재생을 ${Math.floor(seekTo / 1000)}초부터 시작했습니다`
+        : `${trackName} 재생을 시작했습니다`
+      toast.success(message)
     } catch (error) {
       console.error('트랙 재생 실패:', error)
       toast.error('트랙 재생에 실패했습니다')
@@ -286,8 +318,10 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         toast.success('재생을 일시정지했습니다')
       } else {
         if (currentTrack?.id !== trackId) {
-          await playTrack(trackId)
+          // 새로운 트랙이면 startTime 위치에서 재생
+          await playTrack(trackId, startTime)
         } else {
+          // 같은 트랙이면 현재 위치에서 재생
           await player.resume()
           toast.success('재생을 재개했습니다')
         }

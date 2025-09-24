@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
 // icons
-import { ChevronLeft, Play, Volume2 } from "lucide-react";
+import { ChevronLeft, Volume2, RotateCcw } from "lucide-react";
 
 // api
 import {
@@ -22,6 +22,7 @@ import {
 } from "@/services/dictationService";
 
 import { type DictationItem } from "@/types/dictation";
+import SpotifyWebPlayer from "@/components/song/SpotifyWebPlayer";
 
 // ==== 유틸: 코어 문장을 글자 단위 토큰으로 쪼갬 (공백/문장부호 포함) ====
 type Token = { ch: string; isInput: boolean };
@@ -33,28 +34,7 @@ const tokenize = (sentence: string): Token[] => {
   });
 };
 
-// ==== TTS (Web Speech API) ====
-function speak(sentence: string) {
-  if (!("speechSynthesis" in window)) return;
-  const utter = new SpeechSynthesisUtterance(sentence);
-
-  // 영어 원어민에 가까운 음성 우선 선택 (en-GB > en-US > en-*)
-  const voices = window.speechSynthesis.getVoices();
-  const pick =
-    voices.find((v) => /en-GB/i.test(v.lang)) ||
-    voices.find((v) => /en-US/i.test(v.lang)) ||
-    voices.find((v) => /^en-/i.test(v.lang)) ||
-    null;
-
-  if (pick) utter.voice = pick;
-  utter.lang = pick?.lang ?? "en-US";
-  utter.rate = 0.95; // 살짝 느리게
-  utter.pitch = 1.0;
-  utter.volume = 1.0;
-
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utter);
-}
+// ==== 노래 재생 관련 유틸리티 ====
 
 const BOX_BASE =
   "h-12 w-10 md:h-12 md:w-10 flex items-center justify-center rounded-lg border bg-background/40 text-lg font-medium";
@@ -84,7 +64,28 @@ export default function DictationPage() {
   const [openResult, setOpenResult] = useState(false);
   const [resultMsg, setResultMsg] = useState<"정답입니다!" | "오답입니다!">("오답입니다!");
 
+  // 노래 재생 관련 상태
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [hasStarted, setHasStarted] = useState(false);
+  const [replayKey, setReplayKey] = useState(0); // Replay 버튼을 위한 key
+
   const progress = (qNo / MAX_Q) * 100;
+
+  // 노래 재생 시간 업데이트 핸들러
+  const handleTimeUpdate = useCallback((time: number, playing: boolean) => {
+    setCurrentTime(time);
+    setIsPlaying(playing);
+    
+    if (item && !hasStarted && playing) {
+      setHasStarted(true);
+    }
+    
+    // endTime에 도달했을 때 재생이 정지되었는지 확인
+    if (item && item.endTime && time >= item.endTime && !playing) {
+      setHasStarted(true); // 재생이 완료되었음을 표시
+    }
+  }, [item, hasStarted]);
 
   // 문제 로드
   const fetchQuestion = useCallback(async (no: number) => {
@@ -95,6 +96,13 @@ export default function DictationPage() {
     // 입력칸 개수만큼 상태 초기화 (이전 값 유지 X — 재시도 시에는 모달만 닫고 그대로 유지)
     const blanksCount = tks.filter((t) => t.isInput).length;
     setAnswers((prev) => (prev.length === blanksCount ? prev : Array(blanksCount).fill("")));
+    
+    // 노래 재생 상태 초기화
+    setHasStarted(false);
+    setCurrentTime(0);
+    setIsPlaying(false);
+    setReplayKey(0);
+    
     // 포커스 초기화
     setTimeout(() => {
       const first = inputsRef.current.find((el) => !!el);
@@ -115,6 +123,16 @@ export default function DictationPage() {
       window.speechSynthesis.onvoiceschanged = null;
     };
   }, [qNo, fetchQuestion]);
+
+  // 페이지를 벗어날 때 노래 정지
+  useEffect(() => {
+    return () => {
+      // 컴포넌트가 언마운트될 때 노래 정지
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   // 토큰 ↔ 입력칸 인덱스 매핑
   const inputMap = useMemo(() => {
@@ -266,16 +284,59 @@ export default function DictationPage() {
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Volume2 className="h-4 w-4" />
-                <span>Play the sentence and type exactly.</span>
+                <span>Listen to the song and type the lyrics exactly.</span>
               </div>
             </div>
 
-            <div className="flex flex-col items-center gap-4 mb-6">
-              <Button size="lg" className="rounded-full h-14 w-14 p-0" onClick={() => item && speak(item.coreSentence)}>
-                <Play className="h-6 w-6" />
-              </Button>
-              <p className="text-sm text-muted-foreground">재생 버튼을 클릭하여 음성을 들어보세요</p>
-            </div>
+            {/* Spotify Web Player */}
+            {item && (
+              <div className="mb-6">
+                <SpotifyWebPlayer
+                  key={`${item.songId}-${replayKey}`}
+                  trackId={item.songId}
+                  trackName={item.title}
+                  artistName={item.artists}
+                  onTimeUpdate={handleTimeUpdate}
+                  startTime={item.startTime}
+                  endTime={item.endTime}
+                />
+                <div className="mt-2 text-center space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {item.startTime && item.endTime ? (
+                      <>
+                        {hasStarted && (!isPlaying || currentTime >= item.endTime) && (
+                          <span className="ml-2 text-green-600 font-medium">✓ Time to answer!</span>
+                        )}
+                      </>
+                    ) : (
+                      "Listen to the song and type the lyrics you hear"
+                    )}
+                  </p>
+                  
+                  {/* 다시 재생 버튼 */}
+                  <div className="flex items-center justify-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        // 재생 상태를 리셋
+                        setHasStarted(false);
+                        setCurrentTime(0);
+                        setIsPlaying(false);
+                        
+                        // replayKey를 증가시켜서 SpotifyWebPlayer를 리렌더링
+                        // 이렇게 하면 새로운 재생 세션이 시작되고 startTime에서 재생됨
+                        setReplayKey(prev => prev + 1);
+                      }}
+                      className="flex items-center gap-1"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      Replay
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* 입력 그리드 */}
             <section className="mx-auto flex flex-col gap-3 items-center">
