@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { isSongInUserPlaylists, type UseSongInPlaylistsResult } from '@/services/playlistService';
+// import { isSongInUserPlaylists, type UseSongInPlaylistsResult } from '@/services/playlist';
 
 /**
  * 특정 노래가 사용자의 플레이리스트에 포함되어 있는지 확인하는 React Hook
