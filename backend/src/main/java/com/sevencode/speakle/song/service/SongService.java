@@ -15,6 +15,7 @@ import com.sevencode.speakle.learn.service.LearningSentenceService;
 import com.sevencode.speakle.learn.repository.LearningSentenceRepository;
 import com.sevencode.speakle.learn.domain.entity.LearningSentence;
 import com.sevencode.speakle.parser.service.LyricsParsingService;
+import com.sevencode.speakle.parser.service.ContextAwareLyricTranslationService;
 import com.sevencode.speakle.parser.repository.SentenceRepository;
 import com.sevencode.speakle.parser.entity.SentenceEntity;
 import com.sevencode.speakle.playlist.service.CustomPlaylistService;
@@ -45,6 +46,7 @@ public class SongService {
     private final LearnedSongRepository learnedSongRepository;
     private final LearningSentenceService learningSentenceService;
     private final LyricsParsingService lyricsParsingService;
+    private final ContextAwareLyricTranslationService contextAwareLyricTranslationService;
     private final LearningSentenceRepository learningSentenceRepository;
     private final SentenceRepository sentenceRepository;
     private final CustomPlaylistService customPlaylistService;
@@ -110,6 +112,45 @@ public class SongService {
         return getSongDetail(songId, null, null);
     }
 
+	/*
+		기존 getSongDetail
+	    // 노래 상세 (situation, location 포함)
+    public SongDetailResponse getSongDetail(String songId, String situation, String location) {
+        log.info("[SongService] 노래 상세 조회 요청 songId={}, situation={}, location={}", songId, situation, location);
+        Song song = songRepository.findById(songId)
+                .orElseThrow(() -> {
+                    log.error("[SongService] 노래 상세 조회 실패 - 존재하지 않는 songId={}", songId);
+                    return new RuntimeException("노래를 찾을 수 없습니다. id=" + songId);
+                });
+
+        // Parser 데이터 비동기 처리 (캐시 우선, 없으면 백그라운드에서 생성)
+        ensureParsingDataExistsAsync(songId, situation, location);
+
+        List<LyricChunkResponse> chunks = lyricChunkRepository.findBySong(song).stream()
+                .map(c -> LyricChunkResponse.builder()
+                        .id(c.getSongsLyricsId())
+                        .startTimeMs(c.getStartTimeMs())
+                        .english(c.getEnglish())
+                        .korean(c.getKorean())
+                        .build())
+                .toList();
+        log.info("[SongService] 노래 상세 조회 성공 songId={}, lyricChunks={}", songId, chunks.size());
+
+        return SongDetailResponse.builder()
+                .songId(song.getSongId())
+                .title(song.getTitle())
+                .artists(song.getArtists())
+                .album(song.getAlbum())
+                .albumImgUrl(song.getAlbumImgUrl())
+                .popularity(song.getPopularity())
+                .durationMs(song.getDurationMs())
+                .lyrics(song.getLyrics())
+                .lyricChunks(chunks)
+                .build();
+    }
+
+	 */
+
     // 노래 상세 (situation, location 포함)
     public SongDetailResponse getSongDetail(String songId, String situation, String location) {
         log.info("[SongService] 노래 상세 조회 요청 songId={}, situation={}, location={}", songId, situation, location);
@@ -121,6 +162,22 @@ public class SongService {
 
         // Parser 데이터 비동기 처리 (캐시 우선, 없으면 백그라운드에서 생성)
         ensureParsingDataExistsAsync(songId, situation, location);
+
+        // 컨텍스트 기반 가사 실시간 번역 백그라운드 처리 (Redis PubSub + WebSocket)
+        // 단, 번역이 필요한 청크가 있을 때만 실행
+        boolean hasUntranslatedChunks = lyricChunkRepository.findBySong(song).stream()
+                .anyMatch(c -> c.getEnglish() != null && !c.getEnglish().trim().isEmpty()
+                             && (c.getKorean() == null || c.getKorean().trim().isEmpty()));
+
+        if (hasUntranslatedChunks) {
+            log.info("[SongService] 번역이 필요한 청크 발견 - 실시간 번역 시작, songId={}", songId);
+			// 테스트 끝나고 배포 후 주석 해제 (토큰 사용 때문에 주석처리)
+            //  contextAwareLyricTranslationService.translateSongChunksRealtime(
+            //          songId, song.getTitle(), song.getArtists(), song.getAlbum()
+            //  );
+        } else {
+            log.info("[SongService] 모든 번역 완료됨 - 번역 서비스 스킵, songId={}", songId);
+        }
 
         List<LyricChunkResponse> chunks = lyricChunkRepository.findBySong(song).stream()
                 .map(c -> LyricChunkResponse.builder()
