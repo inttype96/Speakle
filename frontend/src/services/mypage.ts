@@ -108,16 +108,18 @@ export async function getUserPlaylistsAPI() {
 }
 
 // 출석 정보 조회
+export interface Attendance {
+  checkedToday: boolean;
+  lastCheckDate: string;
+  currentStreak: number;
+  totalAttendanceDays: number;
+  pointsEarnedToday: number;
+}
+
 export interface AttendanceResponse {
   status: number;
   message: string;
-  data: {
-    checkedToday: boolean;
-    lastCheckDate: string;
-    currentStreak: number;
-    totalAttendanceDays: number;
-    pointsEarnedToday: number;
-  };
+  data: Attendance;
 }
 
 // 출석 통계 조회

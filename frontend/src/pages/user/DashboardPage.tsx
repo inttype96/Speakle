@@ -18,10 +18,8 @@ import {
   getPointRankingAPI,
   type PointProfile,
   type LearnedSong,
-  type RankingUser,
-  type AttendanceResponse
+  type RankingUser
 } from '@/services/mypage'
-import { toast } from 'sonner'
 
 export default function DashboardPage() {
   const navigate = useNavigate()
@@ -146,13 +144,7 @@ export default function DashboardPage() {
             {/* 연속 출석일 카드 */}
             <StreakCard
               currentStreak={checkinInfo?.currentStreak || 0}
-              longestStreak={checkinInfo?.totalAttendanceDays || 0}
-              totalDays={checkinInfo?.totalAttendanceDays || 0}
-              onCheckin={() => {
-                toast.info('출석체크는 로그인 시 자동으로 처리됩니다!')
-              }}
               isCheckedIn={isCheckedInToday()}
-              loading={false}
             />
 
             {/* 포인트 카드 */}
