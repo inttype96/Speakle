@@ -21,6 +21,7 @@ import com.sevencode.speakle.playlist.service.CustomPlaylistService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import com.sevencode.speakle.song.repository.LyricChunkRepository;
 import com.sevencode.speakle.song.repository.SongRepository;
@@ -164,58 +165,81 @@ public class SongService {
 
         log.debug("[SongService] 곡 검증 완료 - title={}, artists={}", song.getTitle(), song.getArtists());
 
-        // 수정(소연) - LearnedSongEntity 생성 (artists는 List<String>으로 변환)
-        LearnedSongEntity learnedSong = new LearnedSongEntity();
-        learnedSong.setUserId(userId);
-        learnedSong.setSongId(request.getSongId()); // String 그대로 사용
-        learnedSong.setArtists(song.getArtists()); // String 그대로 사용
-        learnedSong.setSituation(request.getSituation());
-        learnedSong.setLocation(request.getLocation());
+        // 수정(아윤) - LearnedSongEntity 중복 확인
+        Optional<LearnedSongEntity> existing = learnedSongRepository
+                .findByUserIdAndSongIdAndSituationAndLocation(
+                        userId, request.getSongId(), request.getSituation(), request.getLocation());
 
-        try {
-            LearnedSongEntity saved = learnedSongRepository.save(learnedSong);
-            log.info("[SongService] 학습곡 저장 성공 - learnedSongId={}, userId={}, songId={}",
-                    saved.getLearnedSongId(), userId, saved.getSongId());
+        LearnedSongEntity learnedSong;
 
-            // Parser 데이터 확인 및 LLM 파싱 수행 (동기적으로 처리)
-            // songId를 사용해야 함 (learnedSongId가 아님)
-            ensureParsingDataExists(saved.getSongId(), request.getSituation(), request.getLocation());
-
-            // 핵심 학습 문장들을 learning_sentence 테이블에 저장
-            try {
-                List<SentenceEntity> sentences = sentenceRepository.findAllBySongIdAndSituationAndLocation(saved.getSongId(), request.getSituation(), request.getLocation());
-
-                if (!sentences.isEmpty()) {
-                    List<String> coreSentences = sentences.stream()
-                            .map(SentenceEntity::getSentence)
-                            .filter(sentence -> sentence != null && !sentence.trim().isEmpty())
-                            .toList();
-
-                    List<String> koreanTranslations = sentences.stream()
-                            .map(SentenceEntity::getTranslation)
-                            .toList();
-
-                    learningSentenceService.saveLearningSentences(userId, saved.getLearnedSongId(), coreSentences, koreanTranslations);
-                    log.info("[SongService] 핵심 학습 문장 저장 완료 - 문장 수: {}", coreSentences.size());
-                } else {
-                    log.warn("[SongService] 파싱된 문장을 찾을 수 없음 - songId={}", saved.getSongId());
-                }
-            } catch (Exception e) {
-                log.error("[SongService] 학습 문장 저장 중 오류 - error={}", e.getMessage(), e);
-            }
-
+        if (existing.isPresent()) {
+            // 이미 존재하는 데이터 사용
+            learnedSong = existing.get();
+            log.info("[SongService] 이미 존재하는 학습곡 - learnedSongId={}, userId={}, songId={}, situation={}, location={}",
+                    learnedSong.getLearnedSongId(), userId, learnedSong.getSongId(),
+                    learnedSong.getSituation(), learnedSong.getLocation());
 
             return SaveLearnedSongResponse.builder()
-                    .learnedSongId(saved.getLearnedSongId())
-                    .songId(saved.getSongId()) // String 그대로 반환 (타입이 이미 String임)
-                    .situation(saved.getSituation())
-                    .location(saved.getLocation())
+                    .learnedSongId(learnedSong.getLearnedSongId())
+                    .songId(learnedSong.getSongId()) // String 그대로 반환 (타입이 이미 String임)
+                    .situation(learnedSong.getSituation())
+                    .location(learnedSong.getLocation())
                     .build();
-        } catch (Exception e) {
-            log.error("[SongService] 학습곡 저장 중 오류 발생 - userId={}, songId={}, error={}",
-                    userId, request.getSongId(), e.getMessage(), e);
-            throw new RuntimeException("학습곡 저장에 실패했습니다.", e);
+        }else{
+            // 수정(소연) - LearnedSongEntity 생성 (artists는 List<String>으로 변환)
+            learnedSong = new LearnedSongEntity();
+            learnedSong.setUserId(userId);
+            learnedSong.setSongId(request.getSongId()); // String 그대로 사용
+            learnedSong.setArtists(song.getArtists()); // String 그대로 사용
+            learnedSong.setSituation(request.getSituation());
+            learnedSong.setLocation(request.getLocation());
+
+            try {
+                LearnedSongEntity saved = learnedSongRepository.save(learnedSong);
+                log.info("[SongService] 학습곡 저장 성공 - learnedSongId={}, userId={}, songId={}",
+                        saved.getLearnedSongId(), userId, saved.getSongId());
+
+                // Parser 데이터 확인 및 LLM 파싱 수행 (동기적으로 처리)
+                // songId를 사용해야 함 (learnedSongId가 아님)
+                ensureParsingDataExists(saved.getSongId(), request.getSituation(), request.getLocation());
+
+                // 핵심 학습 문장들을 learning_sentence 테이블에 저장
+                try {
+                    List<SentenceEntity> sentences = sentenceRepository.findAllBySongIdAndSituationAndLocation(saved.getSongId(), request.getSituation(), request.getLocation());
+
+                    if (!sentences.isEmpty()) {
+                        List<String> coreSentences = sentences.stream()
+                                .map(SentenceEntity::getSentence)
+                                .filter(sentence -> sentence != null && !sentence.trim().isEmpty())
+                                .toList();
+
+                        List<String> koreanTranslations = sentences.stream()
+                                .map(SentenceEntity::getTranslation)
+                                .toList();
+
+                        learningSentenceService.saveLearningSentences(userId, saved.getLearnedSongId(), coreSentences, koreanTranslations);
+                        log.info("[SongService] 핵심 학습 문장 저장 완료 - 문장 수: {}", coreSentences.size());
+                    } else {
+                        log.warn("[SongService] 파싱된 문장을 찾을 수 없음 - songId={}", saved.getSongId());
+                    }
+                } catch (Exception e) {
+                    log.error("[SongService] 학습 문장 저장 중 오류 - error={}", e.getMessage(), e);
+                }
+
+
+                return SaveLearnedSongResponse.builder()
+                        .learnedSongId(saved.getLearnedSongId())
+                        .songId(saved.getSongId()) // String 그대로 반환 (타입이 이미 String임)
+                        .situation(saved.getSituation())
+                        .location(saved.getLocation())
+                        .build();
+            } catch (Exception e) {
+                log.error("[SongService] 학습곡 저장 중 오류 발생 - userId={}, songId={}, error={}",
+                        userId, request.getSongId(), e.getMessage(), e);
+                throw new RuntimeException("학습곡 저장에 실패했습니다.", e);
+            }
         }
+
     }
 
 //    public SaveLearnedSongResponse saveLearnedSong(Long userId, SaveLearnedSongRequest request) {
