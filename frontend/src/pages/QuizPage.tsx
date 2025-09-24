@@ -137,8 +137,8 @@ export default function QuizPage() {
     const result = {
       learnedSongId: Number.isFinite(lsid) ? lsid : DEFAULT_LEARNED_SONG_ID,
       songId: rawSongId || DEFAULT_SONG_ID,  // 문자열 그대로 사용
-      situation: sp.get("situation") ?? DEFAULT_SITUATION,
-      location: sp.get("location") ?? DEFAULT_LOCATION,
+      situation: sp.get("situation"),
+      location: sp.get("location"),
     };
     
     
