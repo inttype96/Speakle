@@ -24,7 +24,27 @@ export default function SynchronizedLyrics({
   const currentLineRef = useRef<HTMLDivElement>(null);
 
   // 빈 가사를 제외한 유효한 가사만 필터링
-  const validLyrics = lyricChunks.filter(chunk => chunk.english && chunk.english.trim() !== '');
+  const validLyrics = lyricChunks
+    .filter(chunk => {
+      if (!chunk.english || chunk.english.trim() === '') return false;
+
+      // 음악 기호나 의미 없는 텍스트 제외
+      const text = chunk.english.trim();
+      if (text === '♪' || text === '♫' || text === '🎵' || text === '🎶') return false;
+      if (text.length <= 2 && /^[♪♫🎵🎶\-_~\s]*$/.test(text)) return false;
+
+      return true;
+    })
+    // 중복 제거 (같은 시간대의 중복 가사 제거)
+    .filter((chunk, index, array) => {
+      const prevChunk = array[index - 1];
+      if (prevChunk &&
+          chunk.english === prevChunk.english &&
+          Math.abs(chunk.startTimeMs - prevChunk.startTimeMs) < 5000) {
+        return false; // 같은 가사이고 5초 이내 차이면 제거
+      }
+      return true;
+    });
 
   console.log('🎵 SynchronizedLyrics Debug:');
   console.log('📝 Original lyricChunks:', lyricChunks);
@@ -36,29 +56,35 @@ export default function SynchronizedLyrics({
   useEffect(() => {
     if (!validLyrics.length) return;
 
-    // 현재 시간보다 작거나 같은 startTimeMs 중 가장 큰 값의 인덱스 찾기
+    // 현재 시간과 가장 적절한 가사 라인 찾기
     let newIndex = -1;
 
+    // 현재 시간보다 작거나 같은 startTimeMs를 가진 가사들 중에서
+    // 가장 나중의 가사를 찾기
     for (let i = 0; i < validLyrics.length; i++) {
-      if (validLyrics[i].startTimeMs <= currentTime) {
-        newIndex = i;
-      } else {
-        break;
-      }
-    }
+      const currentLyric = validLyrics[i];
+      const nextLyric = validLyrics[i + 1];
 
-    // 다음 라인이 있는 경우, 다음 라인의 시작 시간보다 현재 시간이 작은지 확인
-    if (newIndex >= 0 && newIndex < validLyrics.length - 1) {
-      const nextLine = validLyrics[newIndex + 1];
-      if (currentTime >= nextLine.startTimeMs) {
-        // 이미 다음 라인으로 넘어간 경우는 위의 루프에서 처리됨
+      if (currentTime >= currentLyric.startTimeMs) {
+        // 다음 가사가 없거나, 다음 가사 시작 시간보다 현재 시간이 작으면
+        if (!nextLyric || currentTime < nextLyric.startTimeMs) {
+          newIndex = i;
+          break;
+        } else {
+          // 다음 가사가 있고 현재 시간이 다음 가사 시간을 넘었으면 계속 진행
+          newIndex = i;
+        }
+      } else {
+        // 현재 시간이 이 가사 시작 시간보다 작으면 중단
+        break;
       }
     }
 
     if (newIndex !== currentLineIndex) {
       console.log(`🔄 Line changed: ${currentLineIndex} -> ${newIndex}`);
+      console.log(`⏰ Current time: ${Math.floor(currentTime / 1000)}s`);
       if (newIndex >= 0 && validLyrics[newIndex]) {
-        console.log(`🎤 Current lyric: "${validLyrics[newIndex].english}"`);
+        console.log(`🎤 Current lyric: "${validLyrics[newIndex].english}" (starts at ${Math.floor(validLyrics[newIndex].startTimeMs / 1000)}s)`);
       }
       setCurrentLineIndex(newIndex);
     }
@@ -106,21 +132,26 @@ export default function SynchronizedLyrics({
               key={chunk.id}
               ref={isCurrent ? currentLineRef : undefined}
               className={cn(
-                "transition-all duration-300 ease-in-out p-3 rounded-lg",
+                "transition-all duration-500 ease-in-out p-4 rounded-lg cursor-pointer",
+                "hover:bg-muted/50",
                 isCurrent && [
-                  "bg-primary/10 border-l-4 border-primary",
-                  "transform scale-105 shadow-sm"
+                  "bg-primary/15 border-l-4 border-primary",
+                  "transform scale-105 shadow-md",
+                  "ring-2 ring-primary/20"
                 ],
-                isPast && "opacity-60",
-                isFuture && "opacity-40"
+                isPast && "opacity-50",
+                isFuture && "opacity-70"
               )}
             >
               {/* 영어 가사만 표시 */}
               <div className={cn(
-                "text-base leading-relaxed transition-all duration-300",
-                isCurrent && "text-primary font-semibold text-lg",
-                isPast && "text-muted-foreground",
-                isFuture && "text-foreground"
+                "text-base leading-relaxed transition-all duration-500",
+                isCurrent && [
+                  "text-primary font-bold text-xl",
+                  "text-shadow-sm"
+                ],
+                isPast && "text-muted-foreground font-normal",
+                isFuture && "text-foreground/80 font-medium"
               )}>
                 {chunk.english}
               </div>
