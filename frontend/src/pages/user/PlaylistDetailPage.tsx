@@ -192,12 +192,15 @@ export default function PlaylistDetailPage() {
   const handleDeleteTrack = async (trackUri: string) => {
     if (!playlistId || !tracks) return;
 
+    // URI에서 trackId 추출 (spotify:track:id 또는 custom:track:id)
+    const trackId = trackUri.split(':')[2] || 'unknown';
+
     const deleteRequest: DeleteTracksRequest = {
       tracks: [{ uri: trackUri }]
     };
 
     try {
-      await playlistService.deleteTracksFromPlaylist(playlistId, '', deleteRequest);
+      await playlistService.deleteTracksFromPlaylist(playlistId, trackId, deleteRequest);
       setTracks(prev => prev ? {
         ...prev,
         total: prev.total - 1,
