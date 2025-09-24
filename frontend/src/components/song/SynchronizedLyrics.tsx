@@ -102,7 +102,7 @@ export default function SynchronizedLyrics({
                 isFuture && "opacity-40"
               )}
             >
-              {/* 영어 가사 */}
+              {/* 영어 가사만 표시 */}
               <div className={cn(
                 "text-base leading-relaxed transition-all duration-300",
                 isCurrent && "text-primary font-semibold text-lg",
@@ -111,18 +111,6 @@ export default function SynchronizedLyrics({
               )}>
                 {chunk.english}
               </div>
-
-              {/* 한국어 번역 */}
-              {chunk.korean && (
-                <div className={cn(
-                  "text-sm mt-1 leading-relaxed transition-all duration-300",
-                  isCurrent && "text-primary/80 font-medium",
-                  isPast && "text-muted-foreground/80",
-                  isFuture && "text-muted-foreground"
-                )}>
-                  {chunk.korean}
-                </div>
-              )}
 
               {/* 타임스탬프 (디버그용 - 필요시 제거) */}
               {process.env.NODE_ENV === 'development' && (

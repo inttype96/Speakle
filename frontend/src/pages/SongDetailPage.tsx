@@ -321,7 +321,7 @@ export default function SongDetailPage() {
             <Card className="bg-muted/40">
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  영·한 동기화 가사
+                  영어 동기화 가사
                   {isPlaying && (
                     <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                   )}
@@ -337,7 +337,7 @@ export default function SongDetailPage() {
                       </div>
                     ))}
                   </div>
-                ) : data?.lyricChunks ? (
+                ) : data?.lyricChunks && data.lyricChunks.length > 0 ? (
                   <SynchronizedLyrics
                     lyricChunks={data.lyricChunks}
                     currentTime={currentPlayTime}
