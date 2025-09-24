@@ -5,10 +5,8 @@ import { cn } from '@/lib/utils'
 import type { LearnedSong } from '@/services/mypage'
 import {
   TrendingUp,
-  Calendar,
   Music,
   Star,
-  Target,
   Zap,
   Trophy,
   BookOpen,
@@ -17,21 +15,44 @@ import {
 
 interface StreakCardProps {
   currentStreak: number
-  longestStreak: number
-  totalDays: number
-  onCheckin: () => void
   isCheckedIn: boolean
-  loading: boolean
 }
 
 export function StreakCard({
   currentStreak,
-  longestStreak,
-  totalDays,
-  onCheckin,
-  isCheckedIn,
-  loading
+  isCheckedIn
 }: StreakCardProps) {
+  const weekDays = ['월', '화', '수', '목', '금', '토', '일']
+
+  // 현재 요일 구하기 (0: 일요일 -> 6: 일요일로 변환)
+  const today = new Date().getDay()
+  const todayIndex = today === 0 ? 6 : today - 1 // 월요일을 0으로 시작하도록 변환
+
+  // 이번 주에 출석한 날들을 계산 (연속성에 관계없이 이번 주 출석 기록)
+  const getAttendedDaysInWeek = () => {
+    const attendedDays = new Set()
+
+    // 현재 요일부터 시작해서 연속 출석일만큼 역산
+    // 하지만 일주일 범위 내에서만 표시
+    if (currentStreak > 0) {
+      // 오늘이 출석한 날이라면 오늘 포함
+      if (isCheckedIn) {
+        attendedDays.add(todayIndex)
+      }
+
+      // 연속 출석 기간 내의 날들을 이번 주 범위에서 표시
+      // 최대 7일, 오늘부터 역산하되 이번 주 월~일 범위에서만
+      for (let i = 1; i < currentStreak && i < 7; i++) {
+        const dayIndex = (todayIndex - i + 7) % 7
+        attendedDays.add(dayIndex)
+      }
+    }
+
+    return attendedDays
+  }
+
+  const attendedDays = getAttendedDaysInWeek()
+
   return (
     <BentoCard
       className="md:col-span-2 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 border-orange-200 dark:border-orange-800"
@@ -42,55 +63,36 @@ export function StreakCard({
           <div className="p-2 bg-orange-500 rounded-full">
             <Zap className="w-5 h-5 text-white" />
           </div>
-          <h3 className="text-xl font-bold">연속 출석</h3>
+          <h3 className="text-xl font-bold">{currentStreak}일 연속 출석</h3>
         </div>
         <div className="text-3xl">🔥</div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="text-center">
-          <div className="text-3xl font-bold text-orange-600 mb-1">
-            {currentStreak}
-          </div>
-          <p className="text-sm text-muted-foreground">현재 연속일</p>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-semibold text-orange-500 mb-1">
-            {longestStreak}
-          </div>
-          <p className="text-sm text-muted-foreground">최고 기록</p>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-semibold text-orange-400 mb-1">
-            {totalDays}
-          </div>
-          <p className="text-sm text-muted-foreground">총 학습일</p>
-        </div>
-      </div>
+      <div className="flex justify-center items-center gap-3">
+        {weekDays.map((day, index) => {
+          const isAttended = attendedDays.has(index)
+          const isToday = index === todayIndex
 
-      <Button
-        onClick={onCheckin}
-        disabled={loading || isCheckedIn}
-        className="w-full bg-orange-500 hover:bg-orange-600"
-        variant={isCheckedIn ? "secondary" : "default"}
-      >
-        {loading ? (
-          <div className="flex items-center gap-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-            처리 중...
-          </div>
-        ) : isCheckedIn ? (
-          <>
-            <Calendar className="w-4 h-4 mr-2" />
-            오늘 출석 완료
-          </>
-        ) : (
-          <>
-            <Target className="w-4 h-4 mr-2" />
-            출석 체크
-          </>
-        )}
-      </Button>
+          return (
+            <div key={day} className="flex flex-col items-center gap-2">
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                  isAttended
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
+                } ${isToday ? 'ring-2 ring-orange-300' : ''}`}
+              >
+                {isToday && isAttended ? (
+                  <span className="drop-shadow-sm" style={{ textShadow: '0 0 2px white, 0 0 4px white' }}>🔥</span>
+                ) : isAttended ? '✓' : ''}
+              </div>
+              <span className={`text-xs ${isToday ? 'font-bold text-orange-600' : 'text-muted-foreground'}`}>
+                {day}
+              </span>
+            </div>
+          )
+        })}
+      </div>
     </BentoCard>
   )
 }
