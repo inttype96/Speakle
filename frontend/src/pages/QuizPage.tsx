@@ -93,6 +93,23 @@ function InlineBlankInputs({
 }) {
   // '빈칸' 기준으로 분리
   const parts = useMemo(() => question.split(/빈칸/g), [question]);
+  
+  // 정답 길이에 따른 입력칸 너비 계산
+  const getInputWidth = (inputIndex: number) => {
+    const currentInput = inputs[inputIndex] || "";
+    const baseWidth = 80; // 기본 너비
+    const charWidth = 12; // 글자당 너비
+    const minWidth = 60; // 최소 너비
+    const maxWidth = 200; // 최대 너비
+    
+    const calculatedWidth = Math.max(
+      minWidth,
+      Math.min(maxWidth, baseWidth + (currentInput.length * charWidth))
+    );
+    
+    return `${calculatedWidth}px`;
+  };
+  
   return (
     <span className="leading-relaxed flex flex-wrap items-baseline gap-2">
       {parts.map((chunk, i) => {
@@ -111,8 +128,11 @@ function InlineBlankInputs({
                     onEnterLast();
                   }
                 }}
-                className="h-10 min-w-[96px] px-3 rounded-xl border bg-background/60 shadow-inner
-                           outline-none focus:ring-2 focus:ring-violet-500 text-[18px]"
+                style={{ width: getInputWidth(i) }}
+                className="h-10 px-3 rounded-xl border bg-background/60 shadow-inner
+                           outline-none focus:ring-2 focus:ring-violet-500 text-[18px]
+                           text-center placeholder:text-center placeholder:text-gray-400
+                           transition-all duration-200 ease-in-out"
                 placeholder="정답"
               />
             )}
