@@ -87,6 +87,31 @@ def calculate_hybrid_score(
 
     return (norm_sim_weight * similarity_score) + (norm_pop_weight * popularity_score)
 
+def check_title_keyword_match(client, song_id: str, keywords: List[str]) -> bool:
+    """노래 제목과 키워드 간 매칭 여부 확인 (엄격한 필터링)"""
+    try:
+        song_col = client.collections.get("Song")
+        result = song_col.query.fetch_objects(
+            filters=Filter.by_property("song_id").equal(song_id),
+            limit=1
+        )
+        if not result.objects:
+            return False
+
+        props = result.objects[0].properties
+        title = (props.get("title", "") or "").lower()
+
+        # 키워드 중 하나라도 제목에 포함되어 있으면 True
+        for keyword in keywords:
+            keyword_lower = keyword.lower().strip()
+            if keyword_lower in title or title in keyword_lower:
+                return True
+
+        return False
+    except Exception as e:
+        print(f"Failed to check title-keyword match for song {song_id}: {e}")
+        return False
+
 # 입력 스키마
 class QueryRequest(BaseModel):
     words: List[str]
@@ -136,14 +161,24 @@ def recommend_songs(req: QueryRequest):
                     "vector": o.vector,
                 })
 
-        # 2단계: 중복 제거 및 인기도 조회
+        # 2단계: 중복 제거, 인기도 조회, 제목-키워드 매칭 검증
         seen = {}
         song_popularity_cache = {}
+        song_title_match_cache = {}
 
         for r in all_results:
             key = r["words"].strip().lower() if r["words"] else ""
             if key not in seen:
                 song_id = r["song_id"]
+
+                # 제목-키워드 매칭 확인 (캐시 활용)
+                if song_id not in song_title_match_cache:
+                    song_title_match_cache[song_id] = check_title_keyword_match(client, song_id, queries)
+
+                # 제목에 키워드가 매칭되지 않으면 제외
+                if not song_title_match_cache[song_id]:
+                    continue
+
                 # 인기도 캐시 확인
                 if song_id not in song_popularity_cache:
                     song_popularity_cache[song_id] = get_song_popularity(client, song_id)
@@ -155,7 +190,7 @@ def recommend_songs(req: QueryRequest):
                     seen[key] = r
 
         unique_results = list(seen.values())
-        print(f"Found {len(unique_results)} unique candidates after popularity filtering")
+        print(f"Found {len(unique_results)} unique candidates after title-keyword filtering and popularity filtering")
 
         # 3단계: 하이브리드 스코어링 (유사도 + 인기도)
         reranked = []

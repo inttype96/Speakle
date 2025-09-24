@@ -32,12 +32,15 @@ public class GMSAiClient {
      */
     public KeywordsResponse generateKeywords(String situation, String location, String model) {
         String prompt = String.format(
-                "%s에서 %s 상황에서 사용하는 가장 중요한 영어단어 20개와 영어표현 20개를 JSON 형식으로 출력해줘. " +
-                        "우리는 영어를 교육하는 교육자 입장이기 때문에, 단어는 난이도 있는 단어 5개, 일상에서 위 상황과 장소에서 자주쓰는 단어 15개, " +
-                        "문장은 한국인들이 꼭 배워야 하는, 원어민들이 많이 쓰는 표현으로 구성해줘. 내가 말 한 상황과 장소를 영어로 바꾼 영단어도 무조건 넣어줘(단어 총 22개)" +
-                        "반드시 아래 JSON 형식을 따를 것:\n\n" +
-                        "{ \"words\": [\"word1\", ...], \"phrases\": [\"phrase1\", ...] }",
-                location, situation
+                "**중요: 사용자가 입력한 '%s'와 '%s'를 영어로 번역한 단어는 반드시 words 배열의 맨 앞에 포함시켜야 합니다.**\n\n" +
+                        "%s에서 %s 상황에서 사용하는 가장 중요한 영어단어와 영어표현을 JSON 형식으로 출력해줘.\n\n" +
+                        "규칙:\n" +
+                        "1. **필수**: '%s'와 '%s'를 영어로 번역한 단어를 words 배열 맨 앞에 무조건 포함\n" +
+                        "2. 추가로 난이도 있는 단어 2개, 일상에서 자주 쓰는 단어 18개 포함 (총 20개 이상)\n" +
+                        "3. phrases는 한국인들이 꼭 배워야 하는 원어민 표현 20개\n" +
+                        "4. 반드시 아래 JSON 형식을 따를 것:\n\n" +
+                        "{ \"words\": [\"location 영어번역\", \"situation 영어번역\", \"word1\", ...], \"phrases\": [\"phrase1\", ...] }",
+                location, situation, location, situation, location, situation
         );
 
         log.info("GMS(OpenAI) 요청: model={}, prompt={}", model, prompt);
