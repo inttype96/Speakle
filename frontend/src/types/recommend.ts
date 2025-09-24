@@ -34,3 +34,18 @@ export type RecommendRes = {
   message: string;  // "추천 결과를 성공적으로 조회했습니다."
   data: RecommendData;
 };
+
+export type RandomSongData = {
+  songId: string;
+  title: string;
+  artist: string;
+  popularity: number;
+  difficulty: string | null;
+  albumImageUrl: string | null;
+};
+
+export type RandomSongRes = {
+  status: number;
+  message: string;
+  data: RandomSongData;
+};
