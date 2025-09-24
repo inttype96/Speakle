@@ -88,6 +88,7 @@ export default function SongDetailPage() {
 
   // 스포티파이 플레이어 시간 업데이트 핸들러
   const handleTimeUpdate = (currentTime: number, playing: boolean) => {
+    console.log('🎧 Spotify time update:', { currentTime, playing });
     setCurrentPlayTime(currentTime);
     setIsPlaying(playing);
   };
@@ -175,11 +176,15 @@ export default function SongDetailPage() {
         if (useMock) {
           // ✅ 백엔드 대신 로컬 샘플
           if (!alive) return;
+          console.log('🧪 Using mock data:', SONG_DETAIL_SAMPLE);
+          console.log('🎼 Mock lyric chunks count:', SONG_DETAIL_SAMPLE?.lyricChunks?.length || 0);
           setData(SONG_DETAIL_SAMPLE);
           return;
         }
         const detail = await fetchSongDetail(songId, { situation, location });
         if (!alive) return;
+        console.log('📊 Song detail loaded:', detail);
+        console.log('🎼 Lyric chunks count:', detail?.lyricChunks?.length || 0);
         setData(detail);
       } catch (e: any) {
         if (!alive) return;
@@ -338,15 +343,30 @@ export default function SongDetailPage() {
                     ))}
                   </div>
                 ) : data?.lyricChunks && data.lyricChunks.length > 0 ? (
-                  <SynchronizedLyrics
-                    lyricChunks={data.lyricChunks}
-                    currentTime={currentPlayTime}
-                    isPlaying={isPlaying}
-                  />
+                  <>
+                    {console.log('🚀 Rendering SynchronizedLyrics with:', {
+                      chunksCount: data.lyricChunks.length,
+                      currentTime: currentPlayTime,
+                      isPlaying
+                    })}
+                    <SynchronizedLyrics
+                      lyricChunks={data.lyricChunks}
+                      currentTime={currentPlayTime}
+                      isPlaying={isPlaying}
+                    />
+                  </>
                 ) : (
-                  <div className="flex items-center justify-center h-[60vh] text-muted-foreground">
-                    <p>동기화된 가사를 불러올 수 없습니다.</p>
-                  </div>
+                  <>
+                    {console.log('❌ No lyrics available:', {
+                      hasData: !!data,
+                      hasLyricChunks: !!data?.lyricChunks,
+                      lyricChunksLength: data?.lyricChunks?.length,
+                      lyricChunks: data?.lyricChunks
+                    })}
+                    <div className="flex items-center justify-center h-[60vh] text-muted-foreground">
+                      <p>동기화된 가사를 불러올 수 없습니다.</p>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>

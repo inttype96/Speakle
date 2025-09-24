@@ -26,6 +26,12 @@ export default function SynchronizedLyrics({
   // 빈 가사를 제외한 유효한 가사만 필터링
   const validLyrics = lyricChunks.filter(chunk => chunk.english && chunk.english.trim() !== '');
 
+  console.log('🎵 SynchronizedLyrics Debug:');
+  console.log('📝 Original lyricChunks:', lyricChunks);
+  console.log('✅ Valid lyrics:', validLyrics);
+  console.log('⏰ Current time:', currentTime);
+  console.log('📍 Current line index:', currentLineIndex);
+
   // 현재 재생 시간에 따른 가사 라인 인덱스 계산
   useEffect(() => {
     if (!validLyrics.length) return;
@@ -50,6 +56,10 @@ export default function SynchronizedLyrics({
     }
 
     if (newIndex !== currentLineIndex) {
+      console.log(`🔄 Line changed: ${currentLineIndex} -> ${newIndex}`);
+      if (newIndex >= 0 && validLyrics[newIndex]) {
+        console.log(`🎤 Current lyric: "${validLyrics[newIndex].english}"`);
+      }
       setCurrentLineIndex(newIndex);
     }
   }, [currentTime, validLyrics, currentLineIndex]);
