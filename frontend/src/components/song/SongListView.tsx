@@ -126,7 +126,7 @@ export default function SongListView({
   }, [filteredSorted, showFeaturedSection]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-8">
       {/* 헤더 */}
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold">{title}</h1>
