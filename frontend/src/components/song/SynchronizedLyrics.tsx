@@ -23,15 +23,18 @@ export default function SynchronizedLyrics({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const currentLineRef = useRef<HTMLDivElement>(null);
 
+  // 빈 가사를 제외한 유효한 가사만 필터링
+  const validLyrics = lyricChunks.filter(chunk => chunk.english && chunk.english.trim() !== '');
+
   // 현재 재생 시간에 따른 가사 라인 인덱스 계산
   useEffect(() => {
-    if (!lyricChunks.length) return;
+    if (!validLyrics.length) return;
 
     // 현재 시간보다 작거나 같은 startTimeMs 중 가장 큰 값의 인덱스 찾기
     let newIndex = -1;
 
-    for (let i = 0; i < lyricChunks.length; i++) {
-      if (lyricChunks[i].startTimeMs <= currentTime) {
+    for (let i = 0; i < validLyrics.length; i++) {
+      if (validLyrics[i].startTimeMs <= currentTime) {
         newIndex = i;
       } else {
         break;
@@ -39,8 +42,8 @@ export default function SynchronizedLyrics({
     }
 
     // 다음 라인이 있는 경우, 다음 라인의 시작 시간보다 현재 시간이 작은지 확인
-    if (newIndex >= 0 && newIndex < lyricChunks.length - 1) {
-      const nextLine = lyricChunks[newIndex + 1];
+    if (newIndex >= 0 && newIndex < validLyrics.length - 1) {
+      const nextLine = validLyrics[newIndex + 1];
       if (currentTime >= nextLine.startTimeMs) {
         // 이미 다음 라인으로 넘어간 경우는 위의 루프에서 처리됨
       }
@@ -49,7 +52,7 @@ export default function SynchronizedLyrics({
     if (newIndex !== currentLineIndex) {
       setCurrentLineIndex(newIndex);
     }
-  }, [currentTime, lyricChunks, currentLineIndex]);
+  }, [currentTime, validLyrics, currentLineIndex]);
 
   // 현재 라인이 변경될 때 스크롤 조정
   useEffect(() => {
@@ -72,7 +75,7 @@ export default function SynchronizedLyrics({
     }
   }, [currentLineIndex]);
 
-  if (!lyricChunks.length) {
+  if (!validLyrics.length) {
     return (
       <div className="flex items-center justify-center h-[60vh] text-muted-foreground">
         <p>가사를 불러올 수 없습니다.</p>
@@ -83,7 +86,7 @@ export default function SynchronizedLyrics({
   return (
     <ScrollArea ref={scrollAreaRef} className="h-[60vh] pr-3">
       <div className="space-y-6 py-4">
-        {lyricChunks.map((chunk, index) => {
+        {validLyrics.map((chunk, index) => {
           const isCurrent = index === currentLineIndex;
           const isPast = index < currentLineIndex;
           const isFuture = index > currentLineIndex;
