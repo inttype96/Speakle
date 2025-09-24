@@ -32,8 +32,6 @@ import { useAuthStore } from "@/store/auth";
 
 const TOP_RIGHT_MODE = "빈칸 퀴즈";
 const DEFAULT_LEARNED_SONG_ID = 1;
-const DEFAULT_SITUATION = "daily_conversation";
-const DEFAULT_LOCATION = "cafe";
 const DEFAULT_SONG_ID = "1";
 
 const TOTAL_QUESTIONS = 3;
@@ -137,8 +135,8 @@ export default function QuizPage() {
     const result = {
       learnedSongId: Number.isFinite(lsid) ? lsid : DEFAULT_LEARNED_SONG_ID,
       songId: rawSongId || DEFAULT_SONG_ID,  // 문자열 그대로 사용
-      situation: sp.get("situation"),
-      location: sp.get("location"),
+      situation: sp.get("situation") || "daily_conversation",
+      location: sp.get("location") || "cafe",
     };
     
     
