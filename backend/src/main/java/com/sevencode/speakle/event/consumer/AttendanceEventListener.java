@@ -72,17 +72,14 @@ public class AttendanceEventListener {
      */
     private long getSecondsUntilMidnight() {
         LocalTime now = LocalTime.now();
-        LocalTime midnight = LocalTime.MIDNIGHT;
 
-        if (now.equals(midnight)) {
-            // 정확히 자정이면 24시간 후
-            return 24 * 60 * 60;
-        } else {
-            // 다음 자정까지 남은 시간
-            long secondsUntilMidnight = now.until(midnight.plusHours(24), ChronoUnit.SECONDS);
+        // 24:00:00 - 현재시간으로 계산
+        long totalSecondsInDay = 24 * 60 * 60;
+        long currentSeconds = now.toSecondOfDay();
 
-            // Redis setex 명령어는 0 이하의 값을 허용하지 않으므로 최소 1초 보장
-            return Math.max(secondsUntilMidnight, 1L);
-        }
+        long secondsUntilMidnight = totalSecondsInDay - currentSeconds;
+
+        // Redis setex 명령어는 0 이하의 값을 허용하지 않으므로 최소 1초 보장
+        return Math.max(secondsUntilMidnight, 1L);
     }
 }
