@@ -7,6 +7,7 @@ import Loading from "@/components/common/loading";
 import { fetchSongDetail, fetchLearningContent } from "@/services/songService";
 import type { SongDetail, LearningContent } from "@/types/song";
 import { createLearnedSong } from "@/services/songService";
+import SynchronizedLyrics from "@/components/song/SynchronizedLyrics";
 
 // shadcn
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -81,6 +82,16 @@ export default function SongDetailPage() {
   // 컴포넌트 내부 상태
   const [initLearningLoading, setInitLearningLoading] = useState(false);
   const [learned, setLearned] = useState<null | { learnedSongId: number }>(null);
+
+  // 가사 동기화를 위한 상태
+  const [currentPlayTime, setCurrentPlayTime] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // 스포티파이 플레이어 시간 업데이트 핸들러
+  const handleTimeUpdate = (currentTime: number, playing: boolean) => {
+    setCurrentPlayTime(currentTime);
+    setIsPlaying(playing);
+  };
 
   // 버튼 onClick 핸들러 교체
   const handleOpenLearn = async () => {
@@ -182,18 +193,7 @@ export default function SongDetailPage() {
     return () => { alive = false; };
   }, [songId, situation, location]);
 
-  // 왼쪽: 원문 영어 가사
-  const englishOnly = useMemo(() => (data?.lyrics || "").trim(), [data]);
-
-  // 오른쪽: 영어 1줄 + 한국어 1줄
-  const biLines = useMemo(() => {
-    const chunks = data?.lyricChunks ?? [];
-    return chunks.map((c) => ({
-      id: c.id,
-      en: (c.english || "").trim(),
-      ko: (c.korean || "").trim(), // 없으면 빈 문자열
-    }));
-  }, [data]);
+  // 이제 SynchronizedLyrics 컴포넌트에서 직접 lyricChunks를 사용합니다
 
   const qsRaw = sp.toString(); // 현재 쿼리를 그대로 다음 페이지로 넘길 때 사용
 
@@ -295,6 +295,7 @@ export default function SongDetailPage() {
                         trackId={data.songId}
                         trackName={data.title}
                         artistName={data.artists}
+                        onTimeUpdate={handleTimeUpdate}
                       />
                     </div>
 
@@ -317,51 +318,39 @@ export default function SongDetailPage() {
           </TabsList>
 
           <TabsContent value="lyrics" className="space-y-4">
-            {/* 두 컬럼: 왼쪽 영어 전체 / 오른쪽 영-한 한 줄씩 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 왼쪽: 영어 전체 */}
-              <Card className="bg-muted/40">
-                <CardHeader>
-                  <CardTitle className="text-base">영어 가사</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <div className="space-y-2">
-                      {[...Array(10)].map((_, i) => <Skeleton key={i} className="h-4 w-full" />)}
-                    </div>
-                  ) : (
-                    <ScrollArea className="h-[60vh] pr-3">
-                      <pre className="whitespace-pre-wrap leading-7 text-sm">{englishOnly}</pre>
-                    </ScrollArea>
+            {/* 시간 동기화된 영한 가사 */}
+            <Card className="bg-muted/40">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  영·한 동기화 가사
+                  {isPlaying && (
+                    <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                   )}
-                </CardContent>
-              </Card>
-
-              {/* 오른쪽: 영-한 줄바꿈 */}
-              <Card className="bg-muted/40">
-                <CardHeader>
-                  <CardTitle className="text-base">영·한 가사</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <div className="space-y-2">
-                      {[...Array(10)].map((_, i) => <Skeleton key={i} className="h-4 w-full" />)}
-                    </div>
-                  ) : (
-                    <ScrollArea className="h-[60vh] pr-3">
-                      <div className="space-y-3">
-                        {biLines.map(({ id, en, ko }) => (
-                          <div key={id}>
-                            <div className="text-sm">{en}</div>
-                            <div className="text-sm text-muted-foreground">{ko || " "}</div>
-                          </div>
-                        ))}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-4">
+                    {[...Array(8)].map((_, i) => (
+                      <div key={i} className="space-y-2">
+                        <Skeleton className="h-5 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
                       </div>
-                    </ScrollArea>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                    ))}
+                  </div>
+                ) : data?.lyricChunks ? (
+                  <SynchronizedLyrics
+                    lyricChunks={data.lyricChunks}
+                    currentTime={currentPlayTime}
+                    isPlaying={isPlaying}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-[60vh] text-muted-foreground">
+                    <p>동기화된 가사를 불러올 수 없습니다.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="notes">
