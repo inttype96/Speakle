@@ -259,11 +259,6 @@ export default function SongDetailPage() {
                     />
                   );
                 })()}
-                {!loading && (
-                  <Button size="icon" variant="secondary" className="absolute left-3 top-3 rounded-full h-9 w-9">
-                    <Play className="h-5 w-5" />
-                  </Button>
-                )}
               </div>
             </div>
 
