@@ -98,5 +98,21 @@ public class RecommendController {
 
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "랜덤 노래 추천", description = "날씨, 사용자 플레이리스트 특성, 난이도, 인기도를 고려한 랜덤 노래 추천")
+    @GetMapping("/random")
+    public ResponseEntity<ApiResponse<com.sevencode.speakle.recommend.dto.response.RandomSongResponse>> recommendRandomSong(
+            @AuthenticationPrincipal UserPrincipal me) {
+        Long userId = me.userId();
+        var data = recommendService.recommendRandomSong(userId);
+
+        ApiResponse<com.sevencode.speakle.recommend.dto.response.RandomSongResponse> response = ApiResponse.success(
+                200,
+                "랜덤 노래를 성공적으로 추천했습니다.",
+                data
+        );
+
+        return ResponseEntity.ok(response);
+    }
 }
 

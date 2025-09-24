@@ -55,4 +55,8 @@ public interface CustomPlaylistTrackRepository extends JpaRepository<CustomPlayl
 	// 사용자의 특정 노래가 포함된 플레이리스트 목록 조회
 	@Query("SELECT DISTINCT t.playlistId FROM CustomPlaylistTrack t WHERE t.userId = :userId AND t.songId = :songId")
 	List<Long> findPlaylistIdsByUserIdAndSongId(@Param("userId") Long userId, @Param("songId") String songId);
+
+	// 사용자의 모든 플레이리스트 트랙의 songId 조회
+	@Query("SELECT DISTINCT t.songId FROM CustomPlaylistTrack t WHERE t.userId = :userId")
+	List<String> findAllSongIdsByUserId(@Param("userId") Long userId);
 }

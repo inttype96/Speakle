@@ -4,13 +4,13 @@ import HeadphoneImage from '@/assets/images/headset2.png'
 import BallonImage from '@/assets/images/ballon.png'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-// import { useTheme } from "@/components/theme-provider"
 import { useNavigate } from "react-router-dom"
 import SplashCursor from '@/lib/splashCursor'
+import { useRandomSong } from "@/hooks/useRandomSong"
 
 export default function IndexPage() {
-  // const { theme } = useTheme()
   const navigate = useNavigate()
+  const { getRandomSong, isLoading } = useRandomSong()
 
   return (
     <div className="bg-background min-h-screen flex flex-col">
@@ -60,11 +60,20 @@ export default function IndexPage() {
 
           {/* 랜덤 노래 카드 */}
           <Card className="bg-[#4A3B63] text-white rounded-2xl shadow-lg">
-            <CardContent className="py-1 px-6">
+            <CardContent className="py-2 px-6">
               <p className="font-semibold text-lg mb-2">랜덤 노래로 학습하기</p>
               <p className="text-sm text-gray-300">
                 <span className="font-bold">speakle</span>이 추천하는 노래로 영어 학습을 시작해보세요.
               </p>
+              <div className="flex justify-end">
+                <Button
+                  onClick={getRandomSong}
+                  disabled={isLoading}
+                  className="mt-4 bg-[#B5A6E0] text-black rounded-full px-4 py-2 hover:bg-[#9B8BC7]"
+                >
+                  {isLoading ? "추천 중..." : "랜덤 노래 추천받기 →"}
+                </Button>
+              </div>
             </CardContent>
           </Card>
 

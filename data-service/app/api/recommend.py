@@ -22,6 +22,8 @@ def extract_vector(vec):
         return None
     if isinstance(vec, dict):
         # 첫 번째 key의 value 꺼내기 (Weaviate는 항상 1개 key)
+        if not vec or not vec.values():
+            return None
         first_value = list(vec.values())[0]
         return np.array(first_value, dtype=float)
     return np.array(vec, dtype=float)
@@ -245,6 +247,152 @@ def recommend_songs_advanced(req: QueryRequest):
 
         return {"results": diversified_results}
 
+    finally:
+        client.close()
+
+class RandomSongRequest(BaseModel):
+    userId: str
+    userPlaylistFeatures: Optional[dict] = None
+    weatherData: Optional[dict] = None
+    minPopularity: int = 80
+    difficultyLevels: Optional[List[str]] = None
+
+    class Config:
+        populate_by_name = True
+        alias_generator = lambda x: ''.join(word.capitalize() if i > 0 else word for i, word in enumerate(x.split('_')))
+
+class RandomSongResponse(BaseModel):
+    songId: str
+    title: str
+    artist: str
+    popularity: int
+    difficulty: Optional[str] = None
+    albumImageUrl: Optional[str] = None
+
+@router.post("/recommend/random", response_model=RandomSongResponse)
+def recommend_random_song(req: RandomSongRequest):
+    """날씨, 사용자 플레이리스트 특성, 난이도, 인기도를 고려한 랜덤 노래 추천"""
+    import random
+    client = get_client()
+
+    try:
+        song_col = client.collections.get("Song")
+
+        # 기본 필터: 인기도 80 이상
+        filters = Filter.by_property("popularity").greater_or_equal(req.minPopularity)
+
+        # 난이도 필터 추가
+        if req.difficultyLevels:
+            difficulty_filters = []
+            for level in req.difficultyLevels:
+                difficulty_filters.append(Filter.by_property("level").equal(level))
+            if len(difficulty_filters) > 1:
+                filters = filters & Filter.any_of(difficulty_filters)
+            else:
+                filters = filters & difficulty_filters[0]
+
+        # 날씨 기반 필터링 (제목에 날씨 키워드 포함)
+        weather_keyword = None
+        if req.weatherData:
+            condition = req.weatherData.get("condition", "").lower()
+            if "rain" in condition or "drizzle" in condition:
+                weather_keyword = "rain"
+            elif "snow" in condition:
+                weather_keyword = "snow"
+            elif "sun" in condition or "clear" in condition:
+                weather_keyword = "sun"
+            elif "cloud" in condition:
+                weather_keyword = "cloud"
+
+        # 후보 곡 조회
+        candidates = song_col.query.fetch_objects(
+            filters=filters,
+            limit=100,
+            include_vector=True
+        )
+
+        if not candidates.objects:
+            raise Exception("No songs found matching criteria")
+
+        # 날씨 키워드가 있으면 제목에 포함된 곡 우선
+        weather_matched_songs = []
+        other_songs = []
+
+        for song in candidates.objects:
+            props = song.properties
+            title = props.get("title", "").lower()
+            if weather_keyword and weather_keyword in title:
+                weather_matched_songs.append(song)
+            else:
+                other_songs.append(song)
+
+        # 사용자 플레이리스트 특성이 있으면 유사도 기반 필터링
+        if req.userPlaylistFeatures:
+            # 오디오 특성 벡터 생성
+            features_text = " ".join([
+                f"{k}:{v}" for k, v in req.userPlaylistFeatures.items()
+            ])
+            features_vec = embed_text_qwen(features_text)
+
+            # 날씨 매칭 곡이 있으면 그 중에서, 없으면 전체에서
+            target_songs = weather_matched_songs if weather_matched_songs else candidates.objects
+
+            # 유사도 계산
+            scored_songs = []
+            for song in target_songs:
+                props = song.properties
+                song_vec = extract_vector(song.vector)
+                if song_vec is None or len(song_vec) != len(features_vec):
+                    continue
+                similarity = float(np.dot(features_vec, song_vec) / (np.linalg.norm(song_vec) + 1e-10))
+                artists = props.get("artists", [])
+                artist_str = ", ".join(artists) if isinstance(artists, list) else str(artists) if artists else "Unknown"
+
+                scored_songs.append({
+                    "song_id": props.get("song_id"),
+                    "title": props.get("title", "Unknown"),
+                    "artists": artist_str,
+                    "popularity": props.get("popularity", 0),
+                    "difficulty": props.get("level"),
+                    "album_img_url": props.get("album_img_url")
+                })
+
+            # 유사도 상위 10개 중에서 랜덤 선택
+            scored_songs.sort(key=lambda x: x["similarity"], reverse=True)
+            top_candidates = scored_songs[:10]
+
+            if top_candidates:
+                selected = random.choice(top_candidates)
+                return RandomSongResponse(
+                    songId=selected["song_id"],
+                    title=selected["title"],
+                    artist=selected["artists"],
+                    popularity=selected["popularity"],
+                    difficulty=selected["difficulty"],
+                    albumImageUrl=selected.get("album_img_url")
+                )
+
+        # 플레이리스트 특성이 없거나 유사도 계산 실패시
+        # 날씨 매칭 곡이 있으면 그 중에서, 없으면 전체에서 랜덤
+        target_songs = weather_matched_songs if weather_matched_songs else candidates.objects
+        selected = random.choice(target_songs)
+        props = selected.properties
+
+        artists = props.get("artists", [])
+        artist_str = ", ".join(artists) if isinstance(artists, list) else str(artists) if artists else "Unknown"
+
+        return RandomSongResponse(
+            songId=props.get("song_id", ""),
+            title=props.get("title", "Unknown"),
+            artist=artist_str,
+            popularity=props.get("popularity", 0),
+            difficulty=props.get("level"),
+            albumImageUrl=props.get("album_img_url")
+        )
+
+    except Exception as e:
+        print(f"Error in random song recommendation: {e}")
+        raise
     finally:
         client.close()
 
