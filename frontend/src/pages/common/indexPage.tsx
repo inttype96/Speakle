@@ -4,12 +4,12 @@ import HeadphoneImage from '@/assets/images/headset2.png'
 import BallonImage from '@/assets/images/ballon.png'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { useTheme } from "@/components/theme-provider"
+// import { useTheme } from "@/components/theme-provider"
 import { useNavigate } from "react-router-dom"
 import SplashCursor from '@/lib/splashCursor'
 
 export default function IndexPage() {
-  const { theme } = useTheme()
+  // const { theme } = useTheme()
   const navigate = useNavigate()
 
   return (
@@ -19,7 +19,7 @@ export default function IndexPage() {
 
       {/* Main Content */}
       <div className="flex-1 w-full px-12 pt-32 pb-16 grid grid-cols-1 lg:grid-cols-2 gap-16 items-start max-w-screen-2xl mx-auto">
-        
+
         {/* 왼쪽 섹션 */}
         <div className="relative flex flex-col items-center text-center -mt-8">
           <div className="relative">
@@ -32,7 +32,7 @@ export default function IndexPage() {
               Speakle
             </h1>
           </div>
-          <p className="-mt-8 text-lg text-gray-300 leading-relaxed">
+          <p className="mt-8 text-lg text-gray-300 leading-relaxed">
             음악처럼 스며드는 영어학습 <br />
             듣고, 따라하고, 오래 남는 영어
           </p>
