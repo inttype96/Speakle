@@ -45,21 +45,42 @@ export function SpotifyPlayerProvider({ children }: SpotifyPlayerProviderProps) 
       pathname: location.pathname,
       isSongDetailPage,
       isIframePath,
-      isPlaying: isPlayingRef.current
+      isPlaying: isPlayingRef.current,
+      currentIsPlaying: isPlaying
     });
 
-    // iframe 경로는 무시하고, song detail 페이지가 아닐 때만 정지
-    if (!isSongDetailPage && !isIframePath && isPlayingRef.current) {
-      console.log('🛑 Not on song detail page, stopping player');
-      // 즉시 전역 상태도 업데이트
-      setIsPlaying(false);
-      setShouldStopPlayer(true);
-      setStopSignal(prev => prev + 1); // 강제 트리거
+    // iframe 경로는 무시하고, song detail 페이지가 아닐 때 즉시 정지
+    if (!isSongDetailPage && !isIframePath) {
+      // 현재 재생 중인지 확인 (ref와 state 둘 다 체크)
+      const currentlyPlaying = isPlayingRef.current || isPlaying;
+
+      console.log('🛑 Not on song detail page, checking if need to stop:', {
+        currentlyPlaying,
+        refPlaying: isPlayingRef.current,
+        statePlaying: isPlaying
+      });
+
+      if (currentlyPlaying) {
+        console.log('🛑 STOPPING PLAYER - Not on song detail page');
+        // 즉시 전역 상태 업데이트 (동기적으로)
+        setIsPlaying(false);
+        setShouldStopPlayer(true);
+        setStopSignal(prev => {
+          const newSignal = prev + 1;
+          console.log('🔢 Stop signal incremented:', prev, '->', newSignal);
+          return newSignal;
+        });
+      } else {
+        console.log('ℹ️ Not on song detail page, but player already stopped');
+      }
     } else if (isSongDetailPage) {
       // Song detail 페이지에 있으면 정지 신호 리셋
+      console.log('✅ On song detail page, resetting stop signals');
       setShouldStopPlayer(false);
+    } else {
+      console.log('🔍 Page change ignored (iframe or other)');
     }
-  }, [location.pathname]);
+  }, [location.pathname, isPlaying]);
 
   // 브라우저 이벤트들 처리
   useEffect(() => {
