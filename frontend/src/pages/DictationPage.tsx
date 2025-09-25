@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
 // icons
-import { ChevronLeft, Volume2 } from "lucide-react";
+import { ChevronLeft, Volume2, Timer, Play, RotateCcw } from "lucide-react";
 
 // api
 import {
@@ -73,7 +73,54 @@ export default function DictationPage() {
   const [hasStarted, setHasStarted] = useState(false);
   const [replayKey, setReplayKey] = useState(0); // Replay 버튼을 위한 key
 
+  // 게임 상태
+  const [gameState, setGameState] = useState<'ready' | 'countdown' | 'playing' | 'ended'>('ready');
+  const [countdown, setCountdown] = useState(3);
+  const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+
   const progress = (qNo / MAX_Q) * 100;
+
+  // 카운트다운 시작 함수
+  const startCountdown = () => {
+    setGameState('countdown');
+    setCountdown(3);
+    setShouldAutoPlay(false);
+
+    const countdownInterval = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownInterval);
+          setGameState('playing');
+          setShouldAutoPlay(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // 다시 듣기 함수
+  const onReplay = () => {
+    setGameState('playing');        // 바로 재생 상태로
+    setShouldAutoPlay(true);        // 자동재생 활성화
+    setElapsed(0);                  // 타이머 리셋
+    setReplayKey(prev => prev + 1); // SpotifyWebPlayer 리렌더링해서 즉시 재생
+  };
+
+  // 타이머 useEffect
+  useEffect(() => {
+    if (gameState === 'playing') {
+      const timer = setInterval(() => {
+        setElapsed(prev => prev + 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [gameState]);
+
+  // mmss 포맷 함수
+  const mmss = (sec: number) =>
+    `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 
   // 노래 재생 시간 업데이트 핸들러
   const handleTimeUpdate = useCallback((time: number, playing: boolean) => {
@@ -104,6 +151,8 @@ export default function DictationPage() {
     // endTime에 도달했을 때 재생이 정지되었는지 확인
     if (item.endTime && typeof item.endTime === 'number' && time >= item.endTime && !playing) {
       setHasStarted(true); // 재생이 완료되었음을 표시
+      setGameState('ended'); // 게임 종료 상태로 변경
+      setShouldAutoPlay(false); // 자동재생 비활성화해서 다시 시작하지 않도록 함
     }
   }, [item, hasStarted]);
 
@@ -156,12 +205,64 @@ export default function DictationPage() {
       setTokens(tks);
       // 입력칸 개수만큼 상태 초기화 (이전 값 유지 X — 재시도 시에는 모달만 닫고 그대로 유지)
       const blanksCount = tks.filter((t) => t.isInput).length;
-      setAnswers((prev) => (prev.length === blanksCount ? prev : Array(blanksCount).fill("")));
+
+      // 첫 단어를 미리 채워주기 위한 로직
+      const initialAnswers = Array(blanksCount).fill("");
+      if (blanksCount > 0) {
+        // 첫 번째 입력칸에 해당하는 첫 단어 찾기
+        let firstWordChars = [];
+        let foundFirstInput = false;
+
+        for (let i = 0; i < tks.length; i++) {
+          if (tks[i].isInput) {
+            if (!foundFirstInput) {
+              foundFirstInput = true;
+            }
+            firstWordChars.push(tks[i].ch.toUpperCase());
+
+            // 다음이 공백이거나 문장부호면 첫 단어 완료
+            if (i + 1 < tks.length && !tks[i + 1].isInput) {
+              break;
+            }
+          }
+        }
+
+        // 첫 단어의 글자들을 초기 답안에 설정
+        for (let i = 0; i < firstWordChars.length && i < blanksCount; i++) {
+          initialAnswers[i] = firstWordChars[i];
+        }
+      }
+
+      setAnswers((prev) => (prev.length === blanksCount ? prev : initialAnswers));
       
       // 노래 재생 상태 초기화
       setHasStarted(false);
       setCurrentTime(0);
       setIsPlaying(false);
+      // 게임 상태 초기화 - 첫 번째 문제는 ready, 나머지는 바로 카운트다운
+      if (no === 1) {
+        // 첫 번째 문제: 게임시작 버튼 표시
+        setGameState('ready');
+      } else {
+        // 두 번째 문제부터: 바로 카운트다운 시작
+        setGameState('countdown');
+        setCountdown(3);
+
+        const countdownInterval = setInterval(() => {
+          setCountdown(prev => {
+            if (prev <= 1) {
+              clearInterval(countdownInterval);
+              setGameState('playing');
+              setShouldAutoPlay(true);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
+
+      setElapsed(0);
+      setShouldAutoPlay(false);
       // replayKey를 증가시켜서 SpotifyWebPlayer를 완전히 리렌더링
       setReplayKey(prev => prev + 1);
       
@@ -372,113 +473,223 @@ export default function DictationPage() {
   };
 
   return (
-    <>
+    <div className="bg-background text-foreground font-sans min-h-screen">
+      {/* Google Fonts Link */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Pretendard:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+      />
       <Navbar />
-      <main className="mx-auto max-w-5xl pt-20 px-4 pb-16">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-          <Button variant="ghost" size="icon" onClick={() => goSong()}>
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <span>곡으로 돌아가기</span>
-        </div>
+      <div aria-hidden className="h-16 md:h-20" />
 
-        <div className="flex items-center justify-between mb-3">
-          <div className="text-xs">Question {qNo} of {MAX_Q}</div>
-          <div className="text-xs">{Math.round(progress)}% Complete</div>
-        </div>
-        <Progress value={progress} className="h-2 mb-6" />
+      {/* 상단 여백 추가 */}
+      <div className="h-8" />
 
-        <Card className="bg-muted/20 border-muted/40">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary">Dictation</Badge>
-                {item && (
-                  <span className="text-sm text-muted-foreground">
-                    {item.title ?? ""} — {item.artists.replace(/[\[\]']/g, '') ?? ""}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Volume2 className="h-4 w-4" />
-                <span>Listen to the song and type the lyrics exactly.</span>
-              </div>
+      <div className="w-screen px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '65vw' }}>
+        {/* 상단 헤더 */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 sm:gap-0">
+          <button
+            type="button"
+            onClick={() => goSong()}
+            className="inline-flex items-center gap-2 text-sm font-['Pretendard'] font-medium text-white hover:text-[#B5A6E0] transition-colors duration-200 px-3 sm:px-4 py-2 rounded-lg hover:bg-white/10"
+          >
+            <ChevronLeft size={18} />
+            곡으로 돌아가기
+          </button>
+
+          <div className="backdrop-blur-sm bg-white/10 rounded-xl px-3 sm:px-4 py-2.5 text-right border border-white/20">
+            <div className="text-xs font-['Pretendard'] text-white/70 truncate max-w-[200px] sm:max-w-none">
+              {item ? `${item.title} - ${item.artists}` : "Loading..."}
             </div>
+            <div className="text-sm font-['Pretendard'] font-bold text-white">딕테이션</div>
+          </div>
+        </div>
 
-            {/* Spotify Web Player */}
-            {item && (
-              <div className="mb-6">
-                <SpotifyWebPlayer
-                  key={`${item.songId}-${replayKey}`}
-                  trackId={item.songId}
-                  trackName={item.title}
-                  artistName={item.artists.replace(/[\[\]']/g, '')}
-                  onTimeUpdate={handleTimeUpdate}
-                  startTime={item.startTime}
-                  endTime={item.endTime}
-                />
-                <div className="mt-2 text-center space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    {item.startTime && item.endTime ? (
-                      <>
-                        {hasStarted && (!isPlaying || currentTime >= item.endTime) && (
-                          <span className="ml-2 text-green-600 font-medium">✓ Time to answer!</span>
-                        )}
-                      </>
-                    ) : (
-                      "Listen to the song and type the lyrics you hear"
-                    )}
-                  </p>
-                  
-                  {/* 다시 재생 버튼 */}
+        {/* 게임 스타일 진행 표시 */}
+        <div className="backdrop-blur-xl bg-white/10 rounded-2xl p-6 border border-white/20 shadow-2xl mb-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-2 sm:gap-0">
+            <div className="text-sm font-['Pretendard'] font-bold text-white">
+              Question {qNo} of {MAX_Q}
+            </div>
+            <div className="text-sm font-['Pretendard'] font-medium text-[#B5A6E0]">
+              {Math.round(progress)}% Complete
+            </div>
+          </div>
+          <div className="relative">
+            <div className="w-full bg-black/30 rounded-full h-3 backdrop-blur-sm">
+              <div
+                className="bg-[#4B2199] h-3 rounded-full transition-all duration-500 ease-out shadow-lg"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="absolute inset-0 bg-[#B5A6E0]/30 rounded-full animate-pulse" />
+          </div>
+        </div>
 
+        {/* 게임 스타일 딕테이션 본문 */}
+        <div className="flex justify-center w-full">
+          <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-2xl overflow-hidden max-w-5xl w-full">
+            <CardContent className="p-6 text-center">
+              {/* 헤더 섹션 */}
+              <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between w-full mb-6">
+                <div className="flex items-center gap-2">
+                  <div className="backdrop-blur-sm bg-white/20 px-3 py-1.5 rounded-full border border-white/30">
+                    <span className="font-['Pretendard'] font-bold text-white text-sm">문제 {qNo}</span>
+                  </div>
+                  <Badge className="bg-[#4B2199]/80 text-white border-[#B5A6E0]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
+                    5 points
+                  </Badge>
+                </div>
+
+                <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
+                  <div className="flex items-center gap-2 bg-gradient-to-r from-[#4B2199]/20 to-[#B5A6E0]/20 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl shadow-lg">
+                    <Timer size={16} className="text-[#B5A6E0] animate-pulse sm:w-[18px] sm:h-[18px]" />
+                    <span className="tabular-nums text-white font-['Inter'] font-bold text-base sm:text-lg tracking-wide drop-shadow-md">{mmss(elapsed)}</span>
+                  </div>
+                  <Badge className="bg-[#B5A6E0]/80 text-white border-[#4B2199]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
+                    Medium
+                  </Badge>
                 </div>
               </div>
-            )}
 
-            {/* 입력 그리드 */}
-            <section className="mx-auto flex flex-col gap-3 items-center">
-              <div className="flex flex-wrap gap-y-3">
-                {tokens.map((t, ti) => {
-                  if (!t.isInput) {
-                    // 공백은 간격, 문장부호는 그대로 보여줌
-                    if (t.ch === " ") return <div key={ti} className={GAP} />;
-                    return (
-                      <div key={ti} className={`${BOX_BASE} border-dashed text-muted-foreground`}>
-                        {t.ch}
+              {/* 게임 상태별 UI */}
+              <div className="space-y-8">
+
+                {/* 카운트다운 화면 */}
+                {gameState === 'countdown' && (
+                  <div className="flex flex-col items-center justify-center py-20">
+                    <div className="text-6xl sm:text-8xl font-['Inter'] font-black text-white animate-bounce mb-4">
+                      {countdown}
+                    </div>
+                    <div className="text-lg sm:text-xl font-['Pretendard'] font-medium text-[#B5A6E0]">
+                      곧 음악이 시작됩니다...
+                    </div>
+                  </div>
+                )}
+
+                {/* 게임 시작 대기 화면 */}
+                {gameState === 'ready' && (
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <div className="mb-8">
+                      <div className="text-xl sm:text-2xl font-['Pretendard'] font-bold text-white mb-4 text-center">
+                        🎵 음악을 들으며 가사를 맞춰보세요!
                       </div>
-                    );
-                  }
-                  const inputIdx = inputMap[ti];
-                  return (
-                    <input
-                      key={ti}
-                      ref={(el: HTMLInputElement | null) => {
-                        inputsRef.current[inputIdx] = el;
-                      }}
-                      className={`${BOX_BASE} ${BOX_INPUT}`}
-                      value={answers[inputIdx] || ""}
-                      onChange={(e) => handleChange(inputIdx, e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, inputIdx)}
-                      maxLength={1}
-                      inputMode="text"
-                      autoCapitalize="off"
-                      autoCorrect="off"
-                      spellCheck={false}
+                      <div className="text-sm sm:text-base font-['Pretendard'] text-white/70 text-center">
+                        시작 버튼을 누르면 3초 후 음악이 자동으로 재생됩니다
+                      </div>
+                    </div>
+                    <Button
+                      onClick={startCountdown}
+                      className="h-14 px-8 bg-[#4B2199]/90 hover:bg-[#4B2199] text-white font-['Pretendard'] font-bold text-lg rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300"
+                    >
+                      <Play size={20} className="mr-2" />
+                      게임 시작
+                    </Button>
+                  </div>
+                )}
+
+                {/* 숨겨진 Spotify Player (자동재생용) - startTime 2초 일찍 시작 */}
+                {item && (
+                  <div className={gameState === 'playing' ? 'block' : 'hidden'}>
+                    <SpotifyWebPlayer
+                      key={`${item.songId}-${replayKey}-${shouldAutoPlay}`}
+                      trackId={item.songId}
+                      trackName={item.title}
+                      artistName={item.artists}
+                      onTimeUpdate={handleTimeUpdate}
+                      startTime={item.startTime ? Math.max(0, item.startTime - 2000) : undefined}
+                      endTime={item.endTime}
+                      autoPlay={shouldAutoPlay}
                     />
-                  );
-                })}
+                  </div>
+                )}
+
+                {/* 게임 진행 중 & 완료 화면 */}
+                {(gameState === 'playing' || gameState === 'ended') && (
+                  <>
+                    <div className="flex justify-center gap-4 mb-6">
+                      <Button
+                        onClick={onReplay}
+                        className="h-12 px-6 bg-[#B5A6E0]/80 hover:bg-[#B5A6E0] text-white font-['Pretendard'] font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                      >
+                        <RotateCcw size={16} className="mr-2" />
+                        다시 듣기
+                      </Button>
+                    </div>
+
+                    {/* 놀라운 토요일 스타일 게임쇼 입력 그리드 */}
+                    <div className="backdrop-blur-sm bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 shadow-2xl">
+                      <div className="mb-6 text-center">
+                        <div className="text-lg sm:text-xl font-['Pretendard'] font-bold text-white mb-2">
+                          🎤 가사를 입력하세요
+                        </div>
+                        <div className="text-sm font-['Pretendard'] text-white/70">
+                          알파벳과 숫자만 입력하세요 (대소문자 구분 안함)
+                        </div>
+                      </div>
+
+                      <section className="mx-auto flex flex-col gap-4 items-center max-w-4xl">
+                        <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+                          {tokens.map((t, ti) => {
+                            if (!t.isInput) {
+                              // 공백은 간격, 문장부호는 그대로 보여줌
+                              if (t.ch === " ") return <div key={ti} className="w-4 sm:w-6" />;
+                              return (
+                                <div
+                                  key={ti}
+                                  className="h-10 w-8 sm:h-12 sm:w-10 flex items-center justify-center rounded-xl border-2 border-dashed border-[#B5A6E0]/50 bg-white/5 text-base sm:text-lg font-['Inter'] font-bold text-[#B5A6E0] backdrop-blur-sm shadow-lg"
+                                >
+                                  {t.ch}
+                                </div>
+                              );
+                            }
+                            const inputIdx = inputMap[ti];
+                            const hasValue = answers[inputIdx] && answers[inputIdx] !== "";
+                            return (
+                              <input
+                                key={ti}
+                                ref={(el: HTMLInputElement | null) => {
+                                  inputsRef.current[inputIdx] = el;
+                                }}
+                                className={`h-10 w-8 sm:h-12 sm:w-10 flex items-center justify-center rounded-xl border-2 text-center caret-transparent uppercase text-base sm:text-lg font-['Inter'] font-black transition-all duration-300 shadow-lg hover:shadow-xl focus:shadow-2xl ${
+                                  hasValue
+                                    ? 'border-[#4B2199] bg-gradient-to-br from-[#4B2199]/20 to-[#B5A6E0]/20 text-white backdrop-blur-md'
+                                    : 'border-white/30 bg-white/10 text-white/50 backdrop-blur-sm hover:border-[#B5A6E0]/60 focus:border-[#4B2199] focus:bg-white/20'
+                                } focus:outline-none focus:ring-2 focus:ring-[#B5A6E0]/50`}
+                                value={answers[inputIdx] || ""}
+                                onChange={(e) => handleChange(inputIdx, e.target.value)}
+                                onKeyDown={(e) => handleKeyDown(e, inputIdx)}
+                                maxLength={1}
+                                inputMode="text"
+                                autoCapitalize="off"
+                                autoCorrect="off"
+                                spellCheck={false}
+                                placeholder="?"
+                              />
+                            );
+                          })}
+                        </div>
+                      </section>
+                    </div>
+
+                    <div className="flex justify-center mt-8">
+                      <Button
+                        onClick={onSubmit}
+                        className="h-14 sm:h-16 px-8 sm:px-12 bg-[#4B2199]/90 hover:bg-[#4B2199] text-white font-['Pretendard'] font-bold text-lg sm:text-xl rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+                      >
+                       답안 제출
+                      </Button>
+                    </div>
+                  </>
+                )}
+
               </div>
-            </section>
-
-            <Separator className="my-8" />
-
-            <div className="flex justify-center">
-              <Button size="lg" onClick={onSubmit} className="px-8">답안 제출</Button>
-            </div>
-          </CardContent>
-        </Card>
-      </main>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* 결과 모달 */}
       <Dialog open={openResult} onOpenChange={setOpenResult}>
@@ -551,6 +762,6 @@ export default function DictationPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
