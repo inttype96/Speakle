@@ -101,7 +101,8 @@ export default function DictationPage() {
     setHasStarted(false);
     setCurrentTime(0);
     setIsPlaying(false);
-    setReplayKey(0);
+    // replayKey를 증가시켜서 SpotifyWebPlayer를 완전히 리렌더링
+    setReplayKey(prev => prev + 1);
     
     // 포커스 초기화
     setTimeout(() => {
@@ -331,26 +332,7 @@ export default function DictationPage() {
                   </p>
                   
                   {/* 다시 재생 버튼 */}
-                  <div className="flex items-center justify-center">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        // 재생 상태를 리셋
-                        setHasStarted(false);
-                        setCurrentTime(0);
-                        setIsPlaying(false);
-                        
-                        // replayKey를 증가시켜서 SpotifyWebPlayer를 리렌더링
-                        // 이렇게 하면 새로운 재생 세션이 시작되고 startTime에서 재생됨
-                        setReplayKey(prev => prev + 1);
-                      }}
-                      className="flex items-center gap-1"
-                    >
-                      <RotateCcw className="h-3 w-3" />
-                      Replay
-                    </Button>
-                  </div>
+
                 </div>
               </div>
             )}

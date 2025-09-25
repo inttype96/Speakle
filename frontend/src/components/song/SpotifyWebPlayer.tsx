@@ -317,11 +317,15 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         await player.pause()
         toast.success('재생을 일시정지했습니다')
       } else {
-        if (currentTrack?.id !== trackId) {
-          // 새로운 트랙이면 startTime 위치에서 재생
+        // 새로운 트랙이거나, startTime이 설정되어 있고 현재 위치가 startTime과 다를 때
+        const shouldSeekToStart = currentTrack?.id !== trackId || 
+          (startTime !== undefined && Math.abs(position - startTime) > 1000) // 1초 이상 차이날 때
+        
+        if (shouldSeekToStart) {
+          // startTime 위치에서 재생
           await playTrack(trackId, startTime)
         } else {
-          // 같은 트랙이면 현재 위치에서 재생
+          // 같은 트랙이고 위치가 맞으면 현재 위치에서 재생
           await player.resume()
           toast.success('재생을 재개했습니다')
         }
