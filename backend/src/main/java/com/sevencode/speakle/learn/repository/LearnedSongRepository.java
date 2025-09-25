@@ -14,4 +14,6 @@ public interface LearnedSongRepository extends JpaRepository<LearnedSongEntity, 
     Page<LearnedSongEntity> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
     Optional<LearnedSongEntity> findByUserIdAndSongIdAndSituationAndLocation(Long userId, String songId, String situation, String location);
+
+    Optional<LearnedSongEntity> findByLearnedSongId(Long learnedSongId);
 }
