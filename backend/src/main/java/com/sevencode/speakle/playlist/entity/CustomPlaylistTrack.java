@@ -39,6 +39,11 @@ public class CustomPlaylistTrack {
 	@JoinColumn(name = "playlist_id", insertable = false, updatable = false)
 	private CustomPlaylist playlist;
 
+	// Song과의 관계 설정 (N+1 문제 해결용)
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "song_id", insertable = false, updatable = false)
+	private com.sevencode.speakle.song.domain.Song song;
+
 	@PrePersist
 	void onCreate() {
 		if (addedAt == null) {
