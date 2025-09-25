@@ -3,7 +3,6 @@ package com.sevencode.speakle.learn.service;
 import com.sevencode.speakle.learn.domain.entity.BlankEntity;
 import com.sevencode.speakle.learn.domain.entity.BlankResultEntity;
 import com.sevencode.speakle.learn.domain.entity.LearnedSongEntity;
-import com.sevencode.speakle.learn.domain.entity.LearningSentence;
 import com.sevencode.speakle.learn.dto.request.BlankQuestionRequest;
 import com.sevencode.speakle.learn.dto.request.BlankResultRequest;
 import com.sevencode.speakle.learn.dto.response.BlankQuestionResponse;
@@ -12,10 +11,14 @@ import com.sevencode.speakle.learn.dto.response.BlankCompleteResponse;
 import com.sevencode.speakle.learn.exception.*;
 import com.sevencode.speakle.learn.repository.*;
 import com.sevencode.speakle.parser.entity.SentenceEntity;
+import com.sevencode.speakle.recommend.domain.RecommendationSentence;
+import com.sevencode.speakle.recommend.repository.RecommendationSentenceRepository;
 import com.sevencode.speakle.reward.dto.request.RewardUpdateRequest;
 import com.sevencode.speakle.reward.dto.response.RewardUpdateResponse;
 import com.sevencode.speakle.reward.service.RewardService;
+import com.sevencode.speakle.song.domain.LyricChunk;
 import com.sevencode.speakle.song.domain.Song;
+import com.sevencode.speakle.song.repository.LyricChunkRepository;
 import com.sevencode.speakle.song.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,14 +36,15 @@ public class BlankServiceImpl implements BlankService{
     private final BlankRepository blankRepository;
     private final BlankResultRepository blankResultRepository;
     private final LearnedSongRepository learnedSongRepository;
-    private final LearningSentenceRepository learningSentenceRepository;
     private final SpeakingSentenceRepository speakingSentenceRepository;
     private final SongRepository songRepository;
+    private final RecommendationSentenceRepository recommendationSentenceRepository;
+    private final LyricChunkRepository lyricChunkRepository;
     private final RewardService rewardService;
 
     private final Random random = new Random();
 
-    private static final Set<String> EXCLUDED_WORDS = Set.of(
+    private static final Set<String> EXCLUDED_WORDS_BASIC = Set.of(
             // 관사
             "a", "an", "the",
 
@@ -55,24 +59,29 @@ public class BlankServiceImpl implements BlankService{
             "this", "that", "these", "those",
             "who", "whom", "whose", "which", "what",
 
-            // 전치사
-            "in", "on", "at", "by", "for", "with", "to", "from",
-            "of", "about", "under", "over", "during", "before",
-            "after", "into", "onto", "upon", "off",
-
             // be동사
             "am", "is", "are", "was", "were", "be", "been", "being",
             "ain't", "isn't", "aren't", "wasn't", "weren't",
-
-            // 접속사
-            "and", "or", "but", "so", "yet", "nor", "because",
-            "since", "while", "if", "when", "where", "how", "why", "whether",
 
             // do 동사
             "do", "does", "did", "doing", "done",
 
             // have 동사
             "have", "has", "had", "having",
+
+            // 감탄사
+            "huh", "oh"
+    );
+
+    private static final Set<String> EXCLUDED_WORDS_ADVANCED = Set.of(
+            // 전치사
+            "in", "on", "at", "by", "for", "with", "to", "from",
+            "of", "about", "under", "over", "during", "before",
+            "after", "into", "onto", "upon", "off",
+
+            // 접속사
+            "and", "or", "but", "so", "yet", "nor", "because",
+            "since", "while", "if", "when", "where", "how", "why", "whether",
 
             // 기능어
             "not", "no", "yes", "please", "thank", "thanks", "here",
@@ -109,73 +118,145 @@ public class BlankServiceImpl implements BlankService{
                 req.getQuestionNumber()
         );
 
+        // 3. Song 정보 조회 (title, artists를 위해)
+        Song song = songRepository.findById(req.getSongId())
+                .orElseThrow(() -> new SongNotFoundException("존재하지 않는 곡입니다."));
+
         if (existingBlank.isPresent()) {
             // 기존 데이터가 있으면 조회하여 반환
-            return convertToBlankQuestionResponse(existingBlank.get());
+            return convertToBlankQuestionResponse(existingBlank.get(), song);
         }
 
-        // 3. 기존 데이터가 없으면 새로 생성
-        return createNewBlankQuestion(req, userId);
+        // 4. 기존 데이터가 없으면 새로 생성
+        return createNewBlankQuestion(req, userId, song);
     }
 
     // ------------------------------------------------------------
     // 새로운 빈칸 문제 생성
     // ------------------------------------------------------------
-    private BlankQuestionResponse createNewBlankQuestion(BlankQuestionRequest req, Long userId) {
-        String originalSentence;
-        String korean;
+    private BlankQuestionResponse createNewBlankQuestion(BlankQuestionRequest req, Long userId, Song song) {
+        String originalSentence = null;
+        String korean = null;
         Long recommendationSentenceId = null;
+        BlankQuizResult quizResult = null;
 
-        // 1. questionNumber에 따라 문장 출처 결정
+        // questionNumber에 따라 문장 출처 결정
         if(req.getQuestionNumber()==1){
-            // 첫 번째 문제: learning_sentence 테이블에서 가져오기
-            LearningSentence learningSentence = (LearningSentence) learningSentenceRepository
-                    .findFirstByLearnedSongIdOrderByOrderAsc(req.getLearnedSongId())
-                    .orElseThrow(() -> new NoSentenceAvailableException("해당 학습곡에 learning sentence가 없습니다."));
+            // 첫 번째 문제: RecommendationSentence 테이블에서 가져오기
+            Optional<RecommendationSentence> learningSentence = recommendationSentenceRepository.findByUserIdAndSongId(userId, req.getSongId());
 
-            originalSentence = learningSentence.getCoreSentence();
-            korean = learningSentence.getKorean();
-            recommendationSentenceId = learningSentence.getLearningSentenceId();
+            quizResult = tryCreateBlankQuiz(learningSentence.get().getReasonSentence(), req.getQuestionNumber());
+
+            originalSentence = learningSentence.get().getReasonSentence();
+            LyricChunk lyricChunk = lyricChunkRepository.findFirstBySongSongIdAndEnglishIgnoreCase(req.getSongId(), originalSentence).get();
+            korean = lyricChunk.getKorean();
+            recommendationSentenceId = learningSentence.get().getRecommendationSentenceId();
         }else{
             // 두 번째, 세 번째 문제: sentences 테이블에서 가져오기
-            // List<SentenceEntity> sentences = speakingSentenceRepository.findByLearnedSongIdOrderByIdAsc(String.valueOf(req.getLearnedSongId()));
             LearnedSongEntity learned = learnedSongRepository.findById(req.getLearnedSongId())
                     .orElseThrow(() -> new LearnedSongNotFoundException("존재하지 않는 학습곡입니다."));
             List<SentenceEntity> sentences = speakingSentenceRepository.findBySongIdAndSituationAndLocationOrderByIdAsc(learned.getSongId(), req.getSituation(), req.getLocation());
 
             // 해당 학습곡의 문장 개수 확인
-            if (sentences.size() == 0) {
+            if (sentences.isEmpty()) {
                 throw new NoSentenceAvailableException("해당 학습 곡에서 추출할 문장이 없습니다.");
             }
 
-            int index;
-            if(sentences.size() >= 6){
-                index = (req.getQuestionNumber() * 2) - 3;   // 빈칸 게임에 2, 4, 5번 문장 가져오기
-            }else{
-                index = req.getQuestionNumber() - 1;         // 빈칸 게임에 1, 2번 문장 가져오기
+            // 시도할 문장 인덱스 목록 생성
+            List<Integer> candidateIndices = generateCandidateIndices(sentences.size(), req.getQuestionNumber());
+
+            // 각 후보 문장에 대해 빈칸 문제 생성 시도
+            for (Integer index : candidateIndices) {
+                if (index < sentences.size()) {
+                    SentenceEntity sentence = sentences.get(index);
+                    BlankQuizResult tempResult = tryCreateBlankQuiz(sentence.getSentence(), req.getQuestionNumber());
+
+                    if (tempResult != null) {
+                        originalSentence = sentence.getSentence();
+                        korean = sentence.getTranslation();
+                        recommendationSentenceId = -1L;
+                        quizResult = tempResult;
+                        break;
+                    }
+                }
             }
 
-            if(index >= sentences.size()){
-                throw new IllegalArgumentException("해당 questionNumber에 맞는 문장이 존재하지 않습니다.");
+            if (quizResult == null) {
+                throw new ValidWordNotFoundException("해당 questionNumber에 대해 빈칸으로 만들 적절한 단어가 있는 문장을 찾을 수 없습니다.");
             }
-
-            originalSentence = sentences.get(index).getSentence();
-            System.out.println("original Sentence : "+originalSentence);
-            korean = sentences.get(index).getTranslation();
-            recommendationSentenceId = -1L;
         }
 
-        // 2. Song 정보 조회 (title, artists를 위해)
-        Song song = songRepository.findById(req.getSongId())
-                .orElseThrow(() -> new SongNotFoundException("존재하지 않는 곡입니다."));
+        // BlankQuestionResponse 생성 및 반환
+        return createBlankQuestionResponse(req, song, originalSentence, korean, recommendationSentenceId, quizResult);
+    }
 
-        // 3. 빈칸 문제 생성
-        BlankQuizResult quizResult = createBlankQuiz(originalSentence);
+    // ------------------------------------------------------------
+    // 빈칸 문제 생성 시도 (실패시 null 반환)
+    // ------------------------------------------------------------
+    private BlankQuizResult tryCreateBlankQuiz(String sentence, int questionNumber) {
+        try {
+            sentence = sentence.trim();
+            String[] words = sentence.split("\\s+");
+            List<String> validWords = new ArrayList<>();
 
-        // 4. BlankEntity 생성 및 저장
+            // 빈칸 퀴즈에 유효한 단어만 필터링
+            for (String word : words) {
+                word = word.replaceAll("[^a-zA-Z]", "");
+                if (isValidWord(word, questionNumber) && isValidWord(word.toLowerCase(), questionNumber)) {
+                    validWords.add(word);
+                }
+            }
+
+            // 유효한 단어가 없으면 null 반환 (예외 던지지 않음)
+            if (validWords.isEmpty()) {
+                return null;
+            }
+
+            // 빈칸 문제 생성 로직 (기존과 동일)
+            int maxBlanks = Math.min(3, validWords.size());
+            int blankCount = random.nextInt(maxBlanks) + 1;
+            List<String> selectedWords = selectRandomWords(validWords, blankCount);
+            List<String> orderedAnswers = sortByOriginalOrder(sentence, selectedWords);
+            String question = createQuestionWithMultipleBlanks(sentence, orderedAnswers);
+
+            return new BlankQuizResult(question, orderedAnswers);
+
+        } catch (Exception e) {
+            // 예외 발생시 null 반환
+            return null;
+        }
+    }
+
+    // ------------------------------------------------------------
+    // 문장 후보 인덱스 목록 생성
+    // ------------------------------------------------------------
+    private List<Integer> generateCandidateIndices(int totalSentences, int questionNumber) {
+        List<Integer> candidates = new ArrayList<>();
+
+        if (questionNumber == 2) {
+            // 2번째 문제: 2, 6, 10, 14... 번째 문장 (인덱스 1, 5, 9, 13...)
+            for (int i = 1; i < totalSentences; i += 4) {
+                candidates.add(i);
+            }
+        } else if (questionNumber == 3) {
+            // 3번째 문제: 4, 8, 12, 16... 번째 문장 (인덱스 3, 7, 11, 15...)
+            for (int i = 3; i < totalSentences; i += 4) {
+                candidates.add(i);
+            }
+        }
+        return candidates;
+    }
+
+    // ------------------------------------------------------------
+    // BlankQuestionResponse 생성 헬퍼 메서드
+    // ------------------------------------------------------------
+    private BlankQuestionResponse createBlankQuestionResponse(BlankQuestionRequest req, Song song,
+                                                              String originalSentence, String korean, Long recommendationSentenceId, BlankQuizResult quizResult) {
+
+        // BlankEntity 생성 및 저장
         Map<String, Object> meta = new LinkedHashMap<>();
         meta.put("question", quizResult.getQuestion());
-        meta.put("answer", quizResult.getAnswers()); // List<String> -> JSON 배열로 직렬화됨
+        meta.put("answer", quizResult.getAnswers());
         meta.put("originSentence", originalSentence);
         meta.put("korean", korean);
 
@@ -195,8 +276,8 @@ public class BlankServiceImpl implements BlankService{
 
         BlankEntity savedBlank = blankRepository.save(blank);
 
-        // 5. 응답 데이터 생성
-        BlankQuestionResponse res = BlankQuestionResponse.builder()
+        // 응답 데이터 생성
+        return BlankQuestionResponse.builder()
                 .blankId(savedBlank.getBlankId())
                 .learnedSongId(savedBlank.getLearnedSongId())
                 .songId(savedBlank.getSongId())
@@ -209,53 +290,18 @@ public class BlankServiceImpl implements BlankService{
                 .answer(quizResult.getAnswers())
                 .createdAt(savedBlank.getCreatedAt())
                 .build();
-
-        return res;
-    }
-
-    // ------------------------------------------------------------
-    // 빈칸 문제 생성
-    // ------------------------------------------------------------
-    private BlankQuizResult createBlankQuiz(String sentence) {
-        sentence = sentence.trim();
-        String[] words = sentence.split("\\s+");
-        List<String> validWords = new ArrayList<>();
-
-        // 1. 빈칸 퀴즈에 유효한 단어만 필터링
-        for (String word : words) {
-            // 구두점 제거한 순수 단어만 검증
-            word = word.replaceAll("[^a-zA-Z]", "");
-            if (isValidWord(word) && isValidWord(word.toLowerCase())) {
-                validWords.add(word);
-            }
-        }
-
-        if(validWords.isEmpty()){
-            throw new ValidWordNotFoundException("빈칸으로 만들 적절한 단어를 찾을 수 없습니다.");
-        }
-
-        // 2. 랜덤하게 빈칸 개수 결정 (1~3개, 단 유효한 단어 수를 초과하지 않음)
-        int maxBlanks = Math.min(3, validWords.size());
-        int blankCount = random.nextInt(maxBlanks) + 1; // 1~maxBlanks 사이
-
-        // 3. 유효한 단어 중 빈칸으로 만들 단어 랜덤 선택 (쭝복 없이)
-        List<String> selectedWords = selectRandomWords(validWords, blankCount);
-
-        // 4. 채점을 위해 선택한 단어들 원본 문장 순서대로 정렬
-        List<String> orderedAnswers = sortByOriginalOrder(sentence, selectedWords);
-
-        // 5. 빈칸 문제 생성
-        String question = createQuestionWithMultipleBlanks(sentence, orderedAnswers);
-
-        return new BlankQuizResult(question, orderedAnswers);
     }
 
     // ------------------------------------------------------------
     // 빈칸 퀴즈에 유효한 단어만 필터링
     // ------------------------------------------------------------
-    private boolean isValidWord(String word) {
+    private boolean isValidWord(String word, int questionNumber) {
         // 1. 제외 단어 체크
-        if (EXCLUDED_WORDS.contains(word)) return false;
+        if (EXCLUDED_WORDS_BASIC.contains(word)) return false;
+
+        if(questionNumber!=1){
+            if (EXCLUDED_WORDS_ADVANCED.contains(word)) return false;
+        }
 
         // 2. 숫자만인 단어 제외
         if (word.matches("\\d+")) return false;
@@ -282,12 +328,14 @@ public class BlankServiceImpl implements BlankService{
     private List<String> sortByOriginalOrder(String sentence, List<String> selectedWords) {
         String[] originalWords = sentence.split("\\s+");
         List<String> orderedWords = new ArrayList<>();
+        List<String> remainingSelected = new ArrayList<>(selectedWords);
 
         // 원본 문장 순서로 순회하면서 선택된 단어 찾기
         for (String originalWord : originalWords) {
-            if (selectedWords.contains(originalWord)) {
-                orderedWords.add(originalWord);
-                selectedWords.remove(originalWord); // 중복 처리
+            String cleanOriginalWord = originalWord.replaceAll("[^a-zA-Z]", "");
+            if (remainingSelected.contains(cleanOriginalWord)) {
+                orderedWords.add(cleanOriginalWord);
+                remainingSelected.remove(cleanOriginalWord);    // 중복 처리
             }
         }
         return orderedWords;
@@ -329,31 +377,10 @@ public class BlankServiceImpl implements BlankService{
         }
     }
 
-
-
-    // ------------------------------------------------------------
-    // questionNumber에 따라 적절한 BlankEntity 선택
-    // ------------------------------------------------------------
-    private BlankEntity selectBlankByQuestionNumber(List<BlankEntity> blanks, Integer questionNumber) {
-        if (blanks.isEmpty()) {
-            throw new BlankNotFoundException("해당 퀴즈를 찾을 수 없습니다.");
-        }
-        switch (questionNumber) {
-            case 1:
-                return blanks.get(0);
-            case 2:
-                return blanks.get(1);
-            case 3:
-                return blanks.get(2);
-            default:
-                return blanks.get(0);
-        }
-    }
-
     // ------------------------------------------------------------
     // BlankEntity를 BlankQuestionResponse로 변환
     // ------------------------------------------------------------
-    private BlankQuestionResponse convertToBlankQuestionResponse(BlankEntity blank) {
+    private BlankQuestionResponse convertToBlankQuestionResponse(BlankEntity blank, Song song) {
         // answer 배열을 List로 변환
         List<String> answerList = Arrays.asList(blank.getAnswer());
 
@@ -361,7 +388,9 @@ public class BlankServiceImpl implements BlankService{
                 .blankId(blank.getBlankId())
                 .learnedSongId(blank.getLearnedSongId())
                 .songId(blank.getSongId())
-                .recommendationSentenceId(123L) // TODO: recommendation_sentence 테이블 연결하면 수정
+                .title(song.getTitle())
+                .artists(song.getArtists())
+                .recommendationSentenceId(-1L)
                 .originSentence(blank.getOriginSentence())
                 .korean(blank.getKorean())
                 .question(blank.getQuestion())
