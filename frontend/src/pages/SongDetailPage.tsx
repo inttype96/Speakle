@@ -339,12 +339,8 @@ export default function SongDetailPage() {
                   </div>
                 ) : data?.lyricChunks && data.lyricChunks.length > 0 ? (
                   <>
-                    {console.log('🚀 Rendering SynchronizedLyrics with:', {
-                      chunksCount: data.lyricChunks.length,
-                      currentTime: currentPlayTime,
-                      isPlaying
-                    })}
                     <SynchronizedLyrics
+                      songId={data.songId}
                       lyricChunks={data.lyricChunks}
                       currentTime={currentPlayTime}
                       isPlaying={isPlaying}
@@ -352,12 +348,6 @@ export default function SongDetailPage() {
                   </>
                 ) : (
                   <>
-                    {console.log('❌ No lyrics available:', {
-                      hasData: !!data,
-                      hasLyricChunks: !!data?.lyricChunks,
-                      lyricChunksLength: data?.lyricChunks?.length,
-                      lyricChunks: data?.lyricChunks
-                    })}
                     <div className="flex items-center justify-center h-[60vh] text-muted-foreground">
                       <p>동기화된 가사를 불러올 수 없습니다.</p>
                     </div>
