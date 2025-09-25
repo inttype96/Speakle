@@ -66,10 +66,10 @@ const buildSongDetailLink = (songId: string, situation?: string, location?: stri
   return `/songs/${songId}${queryString ? `?${queryString}` : ""}`;
 };
 
-const DIFFICULTY_MAP: Record<Difficulty, { label: string; variant?: "default" | "secondary" | "destructive" | "outline" }> = {
-  LOW: { label: "쉬움", variant: "secondary" },
-  MEDIUM: { label: "보통", variant: "default" },
-  HIGH: { label: "어려움", variant: "destructive" },
+const DIFFICULTY_MAP: Record<Difficulty, { label: string; className: string }> = {
+  LOW: { label: "쉬움", className: "bg-green-600/80 text-white border-green-500/50 hover:bg-green-500/90" },
+  MEDIUM: { label: "보통", className: "bg-yellow-600/80 text-white border-yellow-500/50 hover:bg-yellow-500/90" },
+  HIGH: { label: "어려움", className: "bg-red-600/80 text-white border-red-500/50 hover:bg-red-500/90" },
 };
 
 const sorters: Record<SortKey, (a: UnifiedSong, b: UnifiedSong) => number> = {
@@ -129,26 +129,34 @@ export default function SongListView({
   }, [filteredSorted, showFeaturedSection]);
 
   return (
-    <div className="space-y-6 pt-8">
+    <div className="space-y-8 pt-2 font-sans">
+      {/* Google Fonts Link */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Pretendard:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+      />
       {/* 헤더 */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        <p className="text-sm text-muted-foreground">{subtitle}</p>
+      <div className="space-y-3 text-center">
+        <h1 className="text-3xl font-bold tracking-tight font-['Pretendard'] text-white">{title}</h1>
+        <p className="text-base text-gray-300 font-['Pretendard'] font-medium max-w-2xl mx-auto leading-relaxed">{subtitle}</p>
       </div>
 
       {/* 추천 키워드 (추천 페이지에서만) */}
       {showRecommendationKeywords && keywords && (
-        <Card className="bg-gradient-to-r from-[#4B2199]/10 to-[#7070BA]/10 border-[#4B2199]/20">
-          <CardContent className="pt-5 pb-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-foreground">이런 표현을 배울 수 있어요</h3>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => setShowKeywords(!showKeywords)}
-                  className="bg-[#4B2199] hover:bg-[#B5A6E0] hover:text-black text-white"
-                >
+        <div className="max-w-5xl mx-auto">
+          <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl">
+            <CardContent className="pt-5 pb-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-white font-['Pretendard']">이런 표현을 배울 수 있어요</h3>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setShowKeywords(!showKeywords)}
+                    className="bg-[#4B2199] hover:bg-[#B5A6E0] hover:text-black text-white font-['Pretendard'] font-semibold rounded-xl px-3 py-1.5 text-sm transition-all duration-300"
+                  >
                   {showKeywords ? (
                     <>
                       접기 <ChevronUp className="ml-1 h-4 w-4" />
@@ -166,12 +174,12 @@ export default function SongListView({
                 const currentKeywords = allKeywords.slice(keywordPage * 10, (keywordPage + 1) * 10);
 
                 return (
-                  <div className="pt-2">
+                  <div className="pt-3">
                     <div className="flex flex-wrap gap-2">
                       {currentKeywords.map((keyword, idx) => (
                         <Badge
                           key={idx}
-                          className="bg-[#B5A6E0] text-black hover:bg-[#4B2199] hover:text-white text-sm px-3 py-1"
+                          className="bg-white/20 text-white border-white/30 hover:bg-[#B5A6E0] hover:text-black transition-all duration-300 text-xs px-3 py-1.5 font-['Pretendard'] font-medium rounded-lg"
                         >
                           {keyword}
                         </Badge>
@@ -188,7 +196,7 @@ export default function SongListView({
                         >
                           <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-sm text-white/70 font-['Pretendard'] font-medium">
                           {keywordPage + 1} / {totalPages}
                         </span>
                         <Button
@@ -208,36 +216,38 @@ export default function SongListView({
             </div>
           </CardContent>
         </Card>
+        </div>
       )}
 
       {/* 상위 결과 */}
-      <Card>
-        <CardContent className="p-0">
+      <div className="max-w-7xl mx-auto">
+        <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl">
+          <CardContent className="p-0">
           {loading ? (
             <FeaturedSkeleton showFeaturedSection={showFeaturedSection} />
           ) : error ? (
-            <div className="p-6 text-sm text-destructive">{error}</div>
+            <div className="p-8 text-center text-red-400 font-['Pretendard'] font-medium">{error}</div>
           ) : !top && showFeaturedSection ? (
-            <div className="p-6 text-sm text-muted-foreground">
+            <div className="p-8 text-center text-gray-300 font-['Pretendard'] font-medium">
               {emptyMessage}
               {emptyActionText && onEmptyAction && (
-                <Button variant="outline" className="ml-2" onClick={onEmptyAction}>
+                <Button variant="outline" className="ml-3 border-white/20 text-white hover:bg-white/10" onClick={onEmptyAction}>
                   {emptyActionText}
                 </Button>
               )}
             </div>
           ) : showFeaturedSection && top ? (
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-0">
-              {/* 왼쪽 메인 카드 - 크기 축소 */}
-              <div className="p-3">
+              {/* 왼쪽 메인 카드 */}
+              <div className="p-5">
                 <FeaturedCard song={top} situation={situation} location={location} searchQuery={searchQuery} />
               </div>
 
               {/* 오른쪽 리스트 */}
-              <div className="lg:col-span-3 p-3">
-                <div className="px-1 pt-1 pb-2 text-sm font-medium">상위 결과</div>
-                <ScrollArea className="max-h-[180px] pr-2">
-                  <div className="space-y-2">
+              <div className="lg:col-span-3 p-5">
+                <div className="px-2 pt-1 pb-3 text-base font-bold text-white font-['Pretendard']">상위 결과</div>
+                <ScrollArea className="max-h-[160px] pr-3">
+                  <div className="space-y-2.5">
                     {rest.map((s) => (
                       <TopResultItem key={s.songId} song={s} situation={situation} location={location} searchQuery={searchQuery} />
                     ))}
@@ -246,28 +256,29 @@ export default function SongListView({
               </div>
             </div>
           ) : null}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* 필터 & 정렬 바 */}
       {(onDifficultyChange || onSortChange) && (
-        <>
-          <div className="flex items-center gap-2">
-            <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center justify-between flex-wrap gap-3 p-3 bg-black/10 backdrop-blur-sm rounded-xl border border-white/10">
+            <div className="inline-flex items-center gap-2 text-sm text-white font-['Pretendard'] font-semibold">
               <Filter className="h-4 w-4" /> 필터 및 정렬
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {/* 정렬 */}
               {onSortChange && (
                 <Select value={sortBy} onValueChange={(v: SortKey) => onSortChange(v)}>
-                  <SelectTrigger className="w-[110px]">
+                  <SelectTrigger className="w-28 h-9 bg-black/20 backdrop-blur-sm border-white/20 text-white font-['Pretendard'] font-medium rounded-lg text-sm">
                     <SelectValue placeholder="정렬" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {!searchQuery && <SelectItem value="recommend">추천순</SelectItem>}
-                    <SelectItem value="popularity">인기순</SelectItem>
-                    <SelectItem value="duration">재생시간</SelectItem>
-                    <SelectItem value="learn">학습수</SelectItem>
+                  <SelectContent className="bg-black/90 backdrop-blur-xl border-white/20 font-['Pretendard']">
+                    {!searchQuery && <SelectItem value="recommend" className="text-white hover:bg-white/10">추천순</SelectItem>}
+                    <SelectItem value="popularity" className="text-white hover:bg-white/10">인기순</SelectItem>
+                    <SelectItem value="duration" className="text-white hover:bg-white/10">재생시간</SelectItem>
+                    <SelectItem value="learn" className="text-white hover:bg-white/10">학습수</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -275,71 +286,76 @@ export default function SongListView({
               {/* 난이도 필터 */}
               {onDifficultyChange && (
                 <Select value={difficulty} onValueChange={(v: "ALL" | Difficulty) => onDifficultyChange(v)}>
-                  <SelectTrigger className="w-[120px]">
+                  <SelectTrigger className="w-32 h-9 bg-black/20 backdrop-blur-sm border-white/20 text-white font-['Pretendard'] font-medium rounded-lg text-sm">
                     <SelectValue placeholder="모든 난이도" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">모든 난이도</SelectItem>
-                    <SelectItem value="LOW">쉬움</SelectItem>
-                    <SelectItem value="MEDIUM">보통</SelectItem>
-                    <SelectItem value="HIGH">어려움</SelectItem>
+                  <SelectContent className="bg-black/90 backdrop-blur-xl border-white/20 font-['Pretendard']">
+                    <SelectItem value="ALL" className="text-white hover:bg-white/10">모든 난이도</SelectItem>
+                    <SelectItem value="LOW" className="text-white hover:bg-white/10">쉬움</SelectItem>
+                    <SelectItem value="MEDIUM" className="text-white hover:bg-white/10">보통</SelectItem>
+                    <SelectItem value="HIGH" className="text-white hover:bg-white/10">어려움</SelectItem>
                   </SelectContent>
                 </Select>
               )}
             </div>
           </div>
-          <Separator />
-        </>
+        </div>
       )}
 
       {/* 카드 그리드 */}
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="overflow-hidden">
-              <Skeleton className="aspect-[4/3] w-full" />
-              <div className="p-4 space-y-2">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-1/2" />
-              </div>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {gridList.map((s) => (
-              <SongCard key={s.songId} song={s} situation={situation} location={location} searchQuery={searchQuery} />
+      <div className="max-w-7xl mx-auto">
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <Card key={i} className="overflow-hidden bg-black/20 backdrop-blur-sm border border-white/10">
+                <Skeleton className="aspect-square w-full bg-white/10" />
+                <div className="p-4 space-y-2">
+                  <Skeleton className="h-4 w-3/4 bg-white/10" />
+                  <Skeleton className="h-3 w-1/2 bg-white/10" />
+                </div>
+              </Card>
             ))}
           </div>
-
-          {/* 페이지네이션 */}
-          {totalPages > 1 && onPageChange && (
-            <div className="flex justify-center pt-6">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={onPageChange}
-              />
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+              {gridList.map((s) => (
+                <SongCard key={s.songId} song={s} situation={situation} location={location} searchQuery={searchQuery} />
+              ))}
             </div>
-          )}
 
-          {/* 더 보기 (페이지네이션이 없을 때만) */}
-          {showMoreButton && onShowMore && !onPageChange && (
-            <div className="flex justify-center pt-6">
-              <Button variant="outline" onClick={onShowMore}>
-                더 보기
-              </Button>
-            </div>
-          )}
-        </>
-      )}
+            {/* 페이지네이션 */}
+            {totalPages > 1 && onPageChange && (
+              <div className="flex justify-center pt-6">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={onPageChange}
+                />
+              </div>
+            )}
+
+            {/* 더 보기 (페이지네이션이 없을 때만) */}
+            {showMoreButton && onShowMore && !onPageChange && (
+              <div className="flex justify-center pt-6">
+                <Button
+                  variant="outline"
+                  onClick={onShowMore}
+                  className="border-white/20 text-white hover:bg-white/10 font-['Pretendard'] font-semibold px-6 py-2.5 rounded-lg text-sm"
+                >
+                  더 보기
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
 function FeaturedCard({ song, situation, location, searchQuery }: { song: UnifiedSong; situation?: string; location?: string; searchQuery?: string }) {
-  const diff = DIFFICULTY_MAP[song.level] || { label: "보통", variant: "default" as const };
+  const diff = DIFFICULTY_MAP[song.level] || { label: "보통", className: "bg-yellow-600/80 text-white border-yellow-500/50 hover:bg-yellow-500/90" };
   const to = buildSongDetailLink(song.songId, situation, location, searchQuery);
   const { isSaved, isLoading, saveToPlaylist } = usePlaylistSave(song.songId);
 
@@ -357,25 +373,26 @@ function FeaturedCard({ song, situation, location, searchQuery }: { song: Unifie
   };
 
   return (
-    <Card className="overflow-hidden relative">
+    <Card className="overflow-hidden relative group bg-black/20 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20">
       <Link to={to} className="absolute inset-0 z-10" aria-label={`${song.title} 상세 보기`} />
 
-      <div className="aspect-square bg-muted relative">
+      <div className="aspect-square bg-black/30 relative overflow-hidden">
         <img
           src={hasValidImage ? song.albumImgUrl : "/albumBasicCover.png"}
           alt={song.title}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
         <div className="absolute left-2 top-2">
-          <Badge variant={diff.variant || "default" } className="text-xs">{diff.label}</Badge>
+          <Badge className={`text-xs backdrop-blur-sm border font-['Pretendard'] font-medium px-2 py-0.5 transition-colors duration-200 ${diff.className}`}>{diff.label}</Badge>
         </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
-      <CardHeader className="pb-1 p-3">
-        <CardTitle className="text-sm truncate">{song.title}</CardTitle>
-        <p className="text-xs text-muted-foreground truncate">{song.artists.replace(/[\[\]']/g, '')}</p>
+      <CardHeader className="pb-1.5 p-3">
+        <CardTitle className="text-sm truncate text-white font-['Pretendard'] font-semibold group-hover:text-purple-200 transition-colors duration-300">{song.title}</CardTitle>
+        <p className="text-xs text-gray-300 truncate font-['Pretendard'] font-medium">{song.artists.replace(/[\[\]']/g, '')}</p>
       </CardHeader>
-      <CardContent className="pt-0 p-3 flex items-center justify-between text-xs text-muted-foreground">
-        <div className="flex items-center gap-2">
+      <CardContent className="pt-0 p-3 flex items-center justify-between text-xs text-gray-400">
+        <div className="flex items-center gap-2 font-['Pretendard'] font-medium">
           <span className="inline-flex items-center gap-1">
             <Clock className="h-3 w-3" />
             {msToMinSec(song.durationMs)}
@@ -385,11 +402,11 @@ function FeaturedCard({ song, situation, location, searchQuery }: { song: Unifie
             {song.popularity}
           </span>
         </div>
-        <div className="flex items-center gap-1 z-20 relative">
+        <div className="flex items-center gap-1.5 z-20 relative opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <Button
             size="icon"
             variant="ghost"
-            className="rounded-full h-7 w-7"
+            className="rounded-full h-7 w-7 hover:bg-white/10 transition-colors duration-200"
             onClick={handleSaveToPlaylist}
             disabled={isLoading}
           >
@@ -415,7 +432,7 @@ function FeaturedCard({ song, situation, location, searchQuery }: { song: Unifie
 }
 
 function TopResultItem({ song, situation, location, searchQuery }: { song: UnifiedSong; situation?: string; location?: string; searchQuery?: string }) {
-  const diff = DIFFICULTY_MAP[song.level] || { label: "보통", variant: "default" as const };
+  const diff = DIFFICULTY_MAP[song.level] || { label: "보통", className: "bg-yellow-600/80 text-white border-yellow-500/50 hover:bg-yellow-500/90" };
   const to = buildSongDetailLink(song.songId, situation, location, searchQuery);
   const { isSaved, isLoading, saveToPlaylist } = usePlaylistSave(song.songId);
 
@@ -446,7 +463,7 @@ function TopResultItem({ song, situation, location, searchQuery }: { song: Unifi
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="truncate font-medium">{song.title}</span>
-          <Badge variant={diff.variant || "default"}>{diff.label}</Badge>
+          <Badge className={`text-xs backdrop-blur-sm border font-['Pretendard'] font-medium px-2 py-0.5 transition-colors duration-200 ${diff.className}`}>{diff.label}</Badge>
         </div>
         <div className="truncate text-sm text-muted-foreground">{song.artists.replace(/[\[\]']/g, '')}</div>
       </div>
@@ -481,7 +498,7 @@ function TopResultItem({ song, situation, location, searchQuery }: { song: Unifi
 }
 
 function SongCard({ song, situation, location, searchQuery }: { song: UnifiedSong; situation?: string; location?: string; searchQuery?: string }) {
-  const diff = DIFFICULTY_MAP[song.level] || { label: "보통", variant: "default" as const };
+  const diff = DIFFICULTY_MAP[song.level] || { label: "보통", className: "bg-yellow-600/80 text-white border-yellow-500/50 hover:bg-yellow-500/90" };
   const to = buildSongDetailLink(song.songId, situation, location, searchQuery);
   const { isSaved, isLoading, saveToPlaylist } = usePlaylistSave(song.songId);
 
@@ -509,7 +526,7 @@ function SongCard({ song, situation, location, searchQuery }: { song: UnifiedSon
           className="h-full w-full object-cover"
         />
         <div className="absolute left-3 top-3">
-          <Badge variant={diff.variant || "default"}>{diff.label}</Badge>
+          <Badge className={`text-xs backdrop-blur-sm border font-['Pretendard'] font-medium px-2 py-0.5 transition-colors duration-200 ${diff.className}`}>{diff.label}</Badge>
         </div>
         <div className="absolute right-3 top-3 flex gap-1 z-20">
           <Button

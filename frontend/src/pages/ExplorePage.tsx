@@ -106,50 +106,61 @@ export default function ExplorePage() {
   };
 
   return (
-    <div className="bg-background text-foreground">
+    <div className="bg-background text-foreground font-sans">
+        {/* Google Fonts Link */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Pretendard:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+
         {/* Navbar + 스페이서 */}
         <Navbar />
         <div aria-hidden className="h-16 md:h-20" />
 
       {/* 헤드셋 로고 */}
-      <div className="flex justify-center mt-8 mb-1">
-        <div className="relative">
+      <div className="flex justify-center mt-12 mb-8">
+        <div className="relative group">
           <img
             src={HeadphoneImage}
             alt="Headset"
-            className="w-44 h-44 object-contain"
+            className="w-56 h-56 object-contain transition-all duration-500 group-hover:scale-105 filter drop-shadow-2xl"
           />
-          <h1 className="absolute inset-0 flex items-center justify-center text-4xl font-extrabold font-poppins">
+          <h1 className="absolute inset-0 flex items-center justify-center text-5xl font-black font-['Inter'] transition-all duration-300 group-hover:text-purple-600">
             Speakle
           </h1>
         </div>
       </div>
 
       {/* 상단 헤더 */}
-      <div className="text-center space-y-2 mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight">나만의 음악 찾기</h1>
-        <p className="text-muted-foreground">
+      <div className="text-center space-y-4 mb-12">
+        <h1 className="text-4xl font-bold tracking-tight font-['Pretendard'] text-white">
+          나만의 음악 찾기
+        </h1>
+        <p className="text-lg text-muted-foreground font-['Pretendard'] font-medium max-w-2xl mx-auto leading-relaxed">
           영어를 배우고 싶은 상황과 장소를 선택하면 당신에게 맞춘 곡을 추천해드려요.
         </p>
       </div>
 
       {/* 상황 */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">어떤 상황에서 사용할 표현을 팝송으로 배우고 싶으신가요?</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ToggleGroup
-            type="single"
-            value={situation}
-            onValueChange={(v) => {
-              if (v) {
-                setSituation(v);
-                setCustomSituation("");
-              }
-            }}
-            className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-          >
+      <div className="max-w-6xl mx-auto px-4">
+        <Card className="mb-8 backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl font-['Pretendard'] font-bold text-center">어떤 상황에서 사용할 표현을 팝송으로 배우고 싶으신가요?</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <ToggleGroup
+              type="single"
+              value={situation}
+              onValueChange={(v) => {
+                if (v) {
+                  setSituation(v);
+                  setCustomSituation("");
+                }
+              }}
+              className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+            >
             {SITUATIONS.map((opt) => (
               <ToggleTile key={opt.value} option={opt} />
             ))}
@@ -159,51 +170,52 @@ export default function ExplorePage() {
             <button
               onClick={() => setShowMoreSituations(!showMoreSituations)}
               className={cn(
-                "h-20 justify-center rounded-xl border bg-card text-card-foreground",
-                "hover:bg-[#B5A6E0] hover:text-black px-4 py-3 flex items-center gap-2"
+                "h-24 justify-center rounded-2xl backdrop-blur-sm bg-white/20 border border-white/30",
+                "hover:bg-[#B5A6E0] hover:text-black hover:border-[#B5A6E0]",
+                "px-6 py-4 flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-xl"
               )}
             >
               <Plus className="size-5" />
-              <span className="font-medium">{showMoreSituations ? "간단히 보기" : "더보기"}</span>
+              <span className="font-medium font-['Pretendard']">{showMoreSituations ? "간단히 보기" : "더보기"}</span>
             </button>
           </ToggleGroup>
 
-          {showMoreSituations && (
-            <div className="mt-4">
-              <div className="flex items-center gap-2">
-                <Edit3 className="size-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="직접 입력하기 (예: 데이트, 집들이 등)"
-                  value={customSituation}
-                  onChange={(e) => {
-                    setCustomSituation(e.target.value);
-                    if (e.target.value) setSituation("");
-                  }}
-                  className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4B2199] focus-visible:ring-offset-2"
-                />
+            {showMoreSituations && (
+              <div className="mt-6 col-span-full">
+                <div className="flex items-center gap-3 backdrop-blur-sm bg-white/10 rounded-2xl p-4 border border-white/20">
+                  <Edit3 className="size-5 text-purple-400" />
+                  <input
+                    type="text"
+                    placeholder="직접 입력하기 (예: 데이트, 집들이 등)"
+                    value={customSituation}
+                    onChange={(e) => {
+                      setCustomSituation(e.target.value);
+                      if (e.target.value) setSituation("");
+                    }}
+                    className="flex-1 h-12 rounded-xl border-0 bg-white/20 backdrop-blur-sm px-4 py-3 text-base font-['Pretendard'] font-medium placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/50 focus-visible:bg-white/30 transition-all duration-300"
+                  />
+                </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* 장소 */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">어떤 장소에서 사용할 표현을 팝송으로 배우고 싶으신가요?</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ToggleGroup
-            type="single"
-            value={location}
-            onValueChange={(v) => {
-              if (v) {
-                setLocation(v);
-                setCustomLocation("");
-              }
-            }}
-            className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+        {/* 장소 */}
+        <Card className="mb-8 backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl font-['Pretendard'] font-bold text-center">어떤 장소에서 사용할 표현을 팝송으로 배우고 싶으신가요?</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <ToggleGroup
+              type="single"
+              value={location}
+              onValueChange={(v) => {
+                if (v) {
+                  setLocation(v);
+                  setCustomLocation("");
+                }
+              }}
+              className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
           >
             {LOCATIONS.map((opt) => (
               <ToggleTile key={opt.value} option={opt} />
@@ -214,50 +226,57 @@ export default function ExplorePage() {
             <button
               onClick={() => setShowMoreLocations(!showMoreLocations)}
               className={cn(
-                "h-20 justify-center rounded-xl border bg-card text-card-foreground",
-                "hover:bg-[#B5A6E0] hover:text-black px-4 py-3 flex items-center gap-2"
+                "h-24 justify-center rounded-2xl backdrop-blur-sm bg-white/20 border border-white/30",
+                "hover:bg-[#B5A6E0] hover:text-black hover:border-[#B5A6E0]",
+                "px-6 py-4 flex items-center gap-3 transition-all duration-300 hover:scale-105 hover:shadow-xl"
               )}
             >
               <Plus className="size-5" />
-              <span className="font-medium">{showMoreLocations ? "간단히 보기" : "더보기"}</span>
+              <span className="font-medium font-['Pretendard']">{showMoreLocations ? "간단히 보기" : "더보기"}</span>
             </button>
           </ToggleGroup>
 
-          {showMoreLocations && (
-            <div className="mt-4">
-              <div className="flex items-center gap-2">
-                <Edit3 className="size-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="직접 입력하기 (예: 놀이공원, 영화관 등)"
-                  value={customLocation}
-                  onChange={(e) => {
-                    setCustomLocation(e.target.value);
-                    if (e.target.value) setLocation("");
-                  }}
-                  className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4B2199] focus-visible:ring-offset-2"
-                />
+            {showMoreLocations && (
+              <div className="mt-6 col-span-full">
+                <div className="flex items-center gap-3 backdrop-blur-sm bg-white/10 rounded-2xl p-4 border border-white/20">
+                  <Edit3 className="size-5 text-purple-400" />
+                  <input
+                    type="text"
+                    placeholder="직접 입력하기 (예: 놀이공원, 영화관 등)"
+                    value={customLocation}
+                    onChange={(e) => {
+                      setCustomLocation(e.target.value);
+                      if (e.target.value) setLocation("");
+                    }}
+                    className="flex-1 h-12 rounded-xl border-0 bg-white/20 backdrop-blur-sm px-4 py-3 text-base font-['Pretendard'] font-medium placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/50 focus-visible:bg-white/30 transition-all duration-300"
+                  />
+                </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* 추천 버튼 */}
-      <div className="flex justify-center">
-        <Button size="lg" className="px-6" onClick={handleRecommend} disabled={!canRecommend}>
-          추천 받고 영어 학습 시작하기
-        </Button>
-      </div>
-
-      {/* 하단 안내 */}
-      <div className="mt-8 text-sm text-muted-foreground">
-        <Card>
-          <CardContent className="space-y-1 py-4">
-            <p>• 상황, 장소 하나 이상을 선택할수록 추천 정확도가 높아집니다.</p>
-            <p>• 추천은 선택된 키워드를 바탕으로 영어 학습에 적합한 곡을 우선 제공합니다.</p>
+            )}
           </CardContent>
         </Card>
+
+        {/* 추천 버튼 */}
+        <div className="flex justify-center mb-8">
+          <Button
+            size="lg"
+            className="px-12 py-4 text-lg font-['Pretendard'] font-bold bg-gradient-to-r from-purple-600 to-purple-600 hover:from-purple-700 hover:to-blue-700 rounded-2xl shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105 backdrop-blur-sm border-0"
+            onClick={handleRecommend}
+            disabled={!canRecommend}
+          >
+             추천 받고 영어 학습 시작하기
+          </Button>
+        </div>
+
+        {/* 하단 안내 */}
+        <div className="text-sm text-muted-foreground">
+          <Card className="backdrop-blur-xl bg-white/5 border border-white/10">
+            <CardContent className="space-y-2 py-6 font-['Pretendard'] font-medium text-center">
+              <p className="flex items-center justify-center gap-2">💡 상황, 장소 하나 이상을 선택할수록 추천 정확도가 높아집니다.</p>
+              <p className="flex items-center justify-center gap-2">  추천은 선택된 키워드를 바탕으로 영어 학습에 적합한 곡을 우선 제공합니다.</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
@@ -275,14 +294,15 @@ function ToggleTile({
       value={option.value}
       aria-label={option.label}
       className={cn(
-        "h-20 justify-start rounded-xl border bg-card text-card-foreground",
-        "data-[state=on]:bg-[#4B2199] data-[state=on]:text-white data-[state=on]:border-[#4B2199]",
-        "hover:bg-[#B5A6E0] hover:text-black px-4 py-3 text-left"
+        "h-24 justify-start rounded-2xl backdrop-blur-sm bg-white/20 border border-white/30 text-foreground",
+        "data-[state=on]:bg-[#4B2199] data-[state=on]:text-white data-[state=on]:border-[#4B2199] data-[state=on]:shadow-xl",
+        "hover:bg-[#B5A6E0] hover:text-black hover:border-[#B5A6E0]",
+        "px-6 py-4 text-left transition-all duration-300 hover:scale-105 hover:shadow-lg"
       )}
     >
-      <div className="flex items-center gap-3">
-        {Icon ? <Icon className="size-5 shrink-0" /> : null}
-        <div className="font-medium">{option.label}</div>
+      <div className="flex items-center gap-4">
+        {Icon ? <Icon className="size-6 shrink-0" /> : null}
+        <div className="font-semibold text-base font-['Pretendard']">{option.label}</div>
       </div>
     </ToggleGroupItem>
   );

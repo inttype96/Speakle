@@ -19,6 +19,7 @@ import com.sevencode.speakle.parser.service.ContextAwareLyricTranslationService;
 import com.sevencode.speakle.parser.repository.SentenceRepository;
 import com.sevencode.speakle.parser.entity.SentenceEntity;
 import com.sevencode.speakle.playlist.service.CustomPlaylistService;
+import com.sevencode.speakle.spotify.service.SpotifyService;
 
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,7 @@ public class SongService {
     private final LyricsParsingService lyricsParsingService;
     private final ContextAwareLyricTranslationService contextAwareLyricTranslationService;
     private final LearningSentenceRepository learningSentenceRepository;
+    private final SpotifyService spotifyService;
     private final SentenceRepository sentenceRepository;
     private final CustomPlaylistService customPlaylistService;
 
@@ -410,6 +412,108 @@ public class SongService {
                             songId, error.getMessage(), error);
                 })
                 .subscribe(); // 비동기 실행 (결과 기다리지 않음)
+    }
+
+    /**
+     * 특정 곡의 앨범 이미지를 Spotify에서 가져와서 업데이트합니다.
+     * 수정(소연)
+     *
+     * @param songId 곡 ID
+     * @return 업데이트 성공 여부
+     */
+    public boolean updateAlbumImageFromSpotify(String songId) {
+        try {
+            Optional<Song> songOpt = songRepository.findById(songId);
+            if (songOpt.isEmpty()) {
+                log.warn("곡을 찾을 수 없습니다 - songId: {}", songId);
+                return false;
+            }
+
+            Song song = songOpt.get();
+
+            // 이미 앨범 이미지가 있고 유효한 URL인 경우 스킵
+            if (song.getAlbumImgUrl() != null &&
+                song.getAlbumImgUrl().startsWith("https://") &&
+                song.getAlbumImgUrl().contains("spotify")) {
+                log.info("이미 Spotify 앨범 이미지가 있습니다 - songId: {}", songId);
+                return true;
+            }
+
+            String newImageUrl = spotifyService.getAlbumImageUrl(song.getTitle(), song.getArtists());
+            if (newImageUrl != null) {
+                song.setAlbumImgUrl(newImageUrl);
+                songRepository.save(song);
+                log.info("앨범 이미지 업데이트 성공 - songId: {}, url: {}", songId, newImageUrl);
+                return true;
+            } else {
+                log.warn("Spotify에서 앨범 이미지를 찾을 수 없습니다 - songId: {}, title: {}, artist: {}",
+                        songId, song.getTitle(), song.getArtists());
+                return false;
+            }
+
+        } catch (Exception e) {
+            log.error("앨범 이미지 업데이트 실패 - songId: {}", songId, e);
+            return false;
+        }
+    }
+
+    /**
+     * 모든 곡의 앨범 이미지를 Spotify에서 가져와서 업데이트합니다.
+     * 수정(소연)
+     *
+     * @param limit 처리할 곡 수 제한 (null이면 전체)
+     * @return 업데이트 성공한 곡 수
+     */
+    public int updateAllAlbumImagesFromSpotify(Integer limit) {
+        try {
+            Pageable pageable = limit != null ?
+                PageRequest.of(0, limit) :
+                PageRequest.of(0, Integer.MAX_VALUE);
+
+            // 앨범 이미지가 없거나 Spotify URL이 아닌 곡들을 우선적으로 처리
+            Page<Song> songsPage = songRepository.findByAlbumImgUrlIsNullOrAlbumImgUrlNotLike("https://i.scdn.co%", pageable);
+
+            int successCount = 0;
+            int totalCount = songsPage.getContent().size();
+
+            log.info("앨범 이미지 일괄 업데이트 시작 - 총 {}곡", totalCount);
+
+            for (Song song : songsPage.getContent()) {
+                try {
+                    String newImageUrl = spotifyService.getAlbumImageUrl(song.getTitle(), song.getArtists());
+                    if (newImageUrl != null) {
+                        song.setAlbumImgUrl(newImageUrl);
+                        songRepository.save(song);
+                        successCount++;
+                        log.info("앨범 이미지 업데이트 성공 ({}/{}) - songId: {}",
+                                successCount, totalCount, song.getSongId());
+                    }
+
+                    // API 레이트 리밋을 피하기 위한 딜레이
+                    Thread.sleep(100); // 100ms 대기
+
+                } catch (Exception e) {
+                    log.error("개별 곡 앨범 이미지 업데이트 실패 - songId: {}", song.getSongId(), e);
+                }
+            }
+
+            log.info("앨범 이미지 일괄 업데이트 완료 - 성공: {}/{}", successCount, totalCount);
+            return successCount;
+
+        } catch (Exception e) {
+            log.error("앨범 이미지 일괄 업데이트 실패", e);
+            return 0;
+        }
+    }
+
+    /**
+     * 앨범 이미지가 없는 곡들의 개수를 반환합니다.
+     * 수정(소연)
+     *
+     * @return 앨범 이미지가 없는 곡 수
+     */
+    public long countSongsWithoutAlbumImage() {
+        return songRepository.countByAlbumImgUrlIsNullOrAlbumImgUrlNotLike("https://i.scdn.co%");
     }
 
 }
