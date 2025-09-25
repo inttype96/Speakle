@@ -74,41 +74,89 @@ export default function DictationPage() {
 
   // 노래 재생 시간 업데이트 핸들러
   const handleTimeUpdate = useCallback((time: number, playing: boolean) => {
+    // 입력 값 검증
+    if (typeof time !== 'number' || isNaN(time) || time < 0) {
+      console.warn('handleTimeUpdate: 유효하지 않은 time 값:', time);
+      return;
+    }
+    
+    if (typeof playing !== 'boolean') {
+      console.warn('handleTimeUpdate: 유효하지 않은 playing 값:', playing);
+      return;
+    }
+    
     setCurrentTime(time);
     setIsPlaying(playing);
     
-    if (item && !hasStarted && playing) {
+    // item이 유효한지 확인
+    if (!item) {
+      console.warn('handleTimeUpdate: item이 null 또는 undefined입니다');
+      return;
+    }
+    
+    if (!hasStarted && playing) {
       setHasStarted(true);
     }
     
     // endTime에 도달했을 때 재생이 정지되었는지 확인
-    if (item && item.endTime && time >= item.endTime && !playing) {
+    if (item.endTime && typeof item.endTime === 'number' && time >= item.endTime && !playing) {
       setHasStarted(true); // 재생이 완료되었음을 표시
     }
   }, [item, hasStarted]);
 
   // 문제 로드
   const fetchQuestion = useCallback(async (no: number) => {
-    const data = await startDictation({ learnedSongId, questionNumber: no });
-    setItem(data);
-    const tks = tokenize(data.coreSentence);
-    setTokens(tks);
-    // 입력칸 개수만큼 상태 초기화 (이전 값 유지 X — 재시도 시에는 모달만 닫고 그대로 유지)
-    const blanksCount = tks.filter((t) => t.isInput).length;
-    setAnswers((prev) => (prev.length === blanksCount ? prev : Array(blanksCount).fill("")));
-    
-    // 노래 재생 상태 초기화
-    setHasStarted(false);
-    setCurrentTime(0);
-    setIsPlaying(false);
-    // replayKey를 증가시켜서 SpotifyWebPlayer를 완전히 리렌더링
-    setReplayKey(prev => prev + 1);
-    
-    // 포커스 초기화
-    setTimeout(() => {
-      const first = inputsRef.current.find((el) => !!el);
-      first?.focus();
-    }, 0);
+    try {
+      // 입력 값 검증
+      if (typeof no !== 'number' || isNaN(no) || no < 1) {
+        console.error('fetchQuestion: 유효하지 않은 문제 번호:', no);
+        return;
+      }
+      
+      if (typeof learnedSongId !== 'number' || isNaN(learnedSongId) || learnedSongId < 1) {
+        console.error('fetchQuestion: 유효하지 않은 learnedSongId:', learnedSongId);
+        return;
+      }
+      
+      const data = await startDictation({ learnedSongId, questionNumber: no });
+      
+      // 응답 데이터 검증
+      if (!data) {
+        console.error('fetchQuestion: 서버에서 빈 응답을 받았습니다');
+        return;
+      }
+      
+      if (!data.coreSentence || typeof data.coreSentence !== 'string') {
+        console.error('fetchQuestion: 유효하지 않은 coreSentence:', data.coreSentence);
+        return;
+      }
+      
+      setItem(data);
+      const tks = tokenize(data.coreSentence);
+      setTokens(tks);
+      // 입력칸 개수만큼 상태 초기화 (이전 값 유지 X — 재시도 시에는 모달만 닫고 그대로 유지)
+      const blanksCount = tks.filter((t) => t.isInput).length;
+      setAnswers((prev) => (prev.length === blanksCount ? prev : Array(blanksCount).fill("")));
+      
+      // 노래 재생 상태 초기화
+      setHasStarted(false);
+      setCurrentTime(0);
+      setIsPlaying(false);
+      // replayKey를 증가시켜서 SpotifyWebPlayer를 완전히 리렌더링
+      setReplayKey(prev => prev + 1);
+      
+      // 포커스 초기화
+      setTimeout(() => {
+        const first = inputsRef.current.find((el) => !!el);
+        first?.focus();
+      }, 0);
+    } catch (error) {
+      console.error('fetchQuestion 에러:', error);
+      // 에러 발생 시 기본값으로 설정
+      setItem(null);
+      setTokens([]);
+      setAnswers([]);
+    }
   }, [learnedSongId]);
 
   useEffect(() => {
@@ -213,7 +261,22 @@ export default function DictationPage() {
 
   // 제출
   const onSubmit = useCallback(async () => {
-    if (!item) return;
+    // item 유효성 검증
+    if (!item) {
+      console.error('onSubmit: item이 null 또는 undefined입니다');
+      return;
+    }
+    
+    if (!item.coreSentence || typeof item.coreSentence !== 'string') {
+      console.error('onSubmit: 유효하지 않은 coreSentence:', item.coreSentence);
+      return;
+    }
+    
+    if (!item.dictationId || typeof item.dictationId !== 'number') {
+      console.error('onSubmit: 유효하지 않은 dictationId:', item.dictationId);
+      return;
+    }
+    
     const correct = item.coreSentence;
     const userAnswer = composedUserAnswer;
 
@@ -222,14 +285,19 @@ export default function DictationPage() {
     setResultMsg(isCorrect ? "정답입니다!" : "오답입니다!");
     setOpenResult(true);
 
-    // 점수 규칙: 정답 5점/오답 0점
-    await submitDictation({
-      userId: userId || 0,
-      dictationId: item.dictationId,
-      isCorrect,
-      score: isCorrect ? 5 : 0,
-      meta: { userAnswer, correctAnswer: correct },
-    });
+    try {
+      // 점수 규칙: 정답 5점/오답 0점
+      await submitDictation({
+        userId: userId || 0,
+        dictationId: item.dictationId,
+        isCorrect,
+        score: isCorrect ? 5 : 0,
+        meta: { userAnswer, correctAnswer: correct },
+      });
+    } catch (error) {
+      console.error('submitDictation 에러:', error);
+      // 에러가 발생해도 UI는 정상적으로 표시
+    }
   }, [item, composedUserAnswer, userId]);
 
   // 다음 문제

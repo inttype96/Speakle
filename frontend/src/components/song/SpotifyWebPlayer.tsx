@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { ElasticSlider } from '@/components/ui/elastic-slider'
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react'
@@ -95,6 +95,49 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
   const [duration, setDuration] = useState(0)
   const [isSDKReady, setIsSDKReady] = useState(false)
 
+  // startTime과 endTime 입력 검증
+  const validateTimeValues = useCallback(() => {
+    const errors: string[] = []
+    
+    if (startTime !== undefined) {
+      if (typeof startTime !== 'number' || isNaN(startTime)) {
+        errors.push('startTime은 유효한 숫자여야 합니다')
+      } else if (startTime < 0) {
+        errors.push('startTime은 0 이상이어야 합니다')
+      }
+    }
+    
+    if (endTime !== undefined) {
+      if (typeof endTime !== 'number' || isNaN(endTime)) {
+        errors.push('endTime은 유효한 숫자여야 합니다')
+      } else if (endTime < 0) {
+        errors.push('endTime은 0 이상이어야 합니다')
+      }
+    }
+    
+    if (startTime !== undefined && endTime !== undefined) {
+      if (startTime >= endTime) {
+        errors.push('endTime은 startTime보다 커야 합니다')
+      }
+    }
+    
+    if (errors.length > 0) {
+      console.warn('SpotifyWebPlayer 시간 값 검증 실패:', errors.join(', '))
+      return false
+    }
+    
+    return true
+  }, [startTime, endTime])
+
+  // 검증된 시간 값들
+  const validatedStartTime = useMemo(() => {
+    return validateTimeValues() ? startTime : undefined
+  }, [startTime, validateTimeValues])
+  
+  const validatedEndTime = useMemo(() => {
+    return validateTimeValues() ? endTime : undefined
+  }, [endTime, validateTimeValues])
+
 
   // 시간 포맷팅 함수
   const formatTime = (ms: number) => {
@@ -174,10 +217,10 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         setDuration(state.track_window.current_track.duration_ms)
 
         // endTime이 설정되어 있고 도달하면 정지
-        if (endTime && !state.paused && state.position >= endTime) {
+        if (validatedEndTime && !state.paused && state.position >= validatedEndTime) {
           spotifyPlayer.pause()
           setIsPlaying(false)
-          onTimeUpdate?.(endTime, false)
+          onTimeUpdate?.(validatedEndTime, false)
           return
         }
 
@@ -234,15 +277,15 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
       setPosition((prev) => {
         const newPosition = prev + 100
         
-        // endTime이 설정되어 있고 도달하면 정지
-        if (endTime && newPosition >= endTime) {
-          if (player) {
-            player.pause()
-          }
-          setIsPlaying(false)
-          onTimeUpdate?.(endTime, false)
-          return endTime
-        }
+         // endTime이 설정되어 있고 도달하면 정지
+         if (validatedEndTime && newPosition >= validatedEndTime) {
+           if (player) {
+             player.pause()
+           }
+           setIsPlaying(false)
+           onTimeUpdate?.(validatedEndTime, false)
+           return validatedEndTime
+         }
         
         // 트랙 끝에 도달하면 정지
         if (newPosition >= duration) {
@@ -319,11 +362,11 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
       } else {
         // 새로운 트랙이거나, startTime이 설정되어 있고 현재 위치가 startTime과 다를 때
         const shouldSeekToStart = currentTrack?.id !== trackId || 
-          (startTime !== undefined && Math.abs(position - startTime) > 1000) // 1초 이상 차이날 때
+          (validatedStartTime !== undefined && Math.abs(position - validatedStartTime) > 1000) // 1초 이상 차이날 때
         
         if (shouldSeekToStart) {
           // startTime 위치에서 재생
-          await playTrack(trackId, startTime)
+          await playTrack(trackId, validatedStartTime)
         } else {
           // 같은 트랙이고 위치가 맞으면 현재 위치에서 재생
           await player.resume()
