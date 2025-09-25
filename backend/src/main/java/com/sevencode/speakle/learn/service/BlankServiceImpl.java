@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -123,12 +122,91 @@ public class BlankServiceImpl implements BlankService{
                 .orElseThrow(() -> new SongNotFoundException("존재하지 않는 곡입니다."));
 
         if (existingBlank.isPresent()) {
-            // 기존 데이터가 있으면 조회하여 반환
+            // 4-1. 기존 데이터가 있으면 조회하여 반환
             return convertToBlankQuestionResponse(existingBlank.get(), song);
         }
+        else{
+            // 4-2. 기존 데이터가 없으면 새로 생성
+            // 4-2-1. 랜덤 노래 추천인 경우
+            if(isNullOrEmpty(req.getLocation()) && isNullOrEmpty(req.getSituation())) {
+                return createRandomBlankQuestion(req, userId, song);
+            }
 
-        // 4. 기존 데이터가 없으면 새로 생성
-        return createNewBlankQuestion(req, userId, song);
+            // 4-2-2. 상황, 장소 입력한 추천인 경우
+            return createNewBlankQuestion(req, userId, song);
+        }
+
+    }
+
+    private BlankQuestionResponse createRandomBlankQuestion(BlankQuestionRequest req, Long userId, Song song) {
+        String originalSentence = null;
+        String korean = null;
+        Long recommendationSentenceId = null;
+        BlankQuizResult quizResult = null;
+
+        LearnedSongEntity learned = learnedSongRepository.findById(req.getLearnedSongId())
+                .orElseThrow(() -> new LearnedSongNotFoundException("존재하지 않는 학습곡입니다."));
+        List<SentenceEntity> sentences = speakingSentenceRepository.findBySongIdAndSituationAndLocationOrderByIdAsc(learned.getSongId(), req.getSituation(), req.getLocation());
+
+        // 해당 학습곡의 문장 개수 확인
+        if (sentences.isEmpty()) {
+            throw new NoSentenceAvailableException("해당 학습 곡에서 추출할 문장이 없습니다.");
+        }
+
+        // 시도할 문장 인덱스 목록 생성
+        List<Integer> candidateIndices = generateRandomCandidateIndices(sentences.size(), req.getQuestionNumber());
+
+        // 각 후보 문장에 대해 빈칸 문제 생성 시도
+        for (Integer index : candidateIndices) {
+            if (index < sentences.size()) {
+                SentenceEntity sentence = sentences.get(index);
+                if(sentence.getSentence().length()>=20){
+                    BlankQuizResult tempResult = tryCreateBlankQuiz(sentence.getSentence(), req.getQuestionNumber());
+
+                    if (tempResult != null) {
+                        originalSentence = sentence.getSentence();
+                        korean = sentence.getTranslation();
+                        recommendationSentenceId = -1L;
+                        quizResult = tempResult;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (quizResult == null) {
+            throw new ValidWordNotFoundException("해당 questionNumber에 대해 빈칸으로 만들 적절한 단어가 있는 문장을 찾을 수 없습니다.");
+        }
+
+        // BlankQuestionResponse 생성 및 반환
+        return createBlankQuestionResponse(req, song, originalSentence, korean, recommendationSentenceId, quizResult);
+
+    }
+
+    // ------------------------------------------------------------
+    // 랜덤 추천 문장 후보 인덱스 목록 생성
+    // ------------------------------------------------------------
+    private List<Integer> generateRandomCandidateIndices(int totalSentences, int questionNumber) {
+        List<Integer> candidates = new ArrayList<>();
+
+        if (questionNumber == 1) {
+            // 1번째 문제: 1, 4, 7, 10... 번째 문장 (인덱스 0, 3, 6, 9...)
+            for (int i = 0; i < totalSentences; i += 3) {
+                candidates.add(i);
+            }
+        }
+        else if (questionNumber == 2) {
+            // 2번째 문제: 2, 5, 8, 11... 번째 문장 (인덱스 1, 4, 7, 10...)
+            for (int i = 1; i < totalSentences; i += 3) {
+                candidates.add(i);
+            }
+        } else if (questionNumber == 3) {
+            // 3번째 문제: 3, 6, 9, 12... 번째 문장 (인덱스 2, 5, 8, 11...)
+            for (int i = 2; i < totalSentences; i += 3) {
+                candidates.add(i);
+            }
+        }
+        return candidates;
     }
 
     // ------------------------------------------------------------
@@ -452,6 +530,13 @@ public class BlankServiceImpl implements BlankService{
                 .build();
     }
 
+    // ------------------------------------------------------------
+    // null 체크 헬퍼 메서드
+    // ------------------------------------------------------------
+    private boolean isNullOrEmpty(String str) {
+        return str == null || str.isEmpty() || "null".equals(str);
+    }
+
     /**
      * 빈칸 퀴즈 채점 결과 저장
      */
@@ -604,10 +689,10 @@ public class BlankServiceImpl implements BlankService{
             }
             totalScore += blankResult.getScore();
         }
-        
+
         // blankId를 기준으로 오름차순 정렬
         results.sort(Comparator.comparing(BlankCompleteResponse.BlankResult::getBlankId));
-        
+
         // Summary 생성
         BlankCompleteResponse.Summary summary = new BlankCompleteResponse.Summary();
         summary.setTotalQuestions(results.size());
