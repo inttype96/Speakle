@@ -203,7 +203,7 @@ export function RecentSongsCard({ recentSongs, error }: RecentSongsCardProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{song.title}</p>
-                <p className="text-sm text-muted-foreground truncate">{song.artists}</p>
+                <p className="text-sm text-muted-foreground truncate">{song.artists.replace(/[\[\]']/g, '')}</p>
               </div>
               <div className="text-sm text-muted-foreground">
                 {new Date(song.createdAt).toLocaleDateString('ko-KR', {

@@ -329,7 +329,7 @@ export default function QuizPage() {
 
           <div className="rounded-md px-4 py-2.5 text-right">
             <div className="text-xs">
-              {question ? `${question.title} - ${question.artists}` : "Loading..."}
+              {question ? `${question.title} - ${question.artists.replace(/[\[\]']/g, '')}` : "Loading..."}
             </div>
             <div className="text-sm font-semibold">{TOP_RIGHT_MODE}</div>
           </div>

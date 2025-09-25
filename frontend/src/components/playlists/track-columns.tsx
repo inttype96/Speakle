@@ -81,7 +81,7 @@ export const createTrackColumns = (
               {track.name}
             </div>
             <div className="text-sm text-muted-foreground truncate">
-              {track.artists ? track.artists.map(artist => artist.name).join(', ') : '알 수 없는 아티스트'}
+              {track.artists.replace(/[\[\]']/g, '') ? track.artists.map(artist => artist.name).join(', ') : '알 수 없는 아티스트'}
             </div>
           </div>
         </div>

@@ -49,7 +49,6 @@ export const useTranslationWebSocket = ({
     });
 
     client.onConnect = () => {
-      console.log('[WebSocket] Connected');
       setIsConnected(true);
 
       // 특정 곡의 번역 업데이트 구독
@@ -57,7 +56,6 @@ export const useTranslationWebSocket = ({
       subscriptionRef.current = client.subscribe(`/topic/translation/${songId}`, (message) => {
           try {
               const event: TranslationUpdateEvent = JSON.parse(message.body);
-              console.log('[WebSocket] Translation update:', event);
 
               // 진행률 업데이트
               const progressPercentage = event.totalChunks > 0
@@ -87,12 +85,10 @@ export const useTranslationWebSocket = ({
     };
 
     client.onWebSocketClose = () => {
-      console.log('[WebSocket] Connection closed');
       setIsConnected(false);
     };
 
     client.onDisconnect = () => {
-      console.log('[WebSocket] Disconnected');
       setIsConnected(false);
     };
 

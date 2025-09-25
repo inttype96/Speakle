@@ -395,7 +395,7 @@ export default function DictationPage() {
                 <Badge variant="secondary">Dictation</Badge>
                 {item && (
                   <span className="text-sm text-muted-foreground">
-                    {item.title ?? ""} — {item.artists ?? ""}
+                    {item.title ?? ""} — {item.artists.replace(/[\[\]']/g, '') ?? ""}
                   </span>
                 )}
               </div>
@@ -412,7 +412,7 @@ export default function DictationPage() {
                   key={`${item.songId}-${replayKey}`}
                   trackId={item.songId}
                   trackName={item.title}
-                  artistName={item.artists}
+                  artistName={item.artists.replace(/[\[\]']/g, '')}
                   onTimeUpdate={handleTimeUpdate}
                   startTime={item.startTime}
                   endTime={item.endTime}
