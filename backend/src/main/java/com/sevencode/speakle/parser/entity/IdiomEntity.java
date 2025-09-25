@@ -21,8 +21,14 @@ public class IdiomEntity {
 	@Column(name = "idioms_id")
 	private Long id;
 
-	@Column(name = "learned_song_id", nullable = false)
-	private String learnedSongId;
+	@Column(name = "song_id", nullable = false)
+	private String songId;
+
+	@Column(name = "situation", length = 255)
+	private String situation;
+
+	@Column(name = "location", length = 255)
+	private String location;
 
 	@Column(name = "phrase", nullable = false, length = 255)
 	private String phrase;

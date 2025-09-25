@@ -11,6 +11,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  define: {
+    // SockJS-client의 global 객체 폴리필
+    global: 'globalThis',
+  },
   // 프록시 설정을 추가합니다.
   server: {
     port: 3000,
@@ -21,6 +25,12 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true, // 다른 origin으로 요청을 보낼 때 필요합니다.
         secure: true,
+      },
+      // WebSocket 프록시 설정
+      '/ws-translation': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        ws: true, // WebSocket 지원 활성화
       },
     },
   },

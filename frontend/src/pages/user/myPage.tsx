@@ -1,38 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore, isAuthenticated } from '@/store/auth'
-import { Card, CardContent, } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Navbar from '@/components/common/navbar'
 import Footer from '@/pages/common/footer'
-// import ProfileCard from '@/components/user/ProfileCard'
-// import PointRankingCard from '@/components/user/PointRankingCard'
-// import PlaylistCard from '@/components/user/PlaylistCard'
-// import RecentSongsCard from '@/components/user/RecentSongsCard'
-// import SpotifyCard from '@/components/user/SpotifyCard'
 import EditProfileModal from '@/components/user/EditProfileModal'
-import OverviewTab from '@/components/user/my-page-tabs/OverviewTab'
-import LearningTab from '@/components/user/my-page-tabs/LearningTab'
-import PlaylistsTab from '@/components/user/my-page-tabs/PlaylistsTab'
-import SpotifyTab from '@/components/user/my-page-tabs/SpotifyTab'
-import RankingTab from '@/components/user/my-page-tabs/RankingTab'
 import { getUserProfileAPI } from '@/services/auth'
 import {
-  getPointProfileAPI,
-  getPointRankingAPI,
-  getUserPlaylistsAPI,
-  getRecentLearnedSongsAPI,
-  checkinAPI,
-  getCheckinInfoAPI,
   updateUserAPI,
-  deleteUserAPI,
-  type PointProfile,
-  type RankingUser,
-  type Playlist,
-  type LearnedSong,
-  type CheckinResponse
+  deleteUserAPI
 } from '@/services/mypage'
 import {
   connectSpotifyAPI,
@@ -50,26 +27,14 @@ export default function MyPage() {
   const navigate = useNavigate()
   const { logout, setUserId } = useAuthStore()
   const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [pointProfile, setPointProfile] = useState<PointProfile | null>(null)
-  const [ranking, setRanking] = useState<RankingUser[]>([])
-  const [playlists, setPlaylists] = useState<Playlist[]>([])
-  const [recentSongs, setRecentSongs] = useState<LearnedSong[]>([])
-  const [checkinInfo, setCheckinInfo] = useState<CheckinResponse['data'] | null>(null)
   const [spotifyStatus, setSpotifyStatus] = useState<SpotifyStatusResponse | null>(null)
   const [spotifyProfile, setSpotifyProfile] = useState<SpotifyProfileResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [apiErrors, setApiErrors] = useState({
-    playlists: false,
-    recentSongs: false,
-    ranking: false,
-    checkin: false
-  })
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editForm, setEditForm] = useState({
     username: ''
   })
-  const [activeTab, setActiveTab] = useState('overview')
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -78,13 +43,6 @@ export default function MyPage() {
     }
     loadAllData()
   }, [navigate])
-
-  // Spotify 탭이 활성화될 때 데이터 새로고침
-  useEffect(() => {
-    if (activeTab === 'spotify') {
-      loadSpotifyData()
-    }
-  }, [activeTab])
 
   // 페이지 포커스될 때 Spotify 데이터 새로고침 (연동 후 돌아왔을 때)
   useEffect(() => {
@@ -133,16 +91,8 @@ export default function MyPage() {
         return
       }
 
-      // 병렬로 데이터 로드
-      const userId = profileData.id
-      const today = new Date().toISOString().split('T')[0]
-
+      // Spotify 데이터 로드
       await Promise.allSettled([
-        loadPointProfile(userId),
-        loadRanking(),
-        loadPlaylists(),
-        loadRecentSongs(),
-        loadCheckinInfo(userId, today),
         loadSpotifyStatus(),
         loadSpotifyProfile()
       ])
@@ -151,75 +101,6 @@ export default function MyPage() {
       handleError(err, '데이터를 불러오는데 실패했습니다.')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const loadPointProfile = async (userId: number) => {
-    try {
-      if (!userId) {
-        console.error('loadPointProfile: userId is missing')
-        return
-      }
-      const response = await getPointProfileAPI(userId)
-      setPointProfile(response.data.data)
-    } catch (err) {
-      console.error('포인트 정보 로딩 실패:', err)
-    }
-  }
-
-  const loadRanking = async () => {
-    try {
-      const response = await getPointRankingAPI()
-      setRanking(response.data.data)
-      setApiErrors(prev => ({ ...prev, ranking: false }))
-    } catch (err: any) {
-      console.error('랭킹 정보 로딩 실패:', err)
-      // 404 오류인 경우 랭킹 기능이 아직 구현되지 않았음을 표시
-      if (err.response?.status === 404) {
-        console.log('랭킹 API가 아직 구현되지 않았습니다.')
-        setRanking([]) // 빈 배열로 설정
-        setApiErrors(prev => ({ ...prev, ranking: false })) // 오류로 표시하지 않음
-      } else {
-        setApiErrors(prev => ({ ...prev, ranking: true }))
-      }
-    }
-  }
-
-  const loadPlaylists = async () => {
-    try {
-      const response = await getUserPlaylistsAPI()
-      setPlaylists(response.data.data)
-      setApiErrors(prev => ({ ...prev, playlists: false }))
-    } catch (err) {
-      console.error('플레이리스트 로딩 실패:', err)
-      setApiErrors(prev => ({ ...prev, playlists: true }))
-    }
-  }
-
-  const loadRecentSongs = async () => {
-    try {
-      const response = await getRecentLearnedSongsAPI(1, 5)
-      setRecentSongs(response.data.data.learnedSongs)
-      setApiErrors(prev => ({ ...prev, recentSongs: false }))
-    } catch (err) {
-      console.error('최근 학습 곡 로딩 실패:', err)
-      setApiErrors(prev => ({ ...prev, recentSongs: true }))
-    }
-  }
-
-  const loadCheckinInfo = async (userId: number, date: string) => {
-    try {
-      if (!userId) {
-        console.error('loadCheckinInfo: userId is missing')
-        setApiErrors(prev => ({ ...prev, checkin: true }))
-        return
-      }
-      const response = await getCheckinInfoAPI(userId, date)
-      setCheckinInfo(response.data.data)
-      setApiErrors(prev => ({ ...prev, checkin: false }))
-    } catch (err) {
-      console.error('출석 정보 로딩 실패:', err)
-      setApiErrors(prev => ({ ...prev, checkin: true }))
     }
   }
 
@@ -294,27 +175,6 @@ export default function MyPage() {
     }
   }
 
-  const handleCheckin = async () => {
-    if (!profile) return
-
-    try {
-      const today = new Date().toISOString().split('T')[0]
-      const response = await checkinAPI({
-        userId: profile.id,
-        localDate: today
-      })
-
-      setCheckinInfo(response.data.data)
-      toast.success('출석 체크가 완료되었습니다!')
-    } catch (err: any) {
-      if (err.response?.status === 409) {
-        toast.error('이미 오늘 출석체크를 완료했습니다.')
-      } else {
-        toast.error('출석 체크에 실패했습니다.')
-      }
-    }
-  }
-
   const handleEditProfile = async () => {
     try {
       await updateUserAPI({
@@ -383,7 +243,8 @@ export default function MyPage() {
     return (
       <div className="bg-background text-foreground">
         <Navbar />
-        <div className="relative isolate px-6 pt-14 lg:px-8">
+
+        <div className="relative isolate px-6 pt-24 lg:px-8">
           <div className="container mx-auto py-6 max-w-4xl">
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="text-center">
@@ -393,6 +254,7 @@ export default function MyPage() {
             </div>
           </div>
         </div>
+
         <Footer />
       </div>
     )
@@ -401,8 +263,9 @@ export default function MyPage() {
   return (
     <div className="bg-background text-foreground">
       <Navbar />
-      <div className="relative isolate px-6 pt-14 lg:px-8">
-        <div className="mx-auto py-6 max-w-6xl px-6 lg:px-8">
+
+      <div className="relative isolate px-6 pt-4 lg:px-8">
+        <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">마이페이지</h1>
@@ -410,6 +273,7 @@ export default function MyPage() {
                 내 정보를 확인하고 관리하세요.
               </p>
             </div>
+
             <div className="flex items-center gap-2">
               <Button onClick={openEditModal} variant="outline" size="sm">
                 프로필 수정
@@ -440,62 +304,85 @@ export default function MyPage() {
           )}
 
           {profile && (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="w-full">
-                <TabsTrigger value="overview">개요</TabsTrigger>
-                <TabsTrigger value="learning" className="flex items-center gap-1">
-                  학습 관리
-                  <Badge variant="secondary" className="ml-1 text-xs">{recentSongs.length}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="playlists" className="flex items-center gap-1">
-                  플레이리스트
-                  <Badge variant="secondary" className="ml-1 text-xs">{playlists.length}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="spotify">Spotify 연동</TabsTrigger>
-                <TabsTrigger value="ranking" className="flex items-center gap-1">
-                  랭킹
-                  {ranking.length > 0 && <Badge variant="secondary" className="ml-1 text-xs">{ranking.length}</Badge>}
-                </TabsTrigger>
-              </TabsList>
+            <div className="space-y-6">
+              {/* 프로필 정보 섹션 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span>👤</span>
+                      프로필 정보
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">이름</label>
+                      <p className="text-lg font-semibold">{profile.username}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">이메일</label>
+                      <p className="text-lg">{profile.email}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-              <TabsContent value="overview" className="space-y-6">
-                <OverviewTab
-                  profile={profile}
-                  checkinInfo={checkinInfo}
-                  checkinError={apiErrors.checkin}
-                  onEditClick={openEditModal}
-                  onCheckinClick={handleCheckin}
-                  recentSongs={recentSongs}
-                  pointProfile={pointProfile}
-                  recentSongsError={apiErrors.recentSongs}
-                />
-              </TabsContent>
+              {/* Spotify 연동 설정 섹션 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <span>🎵</span>
+                    Spotify 연동 설정
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {spotifyStatus?.connected ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                        <span className="text-green-600 dark:text-green-400">✓</span>
+                        <span className="text-green-600 dark:text-green-400 font-medium">
+                          Spotify 계정이 연동되었습니다
+                        </span>
+                      </div>
 
-              <TabsContent value="learning" className="flex h-[600px]">
-                <LearningTab recentSongs={recentSongs} error={apiErrors.recentSongs} />
-              </TabsContent>
+                      {spotifyProfile && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-muted-foreground">연동된 계정</p>
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold">
+                              {spotifyProfile.displayName?.charAt(0) || 'S'}
+                            </div>
+                            <div>
+                              <p className="font-medium">{spotifyProfile.displayName}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {spotifyProfile.email}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-              <TabsContent value="playlists" className="flex h-[600px]">
-                <PlaylistsTab playlists={playlists} error={apiErrors.playlists} />
-              </TabsContent>
-
-              <TabsContent value="spotify" className="space-y-6">
-                <SpotifyTab
-                  spotifyStatus={spotifyStatus}
-                  spotifyProfile={spotifyProfile}
-                  onConnect={handleSpotifyConnect}
-                  onDisconnect={handleSpotifyDisconnect}
-                />
-              </TabsContent>
-
-              <TabsContent value="ranking" className="flex h-[600px]">
-                <RankingTab
-                  ranking={ranking}
-                  error={apiErrors.ranking}
-                  pointProfile={pointProfile}
-                />
-              </TabsContent>
-            </Tabs>
+                      <Button onClick={handleSpotifyDisconnect} variant="destructive">
+                        연동 해제
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="text-center space-y-2">
+                        <p className="text-muted-foreground">
+                          Spotify 계정을 연동하여 개인화된 음악 학습을 시작하세요
+                        </p>
+                      </div>
+                      <Button onClick={handleSpotifyConnect} className="w-full">
+                        Spotify 연동하기
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           )}
 
           {/* 프로필 수정 모달 */}

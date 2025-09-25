@@ -1,13 +1,18 @@
 // src/types/speaking.ts
 export type SpeakingEvalReq = {
   learnedSongId: number;
+  situation: string;
+  location: string;
+  songId: string;        // 문자열 ID
   questionNumber: number;
 };
 
 export type SpeakingEvalResData = {
   speakingId: number;
   learnedSongId: number;
-  songId: number;
+  songId: string;        // 문자열 ID로 변경
+  title: string;
+  artists: string;
   coreSentence: string;
 };
 

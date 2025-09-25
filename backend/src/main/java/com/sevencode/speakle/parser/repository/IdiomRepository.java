@@ -8,9 +8,13 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IdiomRepository extends JpaRepository<IdiomEntity, Long> {
-	boolean existsByLearnedSongId(String learnedSongId);
+	boolean existsBySongId(String songId);
 
-	List<IdiomEntity> findAllByLearnedSongId(String learnedSongId);
+	boolean existsBySongIdAndSituationAndLocation(String songId, String situation, String location);
 
-	Optional<IdiomEntity> findByLearnedSongIdAndPhraseIgnoreCase(String learnedSongId, String phrase);
+	List<IdiomEntity> findAllBySongId(String songId);
+
+	List<IdiomEntity> findAllBySongIdAndSituationAndLocation(String songId, String situation, String location);
+
+	Optional<IdiomEntity> findBySongIdAndPhraseIgnoreCase(String songId, String phrase);
 }

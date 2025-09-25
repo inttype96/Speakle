@@ -12,7 +12,9 @@ public class SongResponse {
     private String songId;
     private String title;
     private String artists;
+    private Long durationMs;
     private String albumImgUrl;
     private Integer popularity;
     private Song.Level level;
+    private Integer learnCount;
 }

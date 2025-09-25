@@ -19,6 +19,7 @@ import com.sevencode.speakle.config.logging.AuthMdcFilter;
 import com.sevencode.speakle.config.security.filter.JwtAuthenticationFilter;
 import com.sevencode.speakle.config.security.handler.JwtAuthenticationEntryPoint;
 import com.sevencode.speakle.config.security.provider.JwtProvider;
+import org.springframework.context.ApplicationEventPublisher;
 
 @Configuration
 public class SecurityConfig {
@@ -30,7 +31,7 @@ public class SecurityConfig {
 	private AuthMdcFilter authMdcFilter;
 
 	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http, JwtProvider jwtProvider) throws Exception {
+	public SecurityFilterChain filterChain(HttpSecurity http, JwtProvider jwtProvider, ApplicationEventPublisher eventPublisher) throws Exception {
 		if ("local".equals(activeProfile)) {
 			// 로컬 개발환경 → Spotify API만 인증 적용, 나머지는 허용
 			http.csrf(csrf -> csrf.disable())
@@ -40,9 +41,12 @@ public class SecurityConfig {
 				.authorizeHttpRequests(auth -> auth
 					.requestMatchers("/api/spotify/callback").permitAll()  // Spotify OAuth callback
 					.requestMatchers("/api/spotify/**").authenticated()    // Spotify API 인증 필요
+					.requestMatchers("/api/reward/**").authenticated()			// reward
+					.requestMatchers("/api/user/**").authenticated()			// user
+					.requestMatchers("/api/attendance/**").authenticated()		// attendance
 					.anyRequest().permitAll()  // 나머지는 모두 허용
 				);
-			http.addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
+			http.addFilterBefore(new JwtAuthenticationFilter(jwtProvider, eventPublisher), UsernamePasswordAuthenticationFilter.class);
 		} else {
 			// dev / prod 환경 → 보안 정책 적용
 			http
@@ -65,20 +69,23 @@ public class SecurityConfig {
 					.requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh").permitAll()
 					.requestMatchers(HttpMethod.POST, "/api/user").permitAll()
 					.requestMatchers(HttpMethod.POST, "/api/user/temp-password").permitAll()
-					.requestMatchers(HttpMethod.POST, "/api/user/verify", "/api/user/verify/send").permitAll()
+					.requestMatchers(HttpMethod.POST, "/api/user/verify-email", "/api/user/verify-email/send").permitAll()
 
-					// 파일 다운로드는 공개 금지 
+					// 파일 다운로드는 공개 금지
 					.requestMatchers("/files/**").authenticated()
 
 					// ── 보호 경로
 					.requestMatchers("/user/**").authenticated()
 					.requestMatchers("/api/learn/**").authenticated()			// ay
 					.requestMatchers("/api/spotify/**").authenticated()			// spotify
+					.requestMatchers("/api/reward/**").authenticated()			// reward
+					.requestMatchers("/api/user/**").authenticated()			// user
+					.requestMatchers("/api/attendance/**").authenticated()		// attendance
 
 					// 그 외 필요 시 정책 추가
 					.anyRequest().permitAll()
 				);
-			http.addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
+			http.addFilterBefore(new JwtAuthenticationFilter(jwtProvider, eventPublisher), UsernamePasswordAuthenticationFilter.class);
 			http.addFilterAfter(authMdcFilter, JwtAuthenticationFilter.class);
 			// (선택) 특정 고위험 경로에만 XSS 탐지 필터 적용하고 싶을 때 아래 주석 참고
 			// var xssFilter = new XssProbeFilter(new OrRequestMatcher(

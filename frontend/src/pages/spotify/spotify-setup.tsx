@@ -35,10 +35,9 @@ export default function SpotifySetupPage() {
         {!showFallback ? (
           <SpotifyConnect
             onSuccess={() => {
-              console.log('Spotify 연결 성공');
+              // Success handled by parent component
             }}
             onError={(error) => {
-              console.error('Spotify 연결 실패:', error);
               setSpotifyError(error);
               // 503 또는 서비스 unavailable 에러인 경우 fallback UI 표시
               if (error.includes('일시적으로 사용할 수 없습니다') || error.includes('503')) {

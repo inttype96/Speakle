@@ -11,5 +11,7 @@ public class SpeakingQuestionResponse {
     private Long speakingId;
     private Long learnedSongId;
     private String songId;
+    private String title;
+    private String artists;
     private String coreSentence;
 }

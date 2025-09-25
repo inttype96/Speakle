@@ -28,8 +28,8 @@ import java.util.Map;
  *     - 저장하지 않음(Stateless).
  *
  *  2) POST /api/lyrics/parse-and-save
- *     - 쿼리/본문로 learnedSongId 전달 + 본문에 lyrics
- *       · 예: ?learnedSongId=123 또는 {"learnedSongId":"123","lyrics":"..."}
+ *     - 쿼리/본문로 songId 전달 + 본문에 lyrics
+ *       · 예: ?songId=123 또는 {"songId":"123","lyrics":"..."}
  *     - DB에 없으면 파싱→저장, 이미 있으면 LLM 스킵 후 저장된 내용 반환.
  *
  *  3) POST /api/lyrics/process
@@ -44,7 +44,7 @@ import java.util.Map;
  *         -d '{"lyrics":"You like to stand on the other side ..."}'
  *
  *  - Parse & Save:
- *    curl -X POST "http://localhost:8080/api/lyrics/parse-and-save?learnedSongId=123" \
+ *    curl -X POST "http://localhost:8080/api/lyrics/parse-and-save?songId=123" \
  *         -H "Content-Type: application/json" \
  *         -d '{"lyrics":"..."}'
  *
@@ -69,35 +69,57 @@ public class LyricsController {
 	 * Request: {"lyrics":"..."}
 	 * Response: ObjectNode {words[], expressions[], idioms[], sentences[]}
 	 */
+//	@PostMapping("/parse")
+//	public Mono<ResponseEntity<ObjectNode>> parse(@RequestBody @Validated ProcessRequest req) {
+//		return parsingService.parse(req.getLyrics())
+//			.map(ResponseEntity::ok);
+//	}
+
+	/**
+	 * Context-aware 파싱 (songId 기반)
+	 * Request: {"songId":"...", "situation":"...", "location":"..."}
+	 * Response: ObjectNode {words[], expressions[], idioms[], sentences[]}
+	 */
 	@PostMapping("/parse")
-	public Mono<ResponseEntity<ObjectNode>> parse(@RequestBody @Validated ProcessRequest req) {
-		return parsingService.parse(req.getLyrics())
-			.map(ResponseEntity::ok);
+	public Mono<ResponseEntity<ObjectNode>> parseWithContext(@RequestBody @Validated ParseRequest req) {
+		log.info("parse request by songId={}, situation={}, location={}",
+			req.getSongId(), req.getSituation(), req.getLocation());
+
+		// 실제 서비스 호출 - context-aware parsing
+		return lyricsParsingService.parseAndSaveBySongIdWithContext(req.getSongId(), req.getSituation(), req.getLocation())
+			.map(result -> ResponseEntity.ok(result))
+			.onErrorResume(ex -> {
+				String msg = ex.getMessage() != null ? ex.getMessage() : "가사 파싱 중 오류가 발생했습니다.";
+				if (msg.contains("존재하지 않습니다") || msg.contains("찾을 수 없습니다")) {
+					return Mono.just(ResponseEntity.notFound().build());
+				}
+				return Mono.just(ResponseEntity.internalServerError().build());
+			});
 	}
 
 	/**
 	 * (예시) 파싱 후 DB 저장(이미 있으면 스킵하고 DB내용 반환).
-	 * QueryParam 또는 Body로 learnedSongId 허용.
-	 * Body 예: {"learnedSongId":"123","lyrics":"..."}
+	 * QueryParam 또는 Body로 songId 허용.
+	 * Body 예: {"songId":"123","lyrics":"..."}
 	 */
 	@PostMapping("/parse-and-save")
 	public Mono<ResponseEntity<ObjectNode>> parseAndSave(
-		@RequestParam(value = "learnedSongId", required = false) String learnedSongId,
+		@RequestParam(value = "songId", required = false) String songId,
 		@RequestBody Map<String, String> body) {
 
 		// Body에만 들어온 경우 보정
-		if (learnedSongId == null) {
-			String idStr = body.get("learnedSongId");
-			learnedSongId = (idStr != null && !idStr.isBlank()) ? idStr : null;
+		if (songId == null) {
+			String idStr = body.get("songId");
+			songId = (idStr != null && !idStr.isBlank()) ? idStr : null;
 		}
 		String lyrics = body.get("lyrics");
 
 		// 필수값 검증
-		if (learnedSongId == null || lyrics == null || lyrics.isBlank()) {
+		if (songId == null || lyrics == null || lyrics.isBlank()) {
 			return Mono.just(ResponseEntity.badRequest().build());
 		}
 
-		return lyricsParsingService.parseAndSave(learnedSongId, lyrics)
+		return lyricsParsingService.parseAndSave(songId, lyrics)
 			.map(ResponseEntity::ok);
 	}
 
@@ -140,6 +162,40 @@ public class LyricsController {
 
 		public void setLyrics(String lyrics) {
 			this.lyrics = lyrics;
+		}
+	}
+
+	/** Context-aware 파싱 요청 DTO */
+	public static class ParseRequest {
+		private String songId;
+		private String situation;
+		private String location;
+
+		public ParseRequest() {
+		}
+
+		public String getSongId() {
+			return songId;
+		}
+
+		public void setSongId(String songId) {
+			this.songId = songId;
+		}
+
+		public String getSituation() {
+			return situation;
+		}
+
+		public void setSituation(String situation) {
+			this.situation = situation;
+		}
+
+		public String getLocation() {
+			return location;
+		}
+
+		public void setLocation(String location) {
+			this.location = location;
 		}
 	}
 

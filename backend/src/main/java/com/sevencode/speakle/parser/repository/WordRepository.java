@@ -8,10 +8,14 @@ import java.util.List;
 import java.util.Optional;
 
 public interface WordRepository extends JpaRepository<WordEntity, Long> {
-	boolean existsByLearnedSongId(String learnedSongId);
+	boolean existsBySongId(String songId);
 
-	List<WordEntity> findAllByLearnedSongId(String learnedSongId);
+	boolean existsBySongIdAndSituationAndLocation(String songId, String situation, String location);
 
-	Optional<WordEntity> findByLearnedSongIdAndWordIgnoreCase(String learnedSongId, String word);
+	List<WordEntity> findAllBySongId(String songId);
+
+	List<WordEntity> findAllBySongIdAndSituationAndLocation(String songId, String situation, String location);
+
+	Optional<WordEntity> findBySongIdAndWordIgnoreCase(String songId, String word);
 
 }

@@ -169,5 +169,22 @@ public class CustomPlaylistController {
 		return ResponseEntity.ok(result);
 	}
 
+	@Operation(
+		summary = "여러 노래의 플레이리스트 포함 여부 확인",
+		description = "여러 노래들이 사용자의 플레이리스트에 포함되어 있는지 한번에 확인합니다. 노래 추천 시 사용됩니다."
+	)
+	@ApiResponses({
+		@ApiResponse(responseCode = "200", description = "확인 완료"),
+		@ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+		@ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
+	})
+	@PostMapping("/songs/check-inclusion")
+	public ResponseEntity<Map<String, Object>> checkSongsInPlaylists(
+		@AuthenticationPrincipal @Parameter(hidden = true) UserPrincipal auth,
+		@Parameter(description = "확인할 노래 ID 목록", required = true)
+		@RequestBody List<String> songIds) {
 
+		Map<String, Object> result = customPlaylistService.checkSongsInUserPlaylists(auth, songIds);
+		return ResponseEntity.ok(result);
+	}
 }

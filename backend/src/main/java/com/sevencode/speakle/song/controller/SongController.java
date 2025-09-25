@@ -5,6 +5,7 @@ import com.sevencode.speakle.learn.dto.response.ApiResponse;
 import com.sevencode.speakle.recommend.service.RecommendationSentenceService;
 import com.sevencode.speakle.song.dto.request.SaveLearnedSongRequest;
 import com.sevencode.speakle.song.dto.request.SongSearchRequest;
+import com.sevencode.speakle.song.dto.request.SongDetailRequest;
 import com.sevencode.speakle.song.dto.response.SaveLearnedSongResponse;
 import com.sevencode.speakle.song.dto.response.SongDetailResponse;
 import com.sevencode.speakle.song.dto.response.SongResponse;
@@ -12,6 +13,7 @@ import com.sevencode.speakle.song.dto.response.SongRecommendationReasonResponse;
 import com.sevencode.speakle.song.service.SongService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/songs")
 @RequiredArgsConstructor
+@Slf4j
 public class SongController {
 
     private final SongService songService;
@@ -40,7 +43,7 @@ public class SongController {
         return ResponseEntity.ok(response);
     }
 
-    // 노래 검색 (POST 방식) - Request Body로 상세 검색
+    // 노래 검색 (POST 방식)
     @PostMapping("/search")
     public ResponseEntity<ApiResponse<Page<SongResponse>>> searchSongs(@RequestBody SongSearchRequest request) {
         Page<SongResponse> songs = songService.searchSongs(request);
@@ -53,9 +56,11 @@ public class SongController {
     }
 
     // 노래 상세 조회
-    @GetMapping("/{songId}")
-    public ResponseEntity<ApiResponse<SongDetailResponse>> getSongDetail(@PathVariable String songId) {
-        SongDetailResponse songDetail = songService.getSongDetail(songId);
+    @PostMapping("/{songId}")
+    public ResponseEntity<ApiResponse<SongDetailResponse>> getSongDetail(
+            @PathVariable String songId,
+            @RequestBody SongDetailRequest request) {
+        SongDetailResponse songDetail = songService.getSongDetail(songId, request.getSituation(), request.getLocation());
         ApiResponse<SongDetailResponse> response = ApiResponse.success(
                 200,
                 "노래 상세 정보를 성공적으로 조회했습니다.",
@@ -78,6 +83,13 @@ public class SongController {
             @PathVariable String songId,
             @RequestBody SaveLearnedSongRequest request,
             @AuthenticationPrincipal UserPrincipal me) {
+
+        // 디버깅 로그 추가
+        log.info("[DEBUG Controller] Received request - songId={}, request body situation='{}', location='{}'",
+            songId, request.getSituation(), request.getLocation());
+        log.info("[DEBUG Controller] situation is null? {}, location is null? {}",
+            request.getSituation() == null, request.getLocation() == null);
+
         request.setSongId(songId);
 
         SaveLearnedSongResponse data = songService.saveLearnedSong(me.userId(), request);

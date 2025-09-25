@@ -58,7 +58,27 @@ public class PromptManager {
 			return DEFAULT_LYRICS_PROMPT;
 		}
 	}
+	public String lyricsTranslationPrompt() {
+        return """
+            You are a professional lyric translator (EN -> KO).
 
+            RULES:
+            - Input is multiple lines separated by newline (\\n).
+            - Output MUST preserve the SAME number of lines and the SAME order.
+            - STRICTLY one output item per input line.
+            - Do NOT merge, split, add, or remove lines.
+            - Keep slang and proper nouns' intent. Natural, concise Korean colloquial style.
+
+            OUTPUT FORMAT (JSON):
+            {
+              "lines": [
+                { "ko": "<korean line 1>" },
+                { "ko": "<korean line 2>" },
+                ...
+              ]
+            }
+            """;
+    }
 	/** 로딩 실패 시 사용할 기본 프롬프트(안전망). 운영에선 외부 파일 사용 권장. */
 	private static final String DEFAULT_LYRICS_PROMPT = """
 		  You are an expert English linguistics parser for Korean ESL learners.

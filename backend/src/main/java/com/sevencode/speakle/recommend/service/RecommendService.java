@@ -7,14 +7,18 @@ import com.sevencode.speakle.recommend.client.GMSAiClient;
 import com.sevencode.speakle.recommend.domain.Recommendation;
 import com.sevencode.speakle.recommend.domain.RecommendationLog;
 import com.sevencode.speakle.recommend.dto.request.HybridRecommendRequest;
+import com.sevencode.speakle.recommend.dto.request.RandomSongRequest;
 import com.sevencode.speakle.recommend.dto.response.KeywordsResponse;
 import com.sevencode.speakle.recommend.dto.request.QueryRequest;
 import com.sevencode.speakle.recommend.dto.response.QueryResponse;
 import com.sevencode.speakle.recommend.dto.response.RecommendResponse;
 import com.sevencode.speakle.recommend.dto.response.EnhancedRecommendResponse;
+import com.sevencode.speakle.recommend.dto.response.RandomSongResponse;
 import com.sevencode.speakle.recommend.dto.response.SongMetaResponse;
 import com.sevencode.speakle.recommend.dto.request.FilterRequest;
 import com.sevencode.speakle.recommend.repository.RecommendationLogRepository;
+import com.sevencode.speakle.playlist.repository.CustomPlaylistTrackRepository;
+import com.sevencode.speakle.weather.WeatherClient;
 import com.sevencode.speakle.song.domain.Song;
 import com.sevencode.speakle.song.repository.SongRepository;
 import com.sevencode.speakle.learn.repository.LearnHistoryRepository;
@@ -42,6 +46,8 @@ public class RecommendService {
     private final LearnHistoryRepository learnHistoryRepository;
     private final RecommendationSentenceService recommendationSentenceService;
     private final ObjectMapper objectMapper;
+    private final CustomPlaylistTrackRepository customPlaylistTrackRepository;
+    private final WeatherClient weatherClient;
 
     /* 향상된 상황 + 장소 기반 추천 with 메타데이터 */
     public EnhancedRecommendResponse recommendHybridEnhanced(Long userId, HybridRecommendRequest request, FilterRequest filter) {
@@ -52,7 +58,7 @@ public class RecommendService {
         KeywordsResponse keywords = gmsAiClient.generateKeywords(
                 request.getSituation(),
                 request.getLocation(),
-                "gpt-4o"
+                "gpt-4o-mini"
         );
 
         // 2. FastAPI 요청 (더 많은 후보를 가져와서 필터링할 수 있도록)
@@ -120,6 +126,8 @@ public class RecommendService {
         // 12. 응답 반환
         return EnhancedRecommendResponse.builder()
                 .recommendedSongs(pagedSongs)
+                .situation(request.getSituation())
+                .location(request.getLocation())
                 .keywords(keywords)
                 .totalCount(totalElements)
                 .build();
@@ -291,6 +299,105 @@ public class RecommendService {
         } catch (Exception e) {
             log.error("[RecommendService] 추천 이유 저장 실패: {}", e.getMessage());
         }
+    }
+
+    public RandomSongResponse recommendRandomSong(Long userId) {
+        // 1. 사용자 플레이리스트에서 오디오 특성 계산
+        RandomSongRequest.AudioFeatures audioFeatures = calculateUserPlaylistAudioFeatures(userId);
+
+        // 2. 날씨 API에서 현재 날씨 데이터 가져오기
+        WeatherClient.WeatherData weatherData = weatherClient.getCurrentWeather("Seoul");
+
+        RandomSongRequest.WeatherData weatherDataDto = RandomSongRequest.WeatherData.builder()
+                .condition(weatherData.getCondition())
+                .description(weatherData.getDescription())
+                .temperature(weatherData.getTemperature())
+                .build();
+
+        // 3. FastAPI 요청 구성
+        RandomSongRequest fastApiRequest = RandomSongRequest.builder()
+                .userId(userId.toString())
+                .userPlaylistFeatures(audioFeatures)
+                .weatherData(weatherDataDto)
+                .minPopularity(80)
+                .build();
+
+        // 4. FastAPI 호출
+        RandomSongResponse fastApiResponse = fastApiClient.getRandomSongRecommendation(fastApiRequest);
+
+        // 5. Song 정보 조회
+        Song song = songRepository.findById(fastApiResponse.getSongId())
+                .orElseThrow(() -> new RuntimeException("Song not found"));
+
+        return RandomSongResponse.builder()
+                .songId(song.getSongId())
+                .title(song.getTitle())
+                .artist(song.getArtists())
+                .popularity(song.getPopularity())
+                .difficulty(song.getLevel() != null ? song.getLevel().name() : null)
+                .albumImageUrl(song.getAlbumImgUrl())
+                .build();
+    }
+
+    private RandomSongRequest.AudioFeatures calculateUserPlaylistAudioFeatures(Long userId) {
+        // 사용자 플레이리스트의 모든 곡 ID 가져오기
+        List<String> songIds = customPlaylistTrackRepository.findAllSongIdsByUserId(userId);
+
+        if (songIds.isEmpty()) {
+            log.info("User {} has no playlist songs. Using default audio features.", userId);
+            return RandomSongRequest.AudioFeatures.builder()
+                    .acousticness(0.5)
+                    .energy(0.5)
+                    .loudness(-10.0)
+                    .valence(0.5)
+                    .tempo(120.0)
+                    .build();
+        }
+
+        // 곡 정보 조회
+        List<Song> songs = songRepository.findAllById(songIds);
+
+        // 오디오 특성 평균 계산
+        double avgAcousticness = songs.stream()
+                .filter(s -> s.getAcousticness() != null)
+                .mapToDouble(Song::getAcousticness)
+                .average()
+                .orElse(0.5);
+
+        double avgEnergy = songs.stream()
+                .filter(s -> s.getEnergy() != null)
+                .mapToDouble(Song::getEnergy)
+                .average()
+                .orElse(0.5);
+
+        double avgLoudness = songs.stream()
+                .filter(s -> s.getLoudness() != null)
+                .mapToDouble(Song::getLoudness)
+                .average()
+                .orElse(-10.0);
+
+        double avgValence = songs.stream()
+                .filter(s -> s.getValence() != null)
+                .mapToDouble(Song::getValence)
+                .average()
+                .orElse(0.5);
+
+        double avgTempo = songs.stream()
+                .filter(s -> s.getTempo() != null)
+                .mapToDouble(Song::getTempo)
+                .average()
+                .orElse(120.0);
+
+        log.info("User {} playlist audio features - Acousticness: {}, Energy: {}, Loudness: {}, Valence: {}, Tempo: {}",
+                userId, avgAcousticness, avgEnergy, avgLoudness, avgValence, avgTempo);
+
+        return RandomSongRequest.AudioFeatures.builder()
+                .acousticness(avgAcousticness)
+                .energy(avgEnergy)
+                .loudness(avgLoudness)
+                .valence(avgValence)
+                .tempo(avgTempo)
+                .build();
     }
 
     private String toJson(Object obj) {

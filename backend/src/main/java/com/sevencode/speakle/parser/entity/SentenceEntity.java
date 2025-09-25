@@ -21,8 +21,14 @@ public class SentenceEntity {
 	@Column(name = "sentences_id")
 	private Long id;
 
-	@Column(name = "learned_song_id", nullable = false)
-	private String learnedSongId;
+	@Column(name = "song_id", nullable = false)
+	private String songId;
+
+	@Column(name = "situation", length = 255)
+	private String situation;
+
+	@Column(name = "location", length = 255)
+	private String location;
 
 	// TEXT 컬럼을 문자열(STRING)로 다루도록 지정 → IgnoreCase 파생 메서드 정상 작동
 	@JdbcTypeCode(SqlTypes.LONGVARCHAR)

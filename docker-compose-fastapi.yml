@@ -1,0 +1,113 @@
+services:
+  # npm:
+  #   image: 'jc21/nginx-proxy-manager:latest'
+  #   container_name: nginx-proxy-manager
+  #   restart: unless-stopped
+  #   ports:
+  #     - '80:80'
+  #     - '8181:81'
+  #     - '443:443'
+  #   volumes:
+  #     - /home/ubuntu/webserver/devops/data:/data
+  #     - /home/ubuntu/webserver/devops/letsencrypt:/etc/letsencrypt
+  #   networks:
+  #     - proxy
+
+  # backend:
+  #   build: ./backend
+  #   container_name: backend
+  #   env_file:
+  #     - .env
+  #   # ports:
+  #   #   - "8080:8080"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - proxy
+
+  # postgres:
+  #   image: postgres:15
+  #   container_name: postgres
+  #   restart: always
+  #   environment:
+  #     POSTGRES_DB: ${POSTGRES_DB}
+  #     POSTGRES_USER: ${POSTGRES_USER}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  #   # ports:
+  #   #   - "5432:5432"
+  #   volumes:
+  #     - ./backend/postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - proxy
+  #   healthcheck:
+  #     test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 20s
+
+  # redis:
+  #   image: redis:latest
+  #   container_name: redis
+  #   restart: always
+  #   # ports:
+  #   #   - "6379:6379"
+  #   volumes:
+  #     - ./backend/redis_data:/data
+  #   networks:
+  #     - proxy
+  #   healthcheck:
+  #     test: [ "CMD", "redis-cli", "ping" ]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 10s
+
+  # frontend:
+  #   container_name: frontend
+  #   build: ./frontend
+  #   # ports:
+  #   #   - '3000:3000'
+  #   networks:
+  #     - proxy
+
+  weaviate:
+    image: semitechnologies/weaviate:1.24.12
+    container_name: weaviate
+    ports:
+      - "8082:8080"
+      - "50051:50051"
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      ENABLE_MODULES: text2vec-openai
+      CLUSTER_HOSTNAME: 'node1'
+    volumes:
+      - ./weaviate_data:/var/lib/weaviate
+    networks:
+      - proxy
+
+  fastapi:
+    container_name: fastapi
+    build: ./data-service
+    # ports:
+    #   - '8081:8081'
+    env_file:
+      - .env
+    volumes:
+      - ./data-service/data:/app/data
+    depends_on:
+      - weaviate
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    driver: bridge
+
+volumes:
+  weaviate_data:

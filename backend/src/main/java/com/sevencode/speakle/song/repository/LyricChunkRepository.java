@@ -8,4 +8,8 @@ import java.util.List;
 
 public interface LyricChunkRepository extends JpaRepository<LyricChunk, String> {
     List<LyricChunk> findBySong(Song song);
+
+    List<LyricChunk> findBySongSongIdAndEnglishIsNotNullOrderByStartTimeMsAsc(String sondId);
+
+    List<LyricChunk> findBySongSongIdOrderByStartTimeMsAsc(String songId);
 }

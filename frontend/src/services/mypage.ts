@@ -34,7 +34,12 @@ export interface RankingResponse {
 }
 
 export async function getPointRankingAPI() {
-  const res = await http.get<RankingResponse>("/reward/ranking");
+  const res = await http.get<RankingResponse>("/reward/ranking", {
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    }
+  });
   return res;
 }
 
@@ -102,35 +107,44 @@ export async function getUserPlaylistsAPI() {
   return res;
 }
 
-// 출석 체크
-export interface CheckinRequest {
-  userId: number;
-  localDate: string;
+// 출석 정보 조회
+export interface Attendance {
+  checkedToday: boolean;
+  lastCheckDate: string;
+  currentStreak: number;
+  totalAttendanceDays: number;
+  pointsEarnedToday: number;
 }
 
-export interface CheckinResponse {
+export interface AttendanceResponse {
+  status: number;
+  message: string;
+  data: Attendance;
+}
+
+// 출석 통계 조회
+export interface AttendanceStatsResponse {
   status: number;
   message: string;
   data: {
-    userId: number;
+    totalAttendanceDays: number;
     currentStreak: number;
-    longestStreak: number;
-    totalDays: number;
-    totalPoints: number;
-    lastCheckinDate: string;
+    maxStreak: number;
+    thisMonthAttendance: number;
+    firstAttendanceDate: string;
+    lastAttendanceDate: string;
   };
 }
 
-export async function checkinAPI(payload: CheckinRequest) {
-  const res = await http.post<CheckinResponse>("/reward/checkin", payload, {
-    headers: { "Content-Type": "application/json" },
-  });
+// 출석 정보 조회 (자동 출석체크는 JWT 인증 시 자동으로 처리됨)
+export async function getAttendanceAPI() {
+  const res = await http.get<AttendanceResponse>("/attendance");
   return res;
 }
 
-// 출석 정보 조회 (GET 요청으로 체크인 정보 가져오기)
-export async function getCheckinInfoAPI(userId: number, localDate: string) {
-  const res = await http.get<CheckinResponse>(`/reward/checkin?userId=${userId}&localDate=${localDate}`);
+// 출석 통계 조회
+export async function getAttendanceStatsAPI() {
+  const res = await http.get<AttendanceStatsResponse>("/attendance/stats");
   return res;
 }
 
