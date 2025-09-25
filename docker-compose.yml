@@ -74,36 +74,36 @@ services:
     networks:
       - proxy
 
-  weaviate:
-    image: semitechnologies/weaviate:1.24.12
-    container_name: weaviate
-    ports:
-      - "8082:8080"
-      - "50051:50051"
-    environment:
-      QUERY_DEFAULTS_LIMIT: 25
-      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
-      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
-      ENABLE_MODULES: text2vec-openai
-      CLUSTER_HOSTNAME: 'node1'
-    volumes:
-      - ./weaviate_data:/var/lib/weaviate
-    networks:
-      - proxy
+  # weaviate:
+  #   image: semitechnologies/weaviate:1.24.12
+  #   container_name: weaviate
+  #   ports:
+  #     - "8082:8080"
+  #     - "50051:50051"
+  #   environment:
+  #     QUERY_DEFAULTS_LIMIT: 25
+  #     AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+  #     PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+  #     ENABLE_MODULES: text2vec-openai
+  #     CLUSTER_HOSTNAME: 'node1'
+  #   volumes:
+  #     - ./weaviate_data:/var/lib/weaviate
+  #   networks:
+  #     - proxy
 
-  fastapi:
-    container_name: fastapi
-    build: ./data-service
-    # ports:
-    #   - '8081:8081'
-    env_file:
-      - .env
-    volumes:
-      - ./data-service/data:/app/data
-    depends_on:
-      - weaviate
-    networks:
-      - proxy
+  # fastapi:
+  #   container_name: fastapi
+  #   build: ./data-service
+  #   # ports:
+  #   #   - '8081:8081'
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ./data-service/data:/app/data
+  #   depends_on:
+  #     - weaviate
+  #   networks:
+  #     - proxy
 
 networks:
   proxy:
