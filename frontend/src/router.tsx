@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import { lazy, Suspense } from "react";
 
 // Layout components (loaded immediately)
@@ -49,7 +49,7 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
-    errorElement: <ErrorBoundary />,
+    errorElement: <ErrorBoundary><div>라우터 에러 발생</div></ErrorBoundary>,
     children: [
       // Home page
       {
