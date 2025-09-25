@@ -27,6 +27,7 @@ export type SentenceEntity = {
   location: string;
   sentence: string;
   meaning: string;
+  translation?: string;
   pattern?: string;
   examples?: string[];
   level: string;

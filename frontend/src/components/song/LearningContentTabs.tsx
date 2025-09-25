@@ -79,7 +79,7 @@ export default function LearningContentTabs({ learningContent }: LearningContent
           const sentence = item as SentenceEntity;
           return {
             main: sentence.sentence,
-            sub: sentence.meaning,
+            sub: sentence.translation || sentence.meaning,
             extra: sentence.pattern || '',
             examples: sentence.examples || []
           };

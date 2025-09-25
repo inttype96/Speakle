@@ -175,9 +175,7 @@ def recommend_songs(req: QueryRequest):
                 if song_id not in song_title_match_cache:
                     song_title_match_cache[song_id] = check_title_keyword_match(client, song_id, queries)
 
-                # 제목에 키워드가 매칭되지 않으면 제외
-                if not song_title_match_cache[song_id]:
-                    continue
+                r["title_match"] = song_title_match_cache[song_id]
 
                 # 인기도 캐시 확인
                 if song_id not in song_popularity_cache:
@@ -190,7 +188,7 @@ def recommend_songs(req: QueryRequest):
                     seen[key] = r
 
         unique_results = list(seen.values())
-        print(f"Found {len(unique_results)} unique candidates after title-keyword filtering and popularity filtering")
+        print(f"Found {len(unique_results)} unique candidates after popularity filtering")
 
         # 3단계: 하이브리드 스코어링 (유사도 + 인기도)
         reranked = []
@@ -214,13 +212,17 @@ def recommend_songs(req: QueryRequest):
                 popularity_raw = r["popularity"]
                 popularity_score = calculate_popularity_boost(popularity_raw)
 
+                # 제목 매칭 보너스 (제목에 키워드가 포함된 곡은 점수 부스트)
+                title_boost = 0.3 if r.get("title_match", False) else 0.0
+
                 # 하이브리드 점수 계산
-                final_score = calculate_hybrid_score(
+                base_score = calculate_hybrid_score(
                     similarity_score,
                     popularity_score,
                     req.similarity_weight,
                     req.popularity_weight
                 )
+                final_score = base_score + title_boost
 
                 reranked.append({
                     "song_id": r["song_id"],
@@ -238,9 +240,13 @@ def recommend_songs(req: QueryRequest):
 
         print(f"Top 5 results:")
         for i, result in enumerate(final_results[:5]):
+            # 제목 매칭 여부 확인
+            song_id = result['song_id']
+            title_matched = song_title_match_cache.get(song_id, False)
             print(f"  {i+1}. song_id={result['song_id']}, "
                   f"sim={result['similarity_score']:.3f}, "
                   f"pop={result['popularity_score']:.3f}, "
+                  f"title_match={'✓' if title_matched else '✗'}, "
                   f"final={result['final_score']:.3f}")
 
         return {"results": final_results}
