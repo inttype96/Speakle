@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
 // icons
-import { ChevronLeft, Play, Volume2 } from "lucide-react";
+import { ChevronLeft, Volume2 } from "lucide-react";
 
 // api
 import {
@@ -22,6 +22,7 @@ import {
 } from "@/services/dictationService";
 
 import { type DictationItem } from "@/types/dictation";
+import SpotifyWebPlayer from "@/components/song/SpotifyWebPlayer";
 
 // ==== 유틸: 코어 문장을 글자 단위 토큰으로 쪼갬 (공백/문장부호 포함) ====
 type Token = { ch: string; isInput: boolean };
@@ -33,28 +34,7 @@ const tokenize = (sentence: string): Token[] => {
   });
 };
 
-// ==== TTS (Web Speech API) ====
-function speak(sentence: string) {
-  if (!("speechSynthesis" in window)) return;
-  const utter = new SpeechSynthesisUtterance(sentence);
-
-  // 영어 원어민에 가까운 음성 우선 선택 (en-GB > en-US > en-*)
-  const voices = window.speechSynthesis.getVoices();
-  const pick =
-    voices.find((v) => /en-GB/i.test(v.lang)) ||
-    voices.find((v) => /en-US/i.test(v.lang)) ||
-    voices.find((v) => /^en-/i.test(v.lang)) ||
-    null;
-
-  if (pick) utter.voice = pick;
-  utter.lang = pick?.lang ?? "en-US";
-  utter.rate = 0.95; // 살짝 느리게
-  utter.pitch = 1.0;
-  utter.volume = 1.0;
-
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utter);
-}
+// ==== 노래 재생 관련 유틸리티 ====
 
 const BOX_BASE =
   "h-12 w-10 md:h-12 md:w-10 flex items-center justify-center rounded-lg border bg-background/40 text-lg font-medium";
@@ -84,22 +64,99 @@ export default function DictationPage() {
   const [openResult, setOpenResult] = useState(false);
   const [resultMsg, setResultMsg] = useState<"정답입니다!" | "오답입니다!">("오답입니다!");
 
+  // 노래 재생 관련 상태
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [hasStarted, setHasStarted] = useState(false);
+  const [replayKey, setReplayKey] = useState(0); // Replay 버튼을 위한 key
+
   const progress = (qNo / MAX_Q) * 100;
+
+  // 노래 재생 시간 업데이트 핸들러
+  const handleTimeUpdate = useCallback((time: number, playing: boolean) => {
+    // 입력 값 검증
+    if (typeof time !== 'number' || isNaN(time) || time < 0) {
+      console.warn('handleTimeUpdate: 유효하지 않은 time 값:', time);
+      return;
+    }
+    
+    if (typeof playing !== 'boolean') {
+      console.warn('handleTimeUpdate: 유효하지 않은 playing 값:', playing);
+      return;
+    }
+    
+    setCurrentTime(time);
+    setIsPlaying(playing);
+    
+    // item이 유효한지 확인
+    if (!item) {
+      console.warn('handleTimeUpdate: item이 null 또는 undefined입니다');
+      return;
+    }
+    
+    if (!hasStarted && playing) {
+      setHasStarted(true);
+    }
+    
+    // endTime에 도달했을 때 재생이 정지되었는지 확인
+    if (item.endTime && typeof item.endTime === 'number' && time >= item.endTime && !playing) {
+      setHasStarted(true); // 재생이 완료되었음을 표시
+    }
+  }, [item, hasStarted]);
 
   // 문제 로드
   const fetchQuestion = useCallback(async (no: number) => {
-    const data = await startDictation({ learnedSongId, questionNumber: no });
-    setItem(data);
-    const tks = tokenize(data.coreSentence);
-    setTokens(tks);
-    // 입력칸 개수만큼 상태 초기화 (이전 값 유지 X — 재시도 시에는 모달만 닫고 그대로 유지)
-    const blanksCount = tks.filter((t) => t.isInput).length;
-    setAnswers((prev) => (prev.length === blanksCount ? prev : Array(blanksCount).fill("")));
-    // 포커스 초기화
-    setTimeout(() => {
-      const first = inputsRef.current.find((el) => !!el);
-      first?.focus();
-    }, 0);
+    try {
+      // 입력 값 검증
+      if (typeof no !== 'number' || isNaN(no) || no < 1) {
+        console.error('fetchQuestion: 유효하지 않은 문제 번호:', no);
+        return;
+      }
+      
+      if (typeof learnedSongId !== 'number' || isNaN(learnedSongId) || learnedSongId < 1) {
+        console.error('fetchQuestion: 유효하지 않은 learnedSongId:', learnedSongId);
+        return;
+      }
+      
+      const data = await startDictation({ learnedSongId, questionNumber: no });
+      
+      // 응답 데이터 검증
+      if (!data) {
+        console.error('fetchQuestion: 서버에서 빈 응답을 받았습니다');
+        return;
+      }
+      
+      if (!data.coreSentence || typeof data.coreSentence !== 'string') {
+        console.error('fetchQuestion: 유효하지 않은 coreSentence:', data.coreSentence);
+        return;
+      }
+      
+      setItem(data);
+      const tks = tokenize(data.coreSentence);
+      setTokens(tks);
+      // 입력칸 개수만큼 상태 초기화 (이전 값 유지 X — 재시도 시에는 모달만 닫고 그대로 유지)
+      const blanksCount = tks.filter((t) => t.isInput).length;
+      setAnswers((prev) => (prev.length === blanksCount ? prev : Array(blanksCount).fill("")));
+      
+      // 노래 재생 상태 초기화
+      setHasStarted(false);
+      setCurrentTime(0);
+      setIsPlaying(false);
+      // replayKey를 증가시켜서 SpotifyWebPlayer를 완전히 리렌더링
+      setReplayKey(prev => prev + 1);
+      
+      // 포커스 초기화
+      setTimeout(() => {
+        const first = inputsRef.current.find((el) => !!el);
+        first?.focus();
+      }, 0);
+    } catch (error) {
+      console.error('fetchQuestion 에러:', error);
+      // 에러 발생 시 기본값으로 설정
+      setItem(null);
+      setTokens([]);
+      setAnswers([]);
+    }
   }, [learnedSongId]);
 
   useEffect(() => {
@@ -115,6 +172,16 @@ export default function DictationPage() {
       window.speechSynthesis.onvoiceschanged = null;
     };
   }, [qNo, fetchQuestion]);
+
+  // 페이지를 벗어날 때 노래 정지
+  useEffect(() => {
+    return () => {
+      // 컴포넌트가 언마운트될 때 노래 정지
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   // 토큰 ↔ 입력칸 인덱스 매핑
   const inputMap = useMemo(() => {
@@ -194,7 +261,22 @@ export default function DictationPage() {
 
   // 제출
   const onSubmit = useCallback(async () => {
-    if (!item) return;
+    // item 유효성 검증
+    if (!item) {
+      console.error('onSubmit: item이 null 또는 undefined입니다');
+      return;
+    }
+    
+    if (!item.coreSentence || typeof item.coreSentence !== 'string') {
+      console.error('onSubmit: 유효하지 않은 coreSentence:', item.coreSentence);
+      return;
+    }
+    
+    if (!item.dictationId || typeof item.dictationId !== 'number') {
+      console.error('onSubmit: 유효하지 않은 dictationId:', item.dictationId);
+      return;
+    }
+    
     const correct = item.coreSentence;
     const userAnswer = composedUserAnswer;
 
@@ -203,14 +285,19 @@ export default function DictationPage() {
     setResultMsg(isCorrect ? "정답입니다!" : "오답입니다!");
     setOpenResult(true);
 
-    // 점수 규칙: 정답 5점/오답 0점
-    await submitDictation({
-      userId: userId || 0,
-      dictationId: item.dictationId,
-      isCorrect,
-      score: isCorrect ? 5 : 0,
-      meta: { userAnswer, correctAnswer: correct },
-    });
+    try {
+      // 점수 규칙: 정답 5점/오답 0점
+      await submitDictation({
+        userId: userId || 0,
+        dictationId: item.dictationId,
+        isCorrect,
+        score: isCorrect ? 5 : 0,
+        meta: { userAnswer, correctAnswer: correct },
+      });
+    } catch (error) {
+      console.error('submitDictation 에러:', error);
+      // 에러가 발생해도 UI는 정상적으로 표시
+    }
   }, [item, composedUserAnswer, userId]);
 
   // 다음 문제
@@ -232,8 +319,25 @@ export default function DictationPage() {
 
   // 곡 상세로
   const goSong = () => {
-    const to = `/songs/${item?.songId || songIdFromQuery || ""}`;
-    navigate(to || "/");
+    const songId = item?.songId || songIdFromQuery || "";
+    if (!songId) {
+      navigate("/");
+      return;
+    }
+
+    // 현재 URL의 쿼리 파라미터들을 가져와서 유지
+    const currentParams = new URLSearchParams(window.location.search);
+    const situation = currentParams.get("situation");
+    const location = currentParams.get("location");
+    
+    // 쿼리 파라미터 구성
+    const queryParams = new URLSearchParams();
+    if (situation) queryParams.set("situation", situation);
+    if (location) queryParams.set("location", location);
+    
+    const queryString = queryParams.toString();
+    const to = `/songs/${songId}${queryString ? `?${queryString}` : ""}`;
+    navigate(to);
   };
 
   return (
@@ -266,16 +370,40 @@ export default function DictationPage() {
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Volume2 className="h-4 w-4" />
-                <span>Play the sentence and type exactly.</span>
+                <span>Listen to the song and type the lyrics exactly.</span>
               </div>
             </div>
 
-            <div className="flex flex-col items-center gap-4 mb-6">
-              <Button size="lg" className="rounded-full h-14 w-14 p-0" onClick={() => item && speak(item.coreSentence)}>
-                <Play className="h-6 w-6" />
-              </Button>
-              <p className="text-sm text-muted-foreground">재생 버튼을 클릭하여 음성을 들어보세요</p>
-            </div>
+            {/* Spotify Web Player */}
+            {item && (
+              <div className="mb-6">
+                <SpotifyWebPlayer
+                  key={`${item.songId}-${replayKey}`}
+                  trackId={item.songId}
+                  trackName={item.title}
+                  artistName={item.artists}
+                  onTimeUpdate={handleTimeUpdate}
+                  startTime={item.startTime}
+                  endTime={item.endTime}
+                />
+                <div className="mt-2 text-center space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {item.startTime && item.endTime ? (
+                      <>
+                        {hasStarted && (!isPlaying || currentTime >= item.endTime) && (
+                          <span className="ml-2 text-green-600 font-medium">✓ Time to answer!</span>
+                        )}
+                      </>
+                    ) : (
+                      "Listen to the song and type the lyrics you hear"
+                    )}
+                  </p>
+                  
+                  {/* 다시 재생 버튼 */}
+
+                </div>
+              </div>
+            )}
 
             {/* 입력 그리드 */}
             <section className="mx-auto flex flex-col gap-3 items-center">
