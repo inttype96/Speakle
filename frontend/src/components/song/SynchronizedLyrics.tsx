@@ -11,9 +11,9 @@ interface LyricChunk {
 }
 
 interface SynchronizedLyricsProps {
-  songId: string; // 실시간 번역을 위한 songId
+  songId: string;
   lyricChunks: LyricChunk[];
-  currentTime: number; // 현재 재생 시간 (밀리초)
+  currentTime: number;
   isPlaying?: boolean;
 }
 
@@ -28,14 +28,10 @@ export default function SynchronizedLyrics({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const currentLineRef = useRef<HTMLDivElement>(null);
 
-  // 실시간 번역 WebSocket 연결
   const handleTranslationUpdate = useCallback((event: TranslationUpdateEvent) => {
-    console.log('🔄 Translation update received:', event);
-
     if (event.status === 'STARTED') {
       setShowTranslationProgress(true);
     } else if (event.status === 'PROGRESS' && event.chunkId && event.korean) {
-      // 해당 청크의 한국어 번역 업데이트
       setRealtimeLyrics(prev => prev.map(chunk =>
         chunk.id === event.chunkId
           ? { ...chunk, korean: event.korean || null }
@@ -43,10 +39,8 @@ export default function SynchronizedLyrics({
       ));
     } else if (event.status === 'COMPLETED') {
       setShowTranslationProgress(false);
-      console.log('✅ Translation completed!');
     } else if (event.status === 'ERROR') {
       setShowTranslationProgress(false);
-      console.error('❌ Translation failed');
     }
   }, []);
 
@@ -76,13 +70,17 @@ export default function SynchronizedLyrics({
     .filter((chunk, index, array) => {
       const prevChunk = array[index - 1];
       return !(prevChunk &&
-          chunk.english === prevChunk.english &&
-          Math.abs(chunk.startTimeMs - prevChunk.startTimeMs) < 5000);
+        chunk.english === prevChunk.english &&
+        Math.abs(chunk.startTimeMs - prevChunk.startTimeMs) < 5000);
     });
 
   // 현재 재생 시간에 따른 가사 라인 인덱스 계산
   useEffect(() => {
     if (!validLyrics.length) return;
+
+    // 동기화 오프셋 (가사가 늦으면 음수값 사용해서 빠르게, 빠르면 양수값 사용해서 늦게)
+    const SYNC_OFFSET_MS = -50; // 필요시 조정 가능 (-500 ~ +500ms 권장)
+    const adjustedCurrentTime = currentTime + SYNC_OFFSET_MS;
 
     // 현재 시간과 가장 적절한 가사 라인 찾기
     let newIndex = -1;
@@ -93,9 +91,9 @@ export default function SynchronizedLyrics({
       const currentLyric = validLyrics[i];
       const nextLyric = validLyrics[i + 1];
 
-      if (currentTime >= currentLyric.startTimeMs) {
+      if (adjustedCurrentTime >= currentLyric.startTimeMs) {
         // 다음 가사가 없거나, 다음 가사 시작 시간보다 현재 시간이 작으면
-        if (!nextLyric || currentTime < nextLyric.startTimeMs) {
+        if (!nextLyric || adjustedCurrentTime < nextLyric.startTimeMs) {
           newIndex = i;
           break;
         } else {
@@ -109,10 +107,8 @@ export default function SynchronizedLyrics({
     }
 
     if (newIndex !== currentLineIndex) {
-      console.log(`🔄 Line changed: ${currentLineIndex} -> ${newIndex}`);
-      console.log(`⏰ Current time: ${Math.floor(currentTime / 1000)}s`);
       if (newIndex >= 0 && validLyrics[newIndex]) {
-        console.log(`🎤 Current lyric: "${validLyrics[newIndex].english}" (starts at ${Math.floor(validLyrics[newIndex].startTimeMs / 1000)}s)`);
+        const timeDifference = adjustedCurrentTime - validLyrics[newIndex].startTimeMs;
       }
       setCurrentLineIndex(newIndex);
     }

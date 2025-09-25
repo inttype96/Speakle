@@ -5,6 +5,7 @@ import com.sevencode.speakle.song.domain.Song;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface LyricChunkRepository extends JpaRepository<LyricChunk, String> {
     List<LyricChunk> findBySong(Song song);
@@ -12,4 +13,6 @@ public interface LyricChunkRepository extends JpaRepository<LyricChunk, String> 
     List<LyricChunk> findBySongSongIdAndEnglishIsNotNullOrderByStartTimeMsAsc(String sondId);
 
     List<LyricChunk> findBySongSongIdOrderByStartTimeMsAsc(String songId);
+
+    Optional<LyricChunk> findFirstBySongSongIdAndEnglishIgnoreCase(String songId, String english);
 }
