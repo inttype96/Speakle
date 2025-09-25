@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/common/navbar";
 import { useAuthStore } from "@/store/auth";
+import { useSpotifyPlayer } from "@/contexts/SpotifyPlayerContext";
+import { pausePlaybackAPI } from "@/services/spotify";
 
 // shadcn
 import { Card, CardContent } from "@/components/ui/card";
@@ -48,6 +50,7 @@ export default function DictationPage() {
   const songIdFromQuery = sp.get("song_id") || sp.get("songId") || "";
   const navigate = useNavigate();
   const { userId } = useAuthStore();
+  const { setIsPlaying, setShouldStopPlayer } = useSpotifyPlayer();
 
   // 진행상태
   const MAX_Q = 3;
@@ -103,6 +106,23 @@ export default function DictationPage() {
       setHasStarted(true); // 재생이 완료되었음을 표시
     }
   }, [item, hasStarted]);
+
+  // 딕테이션 페이지 진입 시 음악 자동 정지
+  useEffect(() => {
+    console.log('🎵 Dictation: Page entered, checking if music should be stopped');
+    const stopMusicOnEntry = async () => {
+      try {
+        await pausePlaybackAPI();
+        setIsPlaying(false);
+        setShouldStopPlayer(true);
+        console.log('✅ Music stopped on dictation page entry');
+      } catch (error) {
+        console.error('❌ Failed to stop music on dictation page entry:', error);
+      }
+    };
+
+    stopMusicOnEntry();
+  }, []); // 빈 배열로 페이지 진입 시 한 번만 실행
 
   // 문제 로드
   const fetchQuestion = useCallback(async (no: number) => {
@@ -302,6 +322,17 @@ export default function DictationPage() {
 
   // 다음 문제
   const onNext = useCallback(async () => {
+    // 다음 문제로 넘어갈 때 음악 정지
+    console.log('🎵 Dictation: Moving to next question, stopping music');
+    try {
+      await pausePlaybackAPI();
+      setIsPlaying(false);
+      setShouldStopPlayer(true);
+      console.log('✅ Music stopped for next question');
+    } catch (error) {
+      console.error('❌ Failed to stop music for next question:', error);
+    }
+
     setOpenResult(false);
     if (qNo < MAX_Q) {
       setQNo((n) => n + 1);
@@ -311,7 +342,7 @@ export default function DictationPage() {
       setSummary(summary);
       setOpenSummary(true);
     }
-  }, [qNo, learnedSongId]);
+  }, [qNo, learnedSongId, setIsPlaying, setShouldStopPlayer]);
 
   // 요약 모달
   const [openSummary, setOpenSummary] = useState(false);

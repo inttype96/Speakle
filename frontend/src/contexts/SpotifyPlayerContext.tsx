@@ -35,32 +35,38 @@ export function SpotifyPlayerProvider({ children }: SpotifyPlayerProviderProps) 
     console.log('🛑 Global shouldStopPlayer updated:', shouldStopPlayer);
   }, [shouldStopPlayer]);
 
-  // 페이지 변경 감지 - SongDetail 페이지가 아니면 플레이어 정지
+  // 페이지 변경 감지 - 음악 재생 허용 페이지가 아니면 플레이어 정지
   useEffect(() => {
     const isSongDetailPage = location.pathname.startsWith('/songs/');
+    const isDictationPage = location.pathname.startsWith('/learn/dictation');
     const isIframePath = location.pathname.includes('/ws-translation/iframe.html');
+
+    // 음악 재생을 허용하는 페이지들
+    const isMusicAllowedPage = isSongDetailPage || isDictationPage;
 
     console.log('🔍 Page Detection:', {
       pathname: location.pathname,
       isSongDetailPage,
+      isDictationPage,
       isIframePath,
+      isMusicAllowedPage,
       isPlaying: isPlayingRef.current,
       currentIsPlaying: isPlaying
     });
 
-    // iframe 경로는 무시하고, song detail 페이지가 아닐 때 즉시 정지
-    if (!isSongDetailPage && !isIframePath) {
+    // iframe 경로는 무시하고, 음악 허용 페이지가 아닐 때 즉시 정지
+    if (!isMusicAllowedPage && !isIframePath) {
       // 현재 재생 중인지 확인 (ref와 state 둘 다 체크)
       const currentlyPlaying = isPlayingRef.current || isPlaying;
 
-      console.log('🛑 Not on song detail page, checking if need to stop:', {
+      console.log('🛑 Not on music allowed page, checking if need to stop:', {
         currentlyPlaying,
         refPlaying: isPlayingRef.current,
         statePlaying: isPlaying
       });
 
       if (currentlyPlaying) {
-        console.log('🛑 STOPPING PLAYER - Not on song detail page');
+        console.log('🛑 STOPPING PLAYER - Not on music allowed page');
 
         // API 호출로 플레이어 정지
         pausePlaybackAPI()
@@ -75,11 +81,11 @@ export function SpotifyPlayerProvider({ children }: SpotifyPlayerProviderProps) 
         setIsPlaying(false);
         setShouldStopPlayer(true);
       } else {
-        console.log('ℹ️ Not on song detail page, but player already stopped');
+        console.log('ℹ️ Not on music allowed page, but player already stopped');
       }
-    } else if (isSongDetailPage) {
-      // Song detail 페이지에 있으면 정지 신호 리셋
-      console.log('✅ On song detail page, resetting stop signals');
+    } else if (isMusicAllowedPage) {
+      // 음악 허용 페이지에 있으면 정지 신호 리셋
+      console.log('✅ On music allowed page, resetting stop signals');
       setShouldStopPlayer(false);
     } else {
       console.log('🔍 Page change ignored (iframe or other)');
