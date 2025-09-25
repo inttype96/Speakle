@@ -85,7 +85,7 @@ interface SpotifyWebPlayerProps {
 }
 
 export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTimeUpdate, startTime, endTime }: SpotifyWebPlayerProps) {
-  const { shouldStopPlayer, setIsPlaying: setGlobalIsPlaying, stopSignal } = useSpotifyPlayer();
+  const { shouldStopPlayer, setIsPlaying: setGlobalIsPlaying } = useSpotifyPlayer();
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(50)
   const [isMuted, setIsMuted] = useState(false)
@@ -308,44 +308,32 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
     return () => clearInterval(interval)
   }, [isPlaying, duration, endTime, onTimeUpdate, player])
 
-  // stopSignal이 변경되면 플레이어 정지
+  // shouldStopPlayer가 true일 때 플레이어 정지 (API가 실패했을 경우를 위한 백업)
   useEffect(() => {
-    console.log('🔍 SpotifyWebPlayer stopSignal check:', { stopSignal, shouldStopPlayer, hasPlayer: !!player, isPlaying });
+    if (shouldStopPlayer && player && isPlaying) {
+      console.log('🔍 SpotifyWebPlayer backup stop check:', { shouldStopPlayer, hasPlayer: !!player, isPlaying });
 
-    if (stopSignal > 0) {
       const stopPlayer = async () => {
         try {
-          console.log('🛑 IMMEDIATE: Stopping Spotify player due to page leave')
+          console.log('🛑 BACKUP: Stopping Spotify player via SDK')
 
-          // 즉시 상태 업데이트 (UI 반응성)
+          // UI 상태 즉시 업데이트
           setIsPlaying(false)
-          setGlobalIsPlaying(false)  // 전역 상태도 업데이트
+          setGlobalIsPlaying(false)
           setPosition(0)
           onTimeUpdate?.(0, false)
 
-          // player가 있는 경우에만 SDK 호출
-          if (player) {
-            try {
-              // Web Playback SDK로 일시정지
-              await player.pause()
-              console.log('✅ SDK pause successful')
-            } catch (sdkError) {
-              console.error('SDK pause failed:', sdkError)
-            }
-          } else {
-            console.log('ℹ️ No player instance, only updating UI state')
-          }
-
-          console.log('🎯 Spotify player stop sequence completed')
+          // SDK로 정지 (백업용)
+          await player.pause()
+          console.log('✅ SDK backup pause successful')
         } catch (error) {
-          console.error('플레이어 정지 실패:', error)
+          console.error('SDK backup pause failed:', error)
         }
       }
 
-      // 즉시 실행 (await 없이)
       stopPlayer()
     }
-  }, [stopSignal, shouldStopPlayer, player, onTimeUpdate, setGlobalIsPlaying])
+  }, [shouldStopPlayer, player, isPlaying, onTimeUpdate, setGlobalIsPlaying])
 
   // 트랙 재생
   const playTrack = async (trackUri: string, seekTo?: number) => {

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
+import { pausePlaybackAPI } from '@/services/spotify';
 
 interface SpotifyPlayerContextType {
   isPlaying: boolean;
@@ -8,7 +9,6 @@ interface SpotifyPlayerContextType {
   setShouldStopPlayer: (stop: boolean) => void;
   currentTrackId: string | null;
   setCurrentTrackId: (trackId: string | null) => void;
-  stopSignal: number; // 정지 신호용 카운터
 }
 
 const SpotifyPlayerContext = createContext<SpotifyPlayerContextType | undefined>(undefined);
@@ -21,7 +21,6 @@ export function SpotifyPlayerProvider({ children }: SpotifyPlayerProviderProps) 
   const [isPlaying, setIsPlaying] = useState(false);
   const [shouldStopPlayer, setShouldStopPlayer] = useState(false);
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
-  const [stopSignal, setStopSignal] = useState(0);
   const location = useLocation();
   const isPlayingRef = useRef(isPlaying);
 
@@ -62,14 +61,19 @@ export function SpotifyPlayerProvider({ children }: SpotifyPlayerProviderProps) 
 
       if (currentlyPlaying) {
         console.log('🛑 STOPPING PLAYER - Not on song detail page');
-        // 즉시 전역 상태 업데이트 (동기적으로)
+
+        // API 호출로 플레이어 정지
+        pausePlaybackAPI()
+          .then(() => {
+            console.log('✅ Spotify pause API call successful');
+          })
+          .catch((error) => {
+            console.error('❌ Spotify pause API call failed:', error);
+          });
+
+        // 즉시 전역 상태 업데이트
         setIsPlaying(false);
         setShouldStopPlayer(true);
-        setStopSignal(prev => {
-          const newSignal = prev + 1;
-          console.log('🔢 Stop signal incremented:', prev, '->', newSignal);
-          return newSignal;
-        });
       } else {
         console.log('ℹ️ Not on song detail page, but player already stopped');
       }
@@ -122,7 +126,6 @@ export function SpotifyPlayerProvider({ children }: SpotifyPlayerProviderProps) 
     setShouldStopPlayer,
     currentTrackId,
     setCurrentTrackId,
-    stopSignal,
   };
 
   return (
