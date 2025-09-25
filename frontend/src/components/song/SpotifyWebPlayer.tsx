@@ -272,41 +272,55 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
     }
   }, [])
 
-  // 실시간 position 업데이트
+  // 실제 Spotify 재생 위치로 position 업데이트
   useEffect(() => {
-    if (!isPlaying || !duration) {
+    if (!isPlaying || !duration || !player) {
       return
     }
 
-    const interval = setInterval(() => {
-      setPosition((prev) => {
-        const newPosition = prev + 100
-        
-         // endTime이 설정되어 있고 도달하면 정지
-         if (validatedEndTime && newPosition >= validatedEndTime) {
-           if (player) {
-             player.pause()
-           }
-           setIsPlaying(false)
-           onTimeUpdate?.(validatedEndTime, false)
-           return validatedEndTime
-         }
-        
+    const interval = setInterval(async () => {
+      try {
+        // 실제 Spotify 재생 상태 가져오기
+        const state = await player.getCurrentState()
+        if (!state || state.paused) {
+          setIsPlaying(false)
+          return
+        }
+
+        const realPosition = state.position
+        setPosition(realPosition)
+
+        // endTime이 설정되어 있고 도달하면 정지
+        if (validatedEndTime && realPosition >= validatedEndTime) {
+          await player.pause()
+          setIsPlaying(false)
+          onTimeUpdate?.(validatedEndTime, false)
+          return
+        }
+
         // 트랙 끝에 도달하면 정지
-        if (newPosition >= duration) {
+        if (realPosition >= duration) {
           setIsPlaying(false)
           onTimeUpdate?.(duration, false)
-          return duration
+          return
         }
-        
-        // 상위 컴포넌트에 시간 업데이트 알림
-        onTimeUpdate?.(newPosition, true)
-        return newPosition
-      })
+
+        // 상위 컴포넌트에 실제 재생 시간 알림
+        onTimeUpdate?.(realPosition, true)
+
+      } catch (error) {
+        console.error('재생 위치 업데이트 실패:', error)
+        // 에러 시 기존 방식으로 폴백
+        setPosition((prev) => {
+          const newPosition = prev + 100
+          onTimeUpdate?.(newPosition, true)
+          return newPosition
+        })
+      }
     }, 100)
 
     return () => clearInterval(interval)
-  }, [isPlaying, duration, endTime, onTimeUpdate, player])
+  }, [isPlaying, duration, validatedEndTime, onTimeUpdate, player])
 
   // shouldStopPlayer가 true일 때 플레이어 정지 (API가 실패했을 경우를 위한 백업)
   useEffect(() => {
