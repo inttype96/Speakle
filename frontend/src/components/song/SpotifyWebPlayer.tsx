@@ -82,9 +82,10 @@ interface SpotifyWebPlayerProps {
   onTimeUpdate?: (currentTime: number, isPlaying: boolean) => void
   startTime?: number // 시작 시간 (밀리초)
   endTime?: number   // 종료 시간 (밀리초)
+  autoPlay?: boolean // 자동 재생 여부 (수정(소연))
 }
 
-export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTimeUpdate, startTime, endTime }: SpotifyWebPlayerProps) {
+export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTimeUpdate, startTime, endTime, autoPlay = false }: SpotifyWebPlayerProps) {
   const { shouldStopPlayer, setIsPlaying: setGlobalIsPlaying } = useSpotifyPlayer();
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(50)
@@ -348,6 +349,18 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
       stopPlayer()
     }
   }, [shouldStopPlayer, player, isPlaying, onTimeUpdate, setGlobalIsPlaying])
+
+  // autoPlay 로직 (수정(소연))
+  useEffect(() => {
+    if (autoPlay && isSDKReady && deviceId && player && !isPlaying) {
+      console.log('🎵 AutoPlay triggered:', { trackId, validatedStartTime })
+      const timeout = setTimeout(() => {
+        playTrack(trackId, validatedStartTime)
+      }, 500) // 플레이어가 완전히 준비될 시간 확보
+
+      return () => clearTimeout(timeout)
+    }
+  }, [autoPlay, isSDKReady, deviceId, player, trackId, validatedStartTime, isPlaying])
 
   // 트랙 재생
   const playTrack = async (trackUri: string, seekTo?: number) => {

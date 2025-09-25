@@ -279,84 +279,151 @@ export default function SpeakingPage() {
   }, [results]);
 
   return (
-    <div className="bg-background text-foreground">
+    <div className="bg-background text-foreground font-sans min-h-screen">
+      {/* Google Fonts Link */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Pretendard:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+      />
       <Navbar />
       <div aria-hidden className="h-16 md:h-20" />
 
-      <div className="mx-auto w-[var(--shell-w)] px-[var(--shell-gutter)]">
-        <div className="flex items-center justify-between">
-          <button type="button" onClick={() => history.back()} className="inline-flex items-center gap-2 text-[15px]">
+      {/* 상단 여백 추가 */}
+      <div className="h-8" />
+
+      <div className="w-screen px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '65vw' }}>
+        {/* 상단 헤더 */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 sm:gap-0">
+          <button
+            type="button"
+            onClick={() => history.back()}
+            className="inline-flex items-center gap-2 text-sm font-['Pretendard'] font-medium text-white hover:text-[#B5A6E0] transition-colors duration-200 px-3 sm:px-4 py-2 rounded-lg hover:bg-white/10"
+          >
             <ChevronLeft size={18} />
             곡으로 돌아가기
           </button>
 
-          <div className="hidden md:block rounded-md px-4 py-2.5 text-right">
-            <div className="text-xs">
+          <div className="backdrop-blur-sm bg-white/10 rounded-xl px-3 sm:px-4 py-2.5 text-right border border-white/20">
+            <div className="text-xs font-['Pretendard'] text-white/70 truncate max-w-[200px] sm:max-w-none">
               {evalData ? `${evalData.title} - ${evalData.artists}` : "Loading..."}
             </div>
-            <div className="text-sm font-semibold">{TOP_RIGHT_MODE}</div>
+            <div className="text-sm font-['Pretendard'] font-bold text-white">{TOP_RIGHT_MODE}</div>
           </div>
         </div>
 
-        <div className="mt-6 text-xs">Question {qNum} of {TOTAL_QUESTIONS}</div>
-        <Progress value={Math.min(progressPct, 100)} className="mt-2 h-2" />
-        <div className="mt-1 text-right text-[11px] sm:text-xs">{progressPct}% Complete</div>
+        {/* 게임 스타일 진행 표시 */}
+        <div className="backdrop-blur-xl bg-white/10 rounded-2xl p-6 border border-white/20 shadow-2xl mb-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-2 sm:gap-0">
+            <div className="text-sm font-['Pretendard'] font-bold text-white">
+              Question {qNum} of {TOTAL_QUESTIONS}
+            </div>
+            <div className="text-sm font-['Pretendard'] font-medium text-[#B5A6E0]">
+              {progressPct}% Complete
+            </div>
+          </div>
+          <div className="relative">
+            <div className="w-full bg-black/30 rounded-full h-3 backdrop-blur-sm">
+              <div
+                className="bg-[#4B2199] h-3 rounded-full transition-all duration-500 ease-out shadow-lg"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+            <div className="absolute inset-0 bg-[#B5A6E0]/30 rounded-full animate-pulse" />
+          </div>
+        </div>
+
+        {/* 게임 스타일 스피킹 본문 */}
+        <div className="flex justify-center w-full">
+          <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-2xl overflow-hidden max-w-5xl w-full">
+            <CardHeader className="flex flex-col gap-3 p-3 sm:p-4 lg:p-5 text-center items-center">
+              <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <div className="backdrop-blur-sm bg-white/20 px-3 py-1.5 rounded-full border border-white/30">
+                    <span className="font-['Pretendard'] font-bold text-white text-sm">문제 {qNum}</span>
+                  </div>
+                  <Badge className="bg-[#4B2199]/80 text-white border-[#B5A6E0]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
+                    {POINTS_PER_Q} points
+                  </Badge>
+                </div>
+
+                <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
+                  <div className="flex items-center gap-2 bg-gradient-to-r from-[#4B2199]/20 to-[#B5A6E0]/20 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl shadow-lg">
+                    <Timer size={16} className="text-[#B5A6E0] animate-pulse sm:w-[18px] sm:h-[18px]" />
+                    <span className="tabular-nums text-white font-['Inter'] font-bold text-base sm:text-lg tracking-wide drop-shadow-md">{mmss(elapsed)}</span>
+                  </div>
+                  <Badge className="bg-[#B5A6E0]/80 text-white border-[#4B2199]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
+                    Medium
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="space-y-4 sm:space-y-6 w-full text-center">
+                <div className="text-xs font-['Pretendard'] text-white/80">주어진 문장을 정확한 발음으로 따라 읽어주세요</div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-6 pb-8 text-center">
+              <div className="backdrop-blur-sm bg-white/5 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/20">
+                <div className="font-['Pretendard'] font-medium leading-relaxed text-lg sm:text-xl lg:text-2xl text-white">
+                  {evalData?.coreSentence ?? "문장을 불러오는 중..."}
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <Button
+                  type="button"
+                  onClick={speak}
+                  className="h-10 sm:h-12 rounded-xl px-4 sm:px-6 bg-[#B5A6E0]/80 hover:bg-[#B5A6E0] text-white font-['Pretendard'] font-medium transition-all duration-300 shadow-lg hover:shadow-xl"
+                  variant="secondary"
+                >
+                  <Volume2 size={18} className="mr-2" />
+                  원어민 발음 듣기
+                </Button>
+              </div>
+
+              <div className="flex flex-col items-center gap-4">
+                <button
+                  type="button"
+                  onClick={toggleRecord}
+                  className={[
+                    "grid place-items-center rounded-full transition-all duration-300 shadow-2xl",
+                    "h-20 w-20 sm:h-24 sm:w-24",
+                    recording
+                      ? "bg-gradient-to-br from-rose-500/90 to-rose-600/90 hover:from-rose-500 hover:to-rose-600 animate-pulse"
+                      : "bg-gradient-to-br from-[#4B2199]/90 to-[#B5A6E0]/90 hover:from-[#4B2199] hover:to-[#B5A6E0]",
+                  ].join(" ")}
+                  title={recording ? "녹음 중지" : "녹음 시작"}
+                >
+                  {recording ? <MicOff size={28} className="text-white" /> : <Mic size={28} className="text-white" />}
+                </button>
+                <div className="text-sm font-['Pretendard'] text-white/80">마이크 버튼을 눌러 발음해보세요</div>
+                {recUrl && (
+                  <div className="w-full max-w-md">
+                    <audio src={recUrl} controls className="w-full rounded-lg" />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-center">
+                <Button
+                  type="button"
+                  onClick={onSubmit}
+                  disabled={!recBlob}
+                  className="h-12 sm:h-14 rounded-xl px-6 sm:px-8 bg-[#4B2199]/90 hover:bg-[#4B2199] text-white font-['Pretendard'] font-bold text-base sm:text-lg disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300 shadow-xl hover:shadow-2xl disabled:hover:shadow-xl"
+                >
+                  답안 제출 →
+                </Button>
+              </div>
+
+              <div className="backdrop-blur-sm bg-white/10 rounded-xl px-4 py-2 border border-white/20">
+                <div className="text-sm font-['Pretendard'] text-white">현재 점수: <span className="font-bold text-[#B5A6E0]">{lastScore ?? 0} / 4</span></div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
-      <div className="mx-auto mt-8 mb-24 w-[min(940px,88vw)]">
-        <Card className="border shadow-2xl">
-          <CardHeader className="flex flex-col items-center gap-2 pt-8">
-            <div className="text-sm">{title}</div>
-            <div className="text-xs">주어진 문장을 정확한 발음으로 따라 읽어주세요</div>
-            <div className="mt-3 flex items-center gap-3">
-              <Badge className="rounded-full">{POINTS_PER_Q} points</Badge>
-              <span className="inline-flex items-center gap-1 text-sm">
-                <Timer size={16} /> {mmss(elapsed)}
-              </span>
-              <Badge variant="outline" className="rounded-full">Medium</Badge>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-6 pb-8">
-            <div className="mx-auto w-full rounded-xl border px-5 py-4 text-center text-[17px]">
-              {evalData?.coreSentence ?? "Loading..."}
-            </div>
-
-            <div className="flex justify-center">
-              <Button type="button" onClick={speak} className="h-9 rounded-full px-3" variant="secondary">
-                <Volume2 size={16} className="mr-2" />
-                원어민 발음 듣기
-              </Button>
-            </div>
-
-            <div className="flex flex-col items-center gap-3">
-              <button
-                type="button"
-                onClick={toggleRecord}
-                className={[
-                  "grid place-items-center rounded-full transition-all",
-                  "h-20 w-20 sm:h-24 sm:w-24",
-                  recording ? "bg-rose-600/80 hover:bg-rose-600" : "bg-violet-600 hover:bg-violet-500",
-                ].join(" ")}
-                title={recording ? "녹음 중지" : "녹음 시작"}
-              >
-                {recording ? <MicOff size={26} /> : <Mic size={26} />}
-              </button>
-              <div className="text-xs">마이크 버튼을 눌러 발음해보세요</div>
-              {recUrl && <audio src={recUrl} controls className="mt-1 w-full max-w-md" />}
-            </div>
-
-            <div className="flex justify-center">
-              <Button type="button" onClick={onSubmit} disabled={!recBlob} className="h-10 rounded-md disabled:cursor-not-allowed disabled:opacity-60">
-                답안 제출 ›
-              </Button>
-            </div>
-
-            <div className="mt-2 text-center text-xs">현재 점수: {lastScore ?? 0} / 4</div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* 결과 모달 */}
       <Dialog open={openResult} onOpenChange={setOpenResult}>
         <DialogContent>
