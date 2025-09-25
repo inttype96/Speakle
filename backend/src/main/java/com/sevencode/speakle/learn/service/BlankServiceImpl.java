@@ -169,14 +169,16 @@ public class BlankServiceImpl implements BlankService{
             for (Integer index : candidateIndices) {
                 if (index < sentences.size()) {
                     SentenceEntity sentence = sentences.get(index);
-                    BlankQuizResult tempResult = tryCreateBlankQuiz(sentence.getSentence(), req.getQuestionNumber());
+                    if(sentence.getSentence().length()>=20){
+                        BlankQuizResult tempResult = tryCreateBlankQuiz(sentence.getSentence(), req.getQuestionNumber());
 
-                    if (tempResult != null) {
-                        originalSentence = sentence.getSentence();
-                        korean = sentence.getTranslation();
-                        recommendationSentenceId = -1L;
-                        quizResult = tempResult;
-                        break;
+                        if (tempResult != null) {
+                            originalSentence = sentence.getSentence();
+                            korean = sentence.getTranslation();
+                            recommendationSentenceId = -1L;
+                            quizResult = tempResult;
+                            break;
+                        }
                     }
                 }
             }
