@@ -226,22 +226,30 @@ export default function SongDetailPage() {
   }
 
   return (
-    <div className="bg-background text-foreground">
+    <div className="bg-background text-foreground font-sans">
+      {/* Google Fonts Link */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Pretendard:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+      />
       <Navbar />
       <div aria-hidden className="h-16 md:h-20" />
 
-      <div className="mx-auto max-w-6xl px-4 py-6 space-y-6">
+      <div className="mx-auto max-w-7xl px-4 py-8 space-y-6 min-h-screen">
         {/* 상단 헤더 */}
         <div className="flex items-center">
-          <Button variant="ghost" asChild>
+          <Button variant="ghost" asChild className="text-white hover:bg-white/10 font-['Pretendard'] font-medium rounded-xl transition-colors duration-200">
             <Link to={backUrl}>
-              <ChevronLeft className="mr-1 h-4 w-4" /> {backText}
+              <ChevronLeft className="mr-2 h-4 w-4" /> {backText}
             </Link>
           </Button>
         </div>
 
         {/* 상단: 앨범/타이틀/메타 */}
-        <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-0">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-0">
           {/* 앨범 커버 */}
           <div className="p-4 md:pr-2">
             <div className="relative aspect-square overflow-hidden rounded-md bg-muted max-w-[200px] mx-auto md:mx-0">
@@ -279,17 +287,17 @@ export default function SongDetailPage() {
             ) : data ? (
               <>
                 <CardHeader className="p-0">
-                  <CardTitle className="text-xl truncate">{data.title}</CardTitle>
-                  <div className="text-sm text-muted-foreground truncate">
+                  <CardTitle className="text-2xl font-bold truncate text-white font-['Pretendard']">{data.title}</CardTitle>
+                  <div className="text-base text-gray-300 truncate font-['Pretendard'] font-medium">
                     {data.artists.replace(/[\[\]']/g, '')} · {data.album}
                   </div>
                 </CardHeader>
                 <CardContent className="p-0 mt-2 space-y-3">
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" />{msToMinSec(data.durationMs)}</span>
-                    <span className="inline-flex items-center gap-1"><Flame className="h-4 w-4" />{data.popularity}</span>
-                    {situation && <Badge variant="outline">{situation}</Badge>}
-                    {location && <Badge variant="outline">{location}</Badge>}
+                  <div className="flex items-center gap-4 text-sm text-gray-400 font-['Pretendard'] font-medium">
+                    <span className="inline-flex items-center gap-1.5"><Clock className="h-4 w-4" />{msToMinSec(data.durationMs)}</span>
+                    <span className="inline-flex items-center gap-1.5"><Flame className="h-4 w-4" />{data.popularity}</span>
+                    {situation && <Badge className="bg-[#4B2199] text-white hover:bg-[#B5A6E0] hover:text-black transition-colors duration-200 font-['Pretendard'] font-medium px-3 py-1 text-sm rounded-xl">{situation}</Badge>}
+                    {location && <Badge className="bg-[#4B2199] text-white hover:bg-[#B5A6E0] hover:text-black transition-colors duration-200 font-['Pretendard'] font-medium px-3 py-1 text-sm rounded-xl">{location}</Badge>}
                   </div>
 
                   {/* 스포티파이 플레이어 */}
@@ -305,7 +313,7 @@ export default function SongDetailPage() {
                   {/* 액션 버튼들 */}
                   <div className="flex flex-col gap-2 max-w-md">
                     {/* 학습 버튼 */}
-                    <Button size="lg" onClick={() => handleOpenLearn()}>
+                    <Button size="lg" onClick={() => handleOpenLearn()} className="bg-[#4B2199] hover:bg-[#B5A6E0] hover:text-black text-white font-['Pretendard'] font-bold rounded-xl transition-all duration-300 hover:scale-105">
                       <Gamepad2 className="mr-2 h-5 w-5" />
                       Speakle과 집중 학습하기
                     </Button>
@@ -315,6 +323,7 @@ export default function SongDetailPage() {
                       variant="outline"
                       size="lg"
                       onClick={() => setShowPlaylistModal(true)}
+                      className="border-white/20 text-white hover:bg-white/10 font-['Pretendard'] font-semibold rounded-xl transition-all duration-300 hover:scale-105"
                     >
                       <Plus className="mr-2 h-5 w-5" />
                       플레이리스트에 추가
@@ -324,23 +333,25 @@ export default function SongDetailPage() {
               </>
             ) : null}
           </div>
+          </div>
         </div>
 
         {/* 탭 (스크린샷처럼 상단에 '가사 | 학습 내용' 탭 표시) */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full" onFocus={(e) => e.preventDefault()}>
-          <TabsList className="mx-auto block w-fit">
-            <TabsTrigger value="lyrics" tabIndex={-1}>가사</TabsTrigger>
-            <TabsTrigger value="notes" tabIndex={-1}>학습 내용</TabsTrigger>
+          <TabsList className="mx-auto block w-fit bg-black/20 backdrop-blur-sm border border-white/10 rounded-xl font-['Pretendard']">
+            <TabsTrigger value="lyrics" tabIndex={-1} className="text-white data-[state=active]:bg-[#4B2199] data-[state=active]:text-white font-medium">가사</TabsTrigger>
+            <TabsTrigger value="notes" tabIndex={-1} className="text-white data-[state=active]:bg-[#4B2199] data-[state=active]:text-white font-medium">학습 내용</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="lyrics" className="space-y-4">
-            {/* 시간 동기화된 영한 가사 */}
-            <Card className="bg-muted/40">
+          <TabsContent value="lyrics" className="space-y-4 w-full min-w-0">
+            <div className="w-full min-w-[800px]">
+              {/* 시간 동기화된 영한 가사 */}
+              <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl w-full">
               <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  영어 동기화 가사
+                <CardTitle className="text-lg flex items-center gap-2 font-['Pretendard'] font-bold text-white">
+                  가사 lyrics
                   {isPlaying && (
-                    <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                    <div className="w-2 h-2 bg-[#4B2199] rounded-full animate-pulse" />
                   )}
                 </CardTitle>
               </CardHeader>
@@ -365,32 +376,37 @@ export default function SongDetailPage() {
                   </>
                 ) : (
                   <>
-                    <div className="flex items-center justify-center h-[60vh] text-muted-foreground">
-                      <p>동기화된 가사를 불러올 수 없습니다.</p>
+                    <div className="flex items-center justify-center h-[60vh] text-gray-300">
+                      <p className="font-['Pretendard'] font-medium">동기화된 가사를 불러올 수 없습니다.</p>
                     </div>
                   </>
                 )}
               </CardContent>
-            </Card>
+              </Card>
+            </div>
           </TabsContent>
 
-          <TabsContent value="notes">
-            {/* 학습 내용 탭 */}
-            {learningError ? (
-              <Card>
-                <CardContent className="py-10 text-center space-y-3">
-                  <p className="text-sm text-destructive">{learningError}</p>
-                  <Button variant="outline" onClick={fetchLearningContentData}>
-                    다시 시도
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <LearningContentTabs
-                learningContent={learningContent || undefined}
-                loading={false}
-              />
-            )}
+          <TabsContent value="notes" className="w-full min-w-0">
+            <div className="w-full min-w-[800px]">
+              {/* 학습 내용 탭 */}
+              {learningError ? (
+                <Card className="bg-black/20 backdrop-blur-xl border border-white/10 w-full">
+                  <CardContent className="py-10 text-center space-y-3">
+                    <p className="text-sm text-red-400 font-['Pretendard'] font-medium">{learningError}</p>
+                    <Button variant="outline" onClick={fetchLearningContentData} className="border-white/20 text-white hover:bg-white/10 font-['Pretendard'] font-semibold rounded-xl">
+                      다시 시도
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="w-full">
+                  <LearningContentTabs
+                    learningContent={learningContent || undefined}
+                    loading={false}
+                  />
+                </div>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>

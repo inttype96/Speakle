@@ -19,5 +19,13 @@ public interface SongRepository extends JpaRepository<Song, String> {
            "LOWER(s.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(s.artists) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Song> findByTitleOrArtistsContainingIgnoreCase(@Param("keyword") String keyword, Pageable pageable);
+
+    // 앨범 이미지가 없거나 특정 패턴이 아닌 곡들 찾기 (수정(소연))
+    @Query("SELECT s FROM Song s WHERE s.albumImgUrl IS NULL OR s.albumImgUrl NOT LIKE :pattern")
+    Page<Song> findByAlbumImgUrlIsNullOrAlbumImgUrlNotLike(@Param("pattern") String pattern, Pageable pageable);
+
+    // 앨범 이미지가 없거나 특정 패턴이 아닌 곡들 개수 (수정(소연))
+    @Query("SELECT COUNT(s) FROM Song s WHERE s.albumImgUrl IS NULL OR s.albumImgUrl NOT LIKE :pattern")
+    long countByAlbumImgUrlIsNullOrAlbumImgUrlNotLike(@Param("pattern") String pattern);
 }
 

@@ -149,4 +149,64 @@ public class SongController {
 //        return ResponseEntity.ok(response);
 //    }
 
+    /**
+     * 특정 곡의 앨범 이미지를 Spotify에서 가져와서 업데이트합니다.
+     * 수정(소연)
+     */
+    @PostMapping("/{songId}/album-image/update")
+    public ResponseEntity<ApiResponse<Boolean>> updateAlbumImage(@PathVariable String songId) {
+        boolean success = songService.updateAlbumImageFromSpotify(songId);
+
+        if (success) {
+            ApiResponse<Boolean> response = ApiResponse.success(
+                    200,
+                    "앨범 이미지 업데이트를 성공적으로 완료했습니다.",
+                    true
+            );
+            return ResponseEntity.ok(response);
+        } else {
+            ApiResponse<Boolean> response = ApiResponse.success(
+                    200,
+                    "앨범 이미지 업데이트에 실패했습니다.",
+                    false
+            );
+            return ResponseEntity.ok(response);
+        }
+    }
+
+    /**
+     * 모든 곡의 앨범 이미지를 Spotify에서 가져와서 업데이트합니다.
+     * 수정(소연)
+     */
+    @PostMapping("/album-images/update-all")
+    public ResponseEntity<ApiResponse<Integer>> updateAllAlbumImages(
+            @RequestParam(required = false, defaultValue = "100") Integer limit) {
+
+        long totalCount = songService.countSongsWithoutAlbumImage();
+        int successCount = songService.updateAllAlbumImagesFromSpotify(limit);
+
+        ApiResponse<Integer> response = ApiResponse.success(
+                200,
+                String.format("앨범 이미지 일괄 업데이트 완료. 성공: %d곡 (총 처리 대상: %d곡)", successCount, Math.min(limit, (int)totalCount)),
+                successCount
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 앨범 이미지가 없는 곡들의 개수를 조회합니다.
+     * 수정(소연)
+     */
+    @GetMapping("/album-images/missing-count")
+    public ResponseEntity<ApiResponse<Long>> getMissingAlbumImageCount() {
+        long count = songService.countSongsWithoutAlbumImage();
+
+        ApiResponse<Long> response = ApiResponse.success(
+                200,
+                "앨범 이미지가 없는 곡 수를 성공적으로 조회했습니다.",
+                count
+        );
+        return ResponseEntity.ok(response);
+    }
+
 }

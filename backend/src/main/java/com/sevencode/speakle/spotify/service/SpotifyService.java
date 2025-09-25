@@ -3,6 +3,7 @@ package com.sevencode.speakle.spotify.service;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
@@ -21,6 +22,7 @@ import com.sevencode.speakle.config.security.UserPrincipal;
 import com.sevencode.speakle.spotify.config.SpotifyProps;
 import com.sevencode.speakle.spotify.dto.response.SpotifyLinkStatusResponse;
 import com.sevencode.speakle.spotify.dto.response.SpotifyMe;
+import com.sevencode.speakle.spotify.dto.response.SpotifySearchResponse;
 import com.sevencode.speakle.spotify.entity.SpotifyAccount;
 import com.sevencode.speakle.spotify.exception.InvalidStateException;
 import com.sevencode.speakle.spotify.exception.SpotifyApiException;
@@ -462,5 +464,145 @@ public class SpotifyService {
 			log.error("Spotify 액세스 토큰 조회 실패 - userId: {}", auth != null ? auth.userId() : "null", e);
 			throw new SpotifyApiException("Spotify 액세스 토큰 조회에 실패했습니다.", 500, e);
 		}
+	}
+
+	/**
+	 * Spotify API를 통해 트랙을 검색하고 앨범 아트 URL을 가져옵니다.
+	 * 수정(소연)
+	 *
+	 * @param title 곡 제목
+	 * @param artist 아티스트명
+	 * @return 앨범 아트 URL (고해상도 우선), 없으면 null
+	 */
+	public String getAlbumImageUrl(String title, String artist) {
+		try {
+			if (title == null || title.isBlank() || artist == null || artist.isBlank()) {
+				log.warn("트랙 정보 부족 - title: {}, artist: {}", title, artist);
+				return null;
+			}
+
+			// Client Credentials Grant를 통한 액세스 토큰 획득
+			String accessToken = getClientCredentialsToken();
+			if (accessToken == null) {
+				log.error("Client Credentials 토큰 획득 실패");
+				return null;
+			}
+
+			// 검색 쿼리 생성 (특수문자 제거 및 정리)
+			String cleanTitle = cleanSearchQuery(title);
+			String cleanArtist = cleanSearchQuery(artist);
+			String query = String.format("track:\"%s\" artist:\"%s\"", cleanTitle, cleanArtist);
+
+			log.info("Spotify 검색 - query: {}", query);
+
+			// Spotify Search API 호출
+			SpotifySearchResponse response = apiWebClient.get()
+				.uri(uriBuilder -> uriBuilder
+					.path("/v1/search")
+					.queryParam("q", query)
+					.queryParam("type", "track")
+					.queryParam("limit", 1)
+					.build())
+				.headers(h -> h.setBearerAuth(accessToken))
+				.retrieve()
+				.onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+					clientResponse -> clientResponse.bodyToMono(String.class)
+						.map(body -> new SpotifyApiException("트랙 검색", clientResponse.statusCode().value())))
+				.bodyToMono(SpotifySearchResponse.class)
+				.block();
+
+			return extractBestAlbumImage(response);
+
+		} catch (Exception e) {
+			log.error("앨범 아트 검색 실패 - title: {}, artist: {}", title, artist, e);
+			return null;
+		}
+	}
+
+	/**
+	 * Client Credentials Grant를 통해 액세스 토큰을 획득합니다.
+	 * 수정(소연)
+	 */
+	private String getClientCredentialsToken() {
+		try {
+			MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+			body.add("grant_type", "client_credentials");
+
+			SpotifyTokenResponse response = accountsWebClient.post()
+				.uri("/api/token")
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+				.headers(h -> h.setBasicAuth(props.getClientId(), props.getClientSecret()))
+				.body(BodyInserters.fromFormData(body))
+				.retrieve()
+				.onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+					clientResponse -> clientResponse.bodyToMono(String.class)
+						.map(errorBody -> new SpotifyTokenException("Client Credentials 토큰 획득 실패: " + errorBody)))
+				.bodyToMono(SpotifyTokenResponse.class)
+				.block();
+
+			return response != null ? response.getAccessToken() : null;
+
+		} catch (Exception e) {
+			log.error("Client Credentials 토큰 획득 실패", e);
+			return null;
+		}
+	}
+
+	/**
+	 * 검색 쿼리를 정리합니다 (특수문자 제거, 공백 정리 등)
+	 * 수정(소연)
+	 */
+	private String cleanSearchQuery(String query) {
+		if (query == null) return "";
+
+		return query
+			.replaceAll("[\\[\\](){}]", "") // 대괄호, 소괄호, 중괄호 제거
+			.replaceAll("feat\\.?\\s*[^,]*", "") // feat. 부분 제거
+			.replaceAll("\\s+", " ") // 연속된 공백을 하나로
+			.trim();
+	}
+
+	/**
+	 * Spotify 검색 응답에서 최고 품질의 앨범 이미지를 추출합니다.
+	 * 수정(소연)
+	 */
+	private String extractBestAlbumImage(SpotifySearchResponse response) {
+		if (response == null ||
+			response.getTracks() == null ||
+			response.getTracks().getItems() == null ||
+			response.getTracks().getItems().isEmpty()) {
+			log.warn("검색 결과가 없습니다");
+			return null;
+		}
+
+		SpotifySearchResponse.TracksResponse.Track track = response.getTracks().getItems().get(0);
+		if (track.getAlbum() == null || track.getAlbum().getImages() == null) {
+			log.warn("앨범 이미지 정보가 없습니다");
+			return null;
+		}
+
+		// 이미지 크기별 우선순위: 300x300 > 640x640 > 64x64 > 기타
+		Optional<String> imageUrl = track.getAlbum().getImages().stream()
+			.filter(img -> img.getHeight() != null && img.getWidth() != null)
+			.sorted((a, b) -> {
+				// 300x300을 최우선
+				if (a.getHeight() == 300 && a.getWidth() == 300) return -1;
+				if (b.getHeight() == 300 && b.getWidth() == 300) return 1;
+				// 그 다음 640x640
+				if (a.getHeight() == 640 && a.getWidth() == 640) return -1;
+				if (b.getHeight() == 640 && b.getWidth() == 640) return 1;
+				// 나머지는 크기순 정렬
+				return Integer.compare(b.getHeight() * b.getWidth(), a.getHeight() * a.getWidth());
+			})
+			.map(SpotifySearchResponse.TracksResponse.Track.Album.Image::getUrl)
+			.findFirst();
+
+		if (imageUrl.isPresent()) {
+			log.info("앨범 아트 URL 획득 성공: {}", imageUrl.get());
+			return imageUrl.get();
+		}
+
+		log.warn("적절한 앨범 이미지를 찾을 수 없습니다");
+		return null;
 	}
 }

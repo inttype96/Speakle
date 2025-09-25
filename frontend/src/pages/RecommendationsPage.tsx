@@ -281,20 +281,41 @@ export default function RecommendationsPage() {
   }
 
   return (
-    <div className="bg-background text-foreground">
+    <div className="bg-background text-foreground font-sans">
+      {/* Google Fonts Link */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Pretendard:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+      />
       <Navbar />
       <div aria-hidden className="h-16 md:h-20" />
 
-      <div className={`mx-auto max-w-6xl px-4 ${isSearchMode ? 'py-12' : 'py-6'}`}>
+      <div className={`mx-auto max-w-7xl px-4 ${isSearchMode ? 'py-12' : 'py-8'}`}>
         {/* 조건 태그 (추천 모드에서만) */}
         {isRecommendMode && (
-          <div className="space-y-1 pt-6 mb-1">
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline">{situation || "상황 없음"}</Badge>
-              <Badge variant="outline">{location || "장소 없음"}</Badge>
-              {genre && <Badge variant="outline">장르: {genre}</Badge>}
-              <Button asChild size="sm" variant="ghost" className="ml-auto">
-                <Link to="/explore">설정 변경 <ChevronRight className="ml-1 h-4 w-4" /></Link>
+          <div className="mb-6">
+            <div className="flex items-center justify-between flex-wrap gap-3 p-4 bg-black/10 backdrop-blur-sm rounded-xl">
+              <div className="flex items-center gap-3">
+                <div className="flex flex-wrap gap-2">
+                  <Badge className="bg-[#4B2199] text-white hover:bg-[#B5A6E0] hover:text-black transition-colors duration-200 font-['Pretendard'] font-medium px-3 py-1 text-sm">
+                    {situation || "상황 없음"}
+                  </Badge>
+                  <Badge className="bg-[#4B2199] text-white hover:bg-[#B5A6E0] hover:text-black transition-colors duration-200 font-['Pretendard'] font-medium px-3 py-1 text-sm">
+                    {location || "장소 없음"}
+                  </Badge>
+                  {genre && (
+                    <Badge className="bg-[#4B2199] text-white hover:bg-[#B5A6E0] hover:text-black transition-colors duration-200 font-['Pretendard'] font-medium px-3 py-1 text-sm">
+                      장르: {genre}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <Button asChild size="sm" className="bg-white/20 hover:bg-[#B5A6E0] hover:text-black text-white border-0 font-['Pretendard'] font-medium px-4 py-1.5 text-sm">
+                <Link to="/explore">
+                  설정 변경 <ChevronRight className="ml-1 h-4 w-4" />
+                </Link>
               </Button>
             </div>
           </div>

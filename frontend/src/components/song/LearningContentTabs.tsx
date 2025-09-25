@@ -109,26 +109,26 @@ export default function LearningContentTabs({ learningContent }: LearningContent
     return (
       <div
         key={item.id}
-        className="p-4 rounded-lg bg-muted/50 border border-border/50 hover:bg-muted/80 transition-colors"
+        className="p-3 rounded-xl backdrop-blur-sm bg-white/10 border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
       >
         <div className="flex items-start gap-3">
-          <Badge variant="secondary" className="mt-1 text-xs min-w-[24px] h-6 justify-center shrink-0">
+          <Badge className="mt-1 text-xs min-w-[20px] h-5 justify-center shrink-0 bg-[#4B2199] text-white hover:bg-[#B5A6E0] hover:text-black transition-colors duration-200 font-['Pretendard'] font-medium">
             {index + 1}
           </Badge>
           <div className="flex-1 min-w-0 space-y-2">
             <div className="space-y-1">
-              <p className="font-medium text-sm leading-relaxed break-words">{main}</p>
-              <p className="text-sm text-muted-foreground leading-relaxed break-words">{sub}</p>
+              <p className="font-medium text-sm leading-relaxed break-words font-['Pretendard'] text-white">{main}</p>
+              <p className="text-sm text-white/70 leading-relaxed break-words font-['Pretendard']">{sub}</p>
               {extra && (
-                <p className="text-xs text-muted-foreground leading-relaxed break-words">{extra}</p>
+                <p className="text-xs text-white/50 leading-relaxed break-words font-['Pretendard']">{extra}</p>
               )}
             </div>
             {examples.length > 0 && (
               <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">예시:</p>
+                <p className="text-xs font-medium text-white/60 font-['Pretendard']">예시:</p>
                 <div className="space-y-1">
                   {examples.slice(0, 2).map((example, idx) => (
-                    <p key={idx} className="text-xs text-muted-foreground italic leading-relaxed break-words">
+                    <p key={idx} className="text-xs text-white/50 italic leading-relaxed break-words font-['Pretendard']">
                       • {example}
                     </p>
                   ))}
@@ -142,9 +142,16 @@ export default function LearningContentTabs({ learningContent }: LearningContent
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Google Fonts Link */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Pretendard:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+      />
       {/* 탭 버튼들 */}
-      <div className="flex gap-3 flex-wrap">
+      <div className="flex gap-2 flex-wrap">
         {SECTIONS.map((section) => {
           const Icon = section.icon;
           const isActive = currentSection === section.key;
@@ -153,18 +160,23 @@ export default function LearningContentTabs({ learningContent }: LearningContent
             <Button
               key={section.key}
               onClick={() => setCurrentSection(section.key)}
-              variant={isActive ? "default" : "outline"}
               className={cn(
-                "flex items-center gap-2 transition-all",
-                isActive ? "shadow-md" : "hover:bg-accent"
+                "flex items-center gap-2 transition-all duration-300 font-['Pretendard'] font-medium text-sm px-4 py-2 rounded-xl backdrop-blur-sm border",
+                isActive
+                  ? "bg-[#4B2199] text-white border-[#4B2199] shadow-lg hover:bg-[#5A2BB8] hover:shadow-xl"
+                  : "bg-white/10 text-white border-white/30 hover:bg-[#B5A6E0] hover:text-black hover:border-[#B5A6E0] hover:scale-105"
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4 w-4 shrink-0" />
               {section.label}
               {learningContent?.[section.key] && (
                 <Badge
-                  variant={isActive ? "secondary" : "outline"}
-                  className="ml-1"
+                  className={cn(
+                    "ml-1 text-xs px-1.5 py-0.5 rounded-md font-['Pretendard'] font-medium transition-colors duration-200",
+                    isActive
+                      ? "bg-white/20 text-white hover:bg-white/30"
+                      : "bg-white/20 text-white hover:bg-black/20"
+                  )}
                 >
                   {learningContent[section.key].length}
                 </Badge>
@@ -175,28 +187,28 @@ export default function LearningContentTabs({ learningContent }: LearningContent
       </div>
 
       {/* 컨텐츠 영역 */}
-      <Card className="min-h-[400px]">
-        <CardContent className="pt-6">
+      <Card className="min-h-[350px] backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-2xl">
+        <CardContent className="pt-5">
           {hasData ? (
-            <ScrollArea className="h-[400px] pr-3">
-              <div className="space-y-3">
+            <ScrollArea className="h-[350px] pr-2">
+              <div className="space-y-2">
                 {currentData.map((item, index) => renderEntityItem(item, index))}
               </div>
             </ScrollArea>
           ) : (
-            <div className="flex flex-col items-center justify-center h-[400px] text-center space-y-3">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center h-[350px] text-center space-y-3">
+              <div className="w-14 h-14 backdrop-blur-sm bg-white/20 rounded-full flex items-center justify-center border border-white/30">
                 {(() => {
                   const section = SECTIONS.find(s => s.key === currentSection);
                   const Icon = section?.icon || BookOpen;
-                  return <Icon className="h-8 w-8 text-muted-foreground" />;
+                  return <Icon className="h-7 w-7 text-white/60" />;
                 })()}
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-white/80 font-['Pretendard']">
                   {SECTIONS.find(s => s.key === currentSection)?.label} 데이터가 없습니다
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-white/60 font-['Pretendard'] max-w-sm">
                   이 곡에는 {SECTIONS.find(s => s.key === currentSection)?.label} 학습 내용이 아직 준비되지 않았어요
                 </p>
               </div>
