@@ -408,11 +408,8 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
           // startTime 위치에서 재생
           await playTrack(trackId, validatedStartTime)
         } else {
-          // 같은 트랙이고 위치가 맞으면 현재 위치에서 재생
-          await player.resume()
-          setIsPlaying(true)
-          setGlobalIsPlaying(true)
-          toast.success('재생을 재개했습니다')
+          // 항상 API를 통해 재생 시작 (SDK 로드 문제 해결)
+          await playTrack(trackId, validatedStartTime)
         }
       }
     } catch (error) {
