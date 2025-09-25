@@ -4,6 +4,7 @@ import com.sevencode.speakle.config.security.UserPrincipal;
 import com.sevencode.speakle.learn.dto.response.ApiResponse;
 import com.sevencode.speakle.learn.dto.response.LearnedSongInfoResponse;
 import com.sevencode.speakle.learn.dto.response.RecentLearnedSongsResponse;
+import com.sevencode.speakle.learn.dto.response.RecentLearnedSongsVersion2Response;
 import com.sevencode.speakle.learn.service.LearnedSongService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,17 @@ public class RecentLearnedController {
         RecentLearnedSongsResponse res = learnedSongService.getRecentLearnedSongs(userId, page, size);
         return ResponseEntity.ok(ApiResponse.success(200, "최근 학습한 노래 목록을 성공적으로 조회했습니다.", res));
     }
+
+//    @GetMapping("/recent/v2")
+//    public ResponseEntity<ApiResponse<RecentLearnedSongsVersion2Response>> getRecentLearnedSongsVersion2(
+//            @RequestParam(defaultValue = "1") int page,
+//            @RequestParam(defaultValue = "5") int size,
+//            @AuthenticationPrincipal UserPrincipal me) {
+//        Long userId = me.userId();
+//
+//        RecentLearnedSongsVersion2Response res = learnedSongService.getRecentLearnedSongsVersion2(userId, page, size);
+//        return ResponseEntity.ok(ApiResponse.success(200, "최근 학습한 노래 목록을 성공적으로 조회했습니다.", res));
+//    }
 
     @GetMapping("/{learnedSongId}/info")
     public ResponseEntity<ApiResponse<LearnedSongInfoResponse>> getSituationAndLocation(
