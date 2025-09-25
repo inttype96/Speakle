@@ -343,6 +343,7 @@ public class SongService {
                 .songId(song.getSongId())
                 .title(song.getTitle())
                 .artists(song.getArtists())
+                .durationMs(song.getDurationMs())
                 .albumImgUrl(song.getAlbumImgUrl())
                 .popularity(song.getPopularity())
                 .level(song.getLevel())
