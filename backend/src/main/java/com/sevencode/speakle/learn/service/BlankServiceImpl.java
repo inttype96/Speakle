@@ -334,10 +334,34 @@ public class BlankServiceImpl implements BlankService{
 
         // 원본 문장 순서로 순회하면서 선택된 단어 찾기
         for (String originalWord : originalWords) {
-            String cleanOriginalWord = originalWord.replaceAll("[^a-zA-Z]", "");
-            if (remainingSelected.contains(cleanOriginalWord)) {
-                orderedWords.add(cleanOriginalWord);
-                remainingSelected.remove(cleanOriginalWord);    // 중복 처리
+            // 매칭을 위해 두 가지 형태 준비
+            String cleanForMatching = originalWord.replaceAll("[^a-zA-Z]", "");   // 매칭용 (알파벳만)
+            String withApostrophe = originalWord.replaceAll("[^a-zA-Z']", "");    // 아포스트로피 유지
+
+            // 매칭 시도
+            for (String selected : remainingSelected) {
+                boolean matches = false;
+                String resultToAdd = null;
+
+                if (selected.contains("'")) {
+                    // selected가 아포스트로피를 포함하면 아포스트로피 유지 형태와 비교
+                    if (withApostrophe.equals(selected)) {
+                        matches = true;
+                        resultToAdd = withApostrophe;
+                    }
+                } else {
+                    // selected가 아포스트로피를 포함하지 않으면 clean 형태와 비교
+                    if (cleanForMatching.equals(selected)) {
+                        matches = true;
+                        resultToAdd = withApostrophe; // 결과는 아포스트로피 유지
+                    }
+                }
+
+                if (matches) {
+                    orderedWords.add(resultToAdd);
+                    remainingSelected.remove(selected);
+                    break;
+                }
             }
         }
         return orderedWords;
@@ -351,8 +375,35 @@ public class BlankServiceImpl implements BlankService{
 
         for (String targetWord : targetWords) {
             String blank = "빈칸";
-            // 단어 경계를 고려한 첫 번째 매칭만 교체
-            result = result.replaceFirst("\\b" + Pattern.quote(targetWord) + "\\b", blank);
+
+            // 현재 문장에서 targetWord와 매칭되는 단어를 찾아서 교체
+            String[] currentWords = result.split("\\s+");
+
+            for (int i = 0; i < currentWords.length; i++) {
+                String originalWord = currentWords[i];
+                boolean shouldReplace = false;
+
+                if (targetWord.contains("'")) {
+                    // targetWord가 아포스트로피를 포함하면 정확히 매칭
+                    String withApostrophe = originalWord.replaceAll("[^a-zA-Z']", "");
+                    if (withApostrophe.equals(targetWord)) {
+                        shouldReplace = true;
+                    }
+                } else {
+                    // targetWord가 아포스트로피를 포함하지 않으면 구두점 제거 후 비교
+                    String cleanOriginalWord = originalWord.replaceAll("[^a-zA-Z]", "");
+                    if (cleanOriginalWord.equals(targetWord)) {
+                        shouldReplace = true;
+                    }
+                }
+
+                if (shouldReplace) {
+                    // 해당 위치의 단어를 빈칸으로 교체
+                    currentWords[i] = blank;
+                    result = String.join(" ", currentWords);
+                    break; // 첫 번째 매칭만 교체
+                }
+            }
         }
         return result;
     }
