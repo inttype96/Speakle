@@ -32,7 +32,7 @@ export default function IndexPage() {
               Speakle
             </h1>
           </div>
-          <p className="mt-8 text-lg text-gray-300 leading-relaxed">
+          <p className="mt-8 text-2xl text-gray-300 leading-relaxed">
             음악처럼 스며드는 영어학습 <br />
             듣고, 따라하고, 오래 남는 영어
           </p>
@@ -43,8 +43,8 @@ export default function IndexPage() {
           {/* 오늘의 기분 카드 */}
           <Card className="bg-[#B5A6E0] text-black rounded-2xl shadow-lg">
             <CardContent className="py-2 px-6">
-              <p className="font-semibold text-lg mb-2">오늘의 기분이나 상황은 어떠신가요?</p>
-              <p className="text-sm text-gray-800">
+              <p className="font-semibold text-2xl mb-2">오늘의 기분이나 상황은 어떠신가요?</p>
+              <p className="text-m text-gray-800">
                 장소와 상황, 분위기에 맞춘 영어 학습을 시작해보세요.
               </p>
               <div className="flex justify-end">
@@ -61,8 +61,8 @@ export default function IndexPage() {
           {/* 랜덤 노래 카드 */}
           <Card className="bg-[#4A3B63] text-white rounded-2xl shadow-lg">
             <CardContent className="py-2 px-6">
-              <p className="font-semibold text-lg mb-2">랜덤 노래로 학습하기</p>
-              <p className="text-sm text-gray-300">
+              <p className="font-semibold text-2xl mb-2">랜덤 노래로 학습하기</p>
+              <p className="text-m text-gray-300">
                 <span className="font-bold">speakle</span>이 추천하는 노래로 영어 학습을 시작해보세요.
               </p>
               <div className="flex justify-end">
@@ -81,7 +81,7 @@ export default function IndexPage() {
           <div className="mt-6 space-y-6">
             <div className="flex items-center justify-end space-x-2">
               <img src={BallonImage} alt="Balloon" className="w-8 h-8" />
-              <p className="font-bold text-xl text-gray-900 dark:text-white">왜 Speakle인가 ?</p>
+              <p className="font-bold text-2xl text-gray-900 dark:text-white">왜 Speakle인가 ?</p>
             </div>
 
             {/* 대화형 말풍선 */}

@@ -42,7 +42,7 @@ const SITUATIONS: Option[] = [
   { value: "travel", label: "여행 중", icon: Plane },
   { value: "night", label: "밤/힐링", icon: Moon },
   { value: "love", label: "연애/사랑", icon: Heart },
-  { value: "work", label: "직장", icon: Briefcase },
+  { value: "work", label: "업무", icon: Briefcase },
 ];
 
 const MORE_SITUATIONS: Option[] = [
@@ -56,14 +56,17 @@ const MORE_SITUATIONS: Option[] = [
   { value: "cleaning", label: "청소/집안일", icon: Home },
   { value: "driving", label: "운전 중", icon: Car },
   { value: "sunny", label: "화창한 날", icon: Sun },
+  { value: "icebreaking", label: "아이스브레이킹", icon: Smile },
+  { value: "christmas", label: "크리스마스", icon: PartyPopper },
+
 ];
 
 const LOCATIONS: Option[] = [
   { value: "home", label: "집", icon: Home },
   { value: "car", label: "차 안", icon: Car },
+  { value: "restaurant", label: "식당", icon: Music2 },
   { value: "gym", label: "헬스장", icon: Dumbbell },
   { value: "office", label: "사무실", icon: Building2 },
-  { value: "cafe", label: "카페", icon: Coffee },
   { value: "school", label: "학교", icon: GraduationCap },
   { value: "library", label: "도서관", icon: Library },
 ];
@@ -72,7 +75,7 @@ const MORE_LOCATIONS: Option[] = [
   { value: "outdoor", label: "야외/산책", icon: Mountain },
   { value: "park", label: "공원", icon: Mountain },
   { value: "beach", label: "해변", icon: Plane },
-  { value: "restaurant", label: "식당", icon: Music2 },
+  { value: "cafe", label: "카페", icon: Coffee },
   { value: "subway", label: "지하철", icon: Car },
   { value: "bus", label: "버스", icon: Car },
   { value: "airport", label: "공항", icon: Plane },
