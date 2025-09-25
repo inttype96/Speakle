@@ -1,6 +1,7 @@
 package com.sevencode.speakle.learn.service;
 
 import com.sevencode.speakle.learn.domain.entity.LearnedSongEntity;
+import com.sevencode.speakle.learn.dto.response.LearnedSongInfoResponse;
 import com.sevencode.speakle.learn.dto.response.LearnedSongResponse;
 import com.sevencode.speakle.learn.dto.response.RecentLearnedSongsResponse;
 import com.sevencode.speakle.learn.exception.MemberNotFoundException;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -120,6 +122,15 @@ public class LearnedSongServiceImpl implements LearnedSongService {
                 .durationMs(song != null ? song.getDurationMs() != null ? song.getDurationMs().doubleValue() : null : null)
                 .lyrics(song != null ? song.getLyrics() : null)
                 .createdAt(learnedSong.getCreatedAt())
+                .build();
+    }
+
+    @Override
+    public LearnedSongInfoResponse getSituationAndLocation(Long learnedSongId) {
+        Optional<LearnedSongEntity> result = learnedSongRepository.findByLearnedSongId(learnedSongId);
+        return LearnedSongInfoResponse.builder()
+                .location(result.get().getLocation())
+                .situation(result.get().getSituation())
                 .build();
     }
 }
