@@ -204,7 +204,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         toast.success('Spotify 플레이어가 준비되었습니다')
       })
 
-      spotifyPlayer.addListener('not_ready', ({ device_id }) => {
+      spotifyPlayer.addListener('not_ready', () => {
         setIsSDKReady(false)
       })
 
