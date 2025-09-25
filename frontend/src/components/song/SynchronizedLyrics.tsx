@@ -79,7 +79,7 @@ export default function SynchronizedLyrics({
     if (!validLyrics.length) return;
 
     // 동기화 오프셋 (가사가 늦으면 음수값 사용해서 빠르게, 빠르면 양수값 사용해서 늦게)
-    const SYNC_OFFSET_MS = 0; // 필요시 조정 가능 (-500 ~ +500ms 권장)
+    const SYNC_OFFSET_MS = -50; // 필요시 조정 가능 (-500 ~ +500ms 권장)
     const adjustedCurrentTime = currentTime + SYNC_OFFSET_MS;
 
     // 현재 시간과 가장 적절한 가사 라인 찾기
@@ -107,12 +107,8 @@ export default function SynchronizedLyrics({
     }
 
     if (newIndex !== currentLineIndex) {
-      console.log(`🔄 Line changed: ${currentLineIndex} -> ${newIndex}`);
-      console.log(`⏰ Raw time: ${Math.floor(currentTime / 1000)}s, Adjusted: ${Math.floor(adjustedCurrentTime / 1000)}s`);
       if (newIndex >= 0 && validLyrics[newIndex]) {
-        console.log(`🎤 Current lyric: "${validLyrics[newIndex].english}" (starts at ${Math.floor(validLyrics[newIndex].startTimeMs / 1000)}s)`);
         const timeDifference = adjustedCurrentTime - validLyrics[newIndex].startTimeMs;
-        console.log(`⏱️ Time difference: ${Math.round(timeDifference)}ms ${timeDifference > 0 ? '(ahead)' : '(behind)'}`);
       }
       setCurrentLineIndex(newIndex);
     }
