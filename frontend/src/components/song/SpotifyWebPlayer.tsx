@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useSpotifyPlayer } from '@/contexts/SpotifyPlayerContext'
 import { Button } from '@/components/ui/button'
 import { ElasticSlider } from '@/components/ui/elastic-slider'
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react'
@@ -84,6 +85,7 @@ interface SpotifyWebPlayerProps {
 }
 
 export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTimeUpdate, startTime, endTime }: SpotifyWebPlayerProps) {
+  const { shouldStopPlayer, setIsPlaying: setGlobalIsPlaying } = useSpotifyPlayer();
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(50)
   const [isMuted, setIsMuted] = useState(false)
@@ -212,7 +214,9 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         if (!state) return
 
         setCurrentTrack(state.track_window.current_track)
-        setIsPlaying(!state.paused)
+        const playing = !state.paused
+        setIsPlaying(playing)
+        setGlobalIsPlaying(playing)  // 전역 상태도 업데이트
         setPosition(state.position)
         setDuration(state.track_window.current_track.duration_ms)
 
@@ -220,6 +224,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         if (validatedEndTime && !state.paused && state.position >= validatedEndTime) {
           spotifyPlayer.pause()
           setIsPlaying(false)
+          setGlobalIsPlaying(false)  // 전역 상태도 업데이트
           onTimeUpdate?.(validatedEndTime, false)
           return
         }
@@ -303,6 +308,32 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
     return () => clearInterval(interval)
   }, [isPlaying, duration, endTime, onTimeUpdate, player])
 
+  // shouldStopPlayer가 true일 때 플레이어 정지 (API가 실패했을 경우를 위한 백업)
+  useEffect(() => {
+    if (shouldStopPlayer && player && isPlaying) {
+      console.log('🔍 SpotifyWebPlayer backup stop check:', { shouldStopPlayer, hasPlayer: !!player, isPlaying });
+
+      const stopPlayer = async () => {
+        try {
+          console.log('🛑 BACKUP: Stopping Spotify player via SDK')
+
+          // UI 상태 즉시 업데이트
+          setIsPlaying(false)
+          setGlobalIsPlaying(false)
+          setPosition(0)
+          onTimeUpdate?.(0, false)
+
+          // SDK로 정지 (백업용)
+          await player.pause()
+          console.log('✅ SDK backup pause successful')
+        } catch (error) {
+          console.error('SDK backup pause failed:', error)
+        }
+      }
+
+      stopPlayer()
+    }
+  }, [shouldStopPlayer, player, isPlaying, onTimeUpdate, setGlobalIsPlaying])
 
   // 트랙 재생
   const playTrack = async (trackUri: string, seekTo?: number) => {
@@ -358,18 +389,22 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
     try {
       if (isPlaying) {
         await player.pause()
+        setIsPlaying(false)
+        setGlobalIsPlaying(false)
         toast.success('재생을 일시정지했습니다')
       } else {
         // 새로운 트랙이거나, startTime이 설정되어 있고 현재 위치가 startTime과 다를 때
-        const shouldSeekToStart = currentTrack?.id !== trackId || 
+        const shouldSeekToStart = currentTrack?.id !== trackId ||
           (validatedStartTime !== undefined && Math.abs(position - validatedStartTime) > 1000) // 1초 이상 차이날 때
-        
+
         if (shouldSeekToStart) {
           // startTime 위치에서 재생
           await playTrack(trackId, validatedStartTime)
         } else {
           // 같은 트랙이고 위치가 맞으면 현재 위치에서 재생
           await player.resume()
+          setIsPlaying(true)
+          setGlobalIsPlaying(true)
           toast.success('재생을 재개했습니다')
         }
       }
