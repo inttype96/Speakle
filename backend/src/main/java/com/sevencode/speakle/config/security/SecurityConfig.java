@@ -65,6 +65,7 @@ public class SecurityConfig {
 
 					// ── 공개/인증 예외 경로
 					.requestMatchers("/api/oauth/**").permitAll()
+					.requestMatchers("/ws-translation/**").permitAll()  // WebSocket 연결 허용
 					.requestMatchers("/api/spotify/callback").permitAll()  // Spotify OAuth callback
 					.requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh").permitAll()
 					.requestMatchers(HttpMethod.POST, "/api/user").permitAll()

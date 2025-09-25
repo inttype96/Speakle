@@ -42,7 +42,7 @@ export default function RecentSongsCard({ recentSongs, error }: RecentSongsCardP
                 </div>
                 <div className="flex-1">
                   <p className="font-medium">{song.title}</p>
-                  <p className="text-sm text-muted-foreground">{song.artists}</p>
+                  <p className="text-sm text-muted-foreground">{song.artists.replace(/[\[\]']/g, '')}</p>
                   <Badge variant="secondary" className="text-xs">{song.level}</Badge>
                 </div>
               </div>

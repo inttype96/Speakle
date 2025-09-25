@@ -174,9 +174,9 @@ public class SongService {
         if (hasUntranslatedChunks) {
             log.info("[SongService] 번역이 필요한 청크 발견 - 실시간 번역 시작, songId={}", songId);
 			// 테스트 끝나고 배포 후 주석 해제 (토큰 사용 때문에 주석처리)
-            //  contextAwareLyricTranslationService.translateSongChunksRealtime(
-            //          songId, song.getTitle(), song.getArtists(), song.getAlbum()
-            //  );
+             contextAwareLyricTranslationService.translateSongChunksRealtime(
+                     songId, song.getTitle(), song.getArtists(), song.getAlbum()
+             );
         } else {
             log.info("[SongService] 모든 번역 완료됨 - 번역 서비스 스킵, songId={}", songId);
         }

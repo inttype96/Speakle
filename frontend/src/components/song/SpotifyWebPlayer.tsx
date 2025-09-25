@@ -200,14 +200,12 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
 
       // 플레이어 이벤트 리스너
       spotifyPlayer.addListener('ready', ({ device_id }) => {
-        console.log('Ready with Device ID', device_id)
         setDeviceId(device_id)
         setIsSDKReady(true)
         toast.success('Spotify 플레이어가 준비되었습니다')
       })
 
-      spotifyPlayer.addListener('not_ready', ({ device_id }) => {
-        console.log('Device ID has gone offline', device_id)
+      spotifyPlayer.addListener('not_ready', () => {
         setIsSDKReady(false)
       })
 
@@ -326,12 +324,8 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
   // shouldStopPlayer가 true일 때 플레이어 정지 (API가 실패했을 경우를 위한 백업)
   useEffect(() => {
     if (shouldStopPlayer && player && isPlaying) {
-      console.log('🔍 SpotifyWebPlayer backup stop check:', { shouldStopPlayer, hasPlayer: !!player, isPlaying });
-
       const stopPlayer = async () => {
         try {
-          console.log('🛑 BACKUP: Stopping Spotify player via SDK')
-
           // UI 상태 즉시 업데이트
           setIsPlaying(false)
           setGlobalIsPlaying(false)
@@ -340,7 +334,6 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
 
           // SDK로 정지 (백업용)
           await player.pause()
-          console.log('✅ SDK backup pause successful')
         } catch (error) {
           console.error('SDK backup pause failed:', error)
         }
@@ -428,11 +421,8 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
           // startTime 위치에서 재생
           await playTrack(trackId, validatedStartTime)
         } else {
-          // 같은 트랙이고 위치가 맞으면 현재 위치에서 재생
-          await player.resume()
-          setIsPlaying(true)
-          setGlobalIsPlaying(true)
-          toast.success('재생을 재개했습니다')
+          // 항상 API를 통해 재생 시작 (SDK 로드 문제 해결)
+          await playTrack(trackId, validatedStartTime)
         }
       }
     } catch (error) {
@@ -518,7 +508,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
           {currentTrack?.name || trackName}
         </p>
         <p className="text-sm text-muted-foreground truncate">
-          {currentTrack?.artists[0]?.name || artistName}
+          {currentTrack?.artists[0]?.name.replace(/[\[\]']/g, '') || artistName.replace(/[\[\]']/g, '')}
         </p>
         {duration > 0 && (
           <div className="flex items-center gap-2 mt-2">
