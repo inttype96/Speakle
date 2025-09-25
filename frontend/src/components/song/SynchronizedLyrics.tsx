@@ -107,9 +107,6 @@ export default function SynchronizedLyrics({
     }
 
     if (newIndex !== currentLineIndex) {
-      if (newIndex >= 0 && validLyrics[newIndex]) {
-        const timeDifference = adjustedCurrentTime - validLyrics[newIndex].startTimeMs;
-      }
       setCurrentLineIndex(newIndex);
     }
   }, [currentTime, validLyrics, currentLineIndex]);

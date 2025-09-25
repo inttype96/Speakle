@@ -50,7 +50,7 @@ export default function DictationPage() {
   const songIdFromQuery = sp.get("song_id") || sp.get("songId") || "";
   const navigate = useNavigate();
   const { userId } = useAuthStore();
-  const { setIsPlaying, setShouldStopPlayer } = useSpotifyPlayer();
+  const { setIsPlaying: setGlobalIsPlaying, setShouldStopPlayer } = useSpotifyPlayer();
 
   // 진행상태
   const MAX_Q = 3;
@@ -113,7 +113,7 @@ export default function DictationPage() {
     const stopMusicOnEntry = async () => {
       try {
         await pausePlaybackAPI();
-        setIsPlaying(false);
+        setGlobalIsPlaying(false);
         setShouldStopPlayer(true);
         console.log('✅ Music stopped on dictation page entry');
       } catch (error) {
@@ -326,7 +326,7 @@ export default function DictationPage() {
     console.log('🎵 Dictation: Moving to next question, stopping music');
     try {
       await pausePlaybackAPI();
-      setIsPlaying(false);
+      setGlobalIsPlaying(false);
       setShouldStopPlayer(true);
       console.log('✅ Music stopped for next question');
     } catch (error) {
@@ -342,7 +342,7 @@ export default function DictationPage() {
       setSummary(summary);
       setOpenSummary(true);
     }
-  }, [qNo, learnedSongId, setIsPlaying, setShouldStopPlayer]);
+  }, [qNo, learnedSongId, setGlobalIsPlaying, setShouldStopPlayer]);
 
   // 요약 모달
   const [openSummary, setOpenSummary] = useState(false);
