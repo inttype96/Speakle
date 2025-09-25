@@ -35,9 +35,11 @@ export function SpotifyPlayerProvider({ children }: SpotifyPlayerProviderProps) 
 
   // 페이지 변경 감지 - 음악 재생 허용 페이지가 아니면 플레이어 정지
   useEffect(() => {
+    console.log('🔍 Current pathname:', location.pathname);
     const isSongDetailPage = location.pathname.startsWith('/songs/');
     const isDictationPage = location.pathname.startsWith('/learn/dictation');
     const isIframePath = location.pathname.includes('/ws-translation/iframe.html');
+    console.log('🔍 isSongDetailPage:', isSongDetailPage, 'isDictationPage:', isDictationPage, 'isIframePath:', isIframePath);
 
     // 음악 재생을 허용하는 페이지들
     const isMusicAllowedPage = isSongDetailPage || isDictationPage;
