@@ -14,8 +14,11 @@ import java.util.Optional;
 @Repository
 public interface CustomPlaylistRepository extends JpaRepository<CustomPlaylist, Long> {
 
-	// 사용자별 플레이리스트 조회
+	// 사용자별 플레이리스트 조회 (최신순)
 	List<CustomPlaylist> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+	// 사용자별 플레이리스트 조회 (오래된 순)
+	List<CustomPlaylist> findByUserIdOrderByCreatedAtAsc(Long userId);
 
 	// 사용자별 플레이리스트 페이징
 	Page<CustomPlaylist> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);

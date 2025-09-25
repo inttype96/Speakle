@@ -101,6 +101,40 @@ export interface DeleteTracksResponse {
   message: string;
 }
 
+// 플레이리스트 멤버십 관련 타입
+export interface PlaylistMembership {
+  playlistId: number;
+  name: string;
+  description: string;
+  trackCount: number;
+  containsSong: boolean;
+}
+
+export interface PlaylistMembershipResponse {
+  status: number;
+  message: string;
+  data: {
+    songId: string;
+    playlists: PlaylistMembership[];
+    totalPlaylists: number;
+    playlistsWithSong: number;
+  };
+}
+
+// 노래 추가 응답 타입
+export interface AddSongResponse {
+  status: number;
+  message: string;
+  data?: {
+    playlistId: number;
+    playlistName: string;
+    songId: string;
+    addedAt?: string;
+    success?: boolean;
+    alreadyAdded?: boolean;
+  };
+}
+
 // API 함수들
 export const playlistService = {
   // 플레이리스트 목록 조회
@@ -178,5 +212,41 @@ export const playlistService = {
       { data }
     );
     return response.data;
+  },
+
+  // 특정 노래의 플레이리스트 멤버십 확인
+  async getPlaylistMembership(songId: string): Promise<PlaylistMembershipResponse> {
+    const response = await http.get<PlaylistMembershipResponse>(`/playlists/songs/${songId}/membership`);
+    return response.data;
+  },
+
+  // 선택한 플레이리스트에 노래 추가
+  async addSongToPlaylist(songId: string, playlistId: number): Promise<AddSongResponse> {
+    const response = await http.post<AddSongResponse>(
+      `/playlists/songs/${songId}/add`,
+      null,
+      { params: { playlistId } }
+    );
+    return response.data;
+  },
+
+  // 가장 오래된 플레이리스트에 노래 추가 (하트 버튼용)
+  async addSongToOldestPlaylist(songId: string): Promise<AddSongResponse> {
+    const response = await http.post<AddSongResponse>(`/playlists/songs/${songId}/add-to-oldest`);
+    return response.data;
+  },
+
+  // 모든 플레이리스트에서 노래 삭제 (하트 버튼 해제용)
+  async removeSongFromAllPlaylists(songId: string): Promise<AddSongResponse> {
+    const response = await http.delete<AddSongResponse>(`/playlists/songs/${songId}/remove-from-all`);
+    return response.data;
   }
 };
+
+// 편의를 위한 개별 함수들 export
+export const getPlaylistsService = playlistService.getPlaylists;
+export const getUserPlaylistsService = playlistService.getPlaylists; // 사용자 플레이리스트 목록 조회
+export const getPlaylistMembershipService = playlistService.getPlaylistMembership;
+export const addSongToPlaylistService = playlistService.addSongToPlaylist;
+export const addSongToOldestPlaylistService = playlistService.addSongToOldestPlaylist;
+export const removeSongFromAllPlaylistsService = playlistService.removeSongFromAllPlaylists;

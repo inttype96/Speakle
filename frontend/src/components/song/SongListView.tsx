@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import type { Song, Difficulty } from "@/types/recommend";
 import type { SearchSong } from "@/types/search";
 import { usePlaylistSave } from "@/hooks/usePlaylistSave";
+import PlaylistDropdown from "@/components/playlists/PlaylistDropdown";
 
 // shadcn
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +15,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 // icons
-import { Heart, Filter, Clock, Flame, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { Filter, Clock, Flame, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
+import likeIconDark from "@/assets/images/likeIcon_dark.png";
+import likeIconDarkActive from "@/assets/images/likeIcon_dark_active.png";
 
 // types
 type UnifiedSong = Song | SearchSong;
@@ -338,7 +341,7 @@ export default function SongListView({
 function FeaturedCard({ song, situation, location, searchQuery }: { song: UnifiedSong; situation?: string; location?: string; searchQuery?: string }) {
   const diff = DIFFICULTY_MAP[song.level] || { label: "보통", variant: "default" as const };
   const to = buildSongDetailLink(song.songId, situation, location, searchQuery);
-  const { isSaved, isLoading, saveToPlaylist } = usePlaylistSave();
+  const { isSaved, isLoading, saveToPlaylist } = usePlaylistSave(song.songId);
 
   // 앨범 이미지 유효성 검사
   const hasValidImage = song.albumImgUrl &&
@@ -382,15 +385,30 @@ function FeaturedCard({ song, situation, location, searchQuery }: { song: Unifie
             {song.popularity}
           </span>
         </div>
-        <Button
-          size="icon"
-          variant="ghost"
-          className="rounded-full z-20 relative h-7 w-7"
-          onClick={handleSaveToPlaylist}
-          disabled={isLoading}
-        >
-          <Heart className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
-        </Button>
+        <div className="flex items-center gap-1 z-20 relative">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="rounded-full h-7 w-7"
+            onClick={handleSaveToPlaylist}
+            disabled={isLoading}
+          >
+              <img
+                  src={isSaved ? likeIconDarkActive : likeIconDark}
+                  alt={isSaved ? "저장됨" : "저장하기"}
+                  className={`h-7 w-7 transition-all duration-200 ${
+                    isSaved
+                      ? 'scale-110 drop-shadow-sm'
+                      : 'opacity-70 hover:opacity-100 hover:scale-105'
+                  }`}
+              />
+            {/*<Heart className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />*/}
+          </Button>
+          <PlaylistDropdown
+            songId={song.songId}
+            songTitle={song.title}
+          />
+        </div>
       </CardContent>
     </Card>
   );
@@ -399,6 +417,7 @@ function FeaturedCard({ song, situation, location, searchQuery }: { song: Unifie
 function TopResultItem({ song, situation, location, searchQuery }: { song: UnifiedSong; situation?: string; location?: string; searchQuery?: string }) {
   const diff = DIFFICULTY_MAP[song.level] || { label: "보통", variant: "default" as const };
   const to = buildSongDetailLink(song.songId, situation, location, searchQuery);
+  const { isSaved, isLoading, saveToPlaylist } = usePlaylistSave(song.songId);
 
   // 앨범 이미지 유효성 검사
   const hasValidImage = song.albumImgUrl &&
@@ -407,11 +426,16 @@ function TopResultItem({ song, situation, location, searchQuery }: { song: Unifi
     song.albumImgUrl !== "none" &&
     song.albumImgUrl.trim() !== "";
 
+  const handleSaveToPlaylist = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    await saveToPlaylist(song.songId);
+  };
+
   return (
-    <Link
-      to={to}
-      className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-accent focus:bg-accent outline-none"
-    >
+    <div className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-accent focus-within:bg-accent group relative">
+      <Link to={to} className="absolute inset-0 z-10" aria-label={`${song.title} 상세 보기`} />
+
       <div className="h-12 w-12 rounded-md overflow-hidden bg-muted shrink-0">
         <img
           src={hasValidImage ? song.albumImgUrl : "/albumBasicCover.png"}
@@ -426,15 +450,40 @@ function TopResultItem({ song, situation, location, searchQuery }: { song: Unifi
         </div>
         <div className="truncate text-sm text-muted-foreground">{song.artists.replace(/[\[\]']/g, '')}</div>
       </div>
-      <div className="text-xs text-muted-foreground">{msToMinSec(song.durationMs)}</div>
-    </Link>
+      <div className="flex items-center gap-2">
+        <div className="text-xs text-muted-foreground flex items-center h-6">{msToMinSec(song.durationMs)}</div>
+        <div className="flex gap-1 z-20 relative items-center">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="rounded-full h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={handleSaveToPlaylist}
+            disabled={isLoading}
+          >
+            <img
+              src={isSaved ? likeIconDarkActive : likeIconDark}
+              alt={isSaved ? "저장됨" : "저장하기"}
+              className={`h-4 w-4 transition-all duration-200 ${
+                isSaved
+                  ? 'scale-110 drop-shadow-sm opacity-100'
+                  : 'opacity-70 hover:opacity-100 hover:scale-105'
+              }`}
+            />
+          </Button>
+          <PlaylistDropdown
+            songId={song.songId}
+            songTitle={song.title}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 
 function SongCard({ song, situation, location, searchQuery }: { song: UnifiedSong; situation?: string; location?: string; searchQuery?: string }) {
   const diff = DIFFICULTY_MAP[song.level] || { label: "보통", variant: "default" as const };
   const to = buildSongDetailLink(song.songId, situation, location, searchQuery);
-  const { isSaved, isLoading, saveToPlaylist } = usePlaylistSave();
+  const { isSaved, isLoading, saveToPlaylist } = usePlaylistSave(song.songId);
 
   // 앨범 이미지 유효성 검사
   const hasValidImage = song.albumImgUrl &&
@@ -462,15 +511,30 @@ function SongCard({ song, situation, location, searchQuery }: { song: UnifiedSon
         <div className="absolute left-3 top-3">
           <Badge variant={diff.variant || "default"}>{diff.label}</Badge>
         </div>
-        <Button
-          size="icon"
-          variant="secondary"
-          className="absolute right-3 top-3 rounded-full h-8 w-8 z-20"
-          onClick={handleSaveToPlaylist}
-          disabled={isLoading}
-        >
-          <Heart className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
-        </Button>
+        <div className="absolute right-3 top-3 flex gap-1 z-20">
+          <Button
+            size="icon"
+            variant="secondary"
+            className="rounded-full h-8 w-8"
+            onClick={handleSaveToPlaylist}
+            disabled={isLoading}
+          >
+              <img
+                  src={isSaved ? likeIconDarkActive : likeIconDark}
+                  alt={isSaved ? "저장됨" : "저장하기"}
+                  className={`h-7 w-7 transition-all duration-200 ${
+                    isSaved
+                      ? 'scale-110 drop-shadow-sm'
+                      : 'opacity-70 hover:opacity-100 hover:scale-105'
+                  }`}
+              />
+            {/*<Heart className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />*/}
+          </Button>
+          <PlaylistDropdown
+            songId={song.songId}
+            songTitle={song.title}
+          />
+        </div>
       </div>
       <CardHeader className="pb-2">
         <CardTitle className="text-base leading-tight line-clamp-1">{song.title}</CardTitle>

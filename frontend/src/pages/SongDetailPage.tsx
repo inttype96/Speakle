@@ -8,6 +8,7 @@ import { fetchSongDetail, fetchLearningContent } from "@/services/songService";
 import type { SongDetail, LearningContent } from "@/types/song";
 import { createLearnedSong } from "@/services/songService";
 import SynchronizedLyrics from "@/components/song/SynchronizedLyrics";
+import PlaylistSelectionModal from "@/components/playlists/PlaylistSelectionModal";
 
 // shadcn
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Skeleton } from "@/components/ui/skeleton";
 
 // icons
-import { Clock, Flame, ChevronLeft, Gamepad2, Type, MicVocal, Keyboard } from "lucide-react";
+import { Clock, Flame, ChevronLeft, Gamepad2, Type, MicVocal, Keyboard, Plus } from "lucide-react";
 
 
 const SONG_DETAIL_SAMPLE: SongDetail = {
@@ -85,6 +86,9 @@ export default function SongDetailPage() {
   // 가사 동기화를 위한 상태
   const [currentPlayTime, setCurrentPlayTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  // 플레이리스트 추가 모달 상태
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
 
   // 스포티파이 플레이어 시간 업데이트 핸들러
   const handleTimeUpdate = (currentTime: number, playing: boolean) => {
@@ -298,11 +302,24 @@ export default function SongDetailPage() {
                     />
                   </div>
 
-                  {/* 학습 버튼 */}
-                  <Button size="lg" className="max-w-md" onClick={() => handleOpenLearn()}>
-                    <Gamepad2 className="mr-2 h-5 w-5" />
-                    Speakle과 집중 학습하기
-                  </Button>
+                  {/* 액션 버튼들 */}
+                  <div className="flex flex-col gap-2 max-w-md">
+                    {/* 학습 버튼 */}
+                    <Button size="lg" onClick={() => handleOpenLearn()}>
+                      <Gamepad2 className="mr-2 h-5 w-5" />
+                      Speakle과 집중 학습하기
+                    </Button>
+
+                    {/* 플레이리스트 추가 버튼 */}
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => setShowPlaylistModal(true)}
+                    >
+                      <Plus className="mr-2 h-5 w-5" />
+                      플레이리스트에 추가
+                    </Button>
+                  </div>
                 </CardContent>
               </>
             ) : null}
@@ -399,6 +416,18 @@ export default function SongDetailPage() {
 
           navigate(`${path}?${qs.toString()}`);
 
+        }}
+      />
+
+      {/* 플레이리스트 선택 모달 */}
+      <PlaylistSelectionModal
+        isOpen={showPlaylistModal}
+        onClose={() => setShowPlaylistModal(false)}
+        songId={songId}
+        songTitle={data?.title}
+        onSuccess={() => {
+          // 성공 후 필요한 액션이 있다면 여기에 추가
+          console.log("노래가 플레이리스트에 성공적으로 추가되었습니다.");
         }}
       />
     </div>

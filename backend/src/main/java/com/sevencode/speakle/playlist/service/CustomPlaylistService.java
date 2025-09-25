@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -191,7 +192,7 @@ public class CustomPlaylistService {
 			.orElseThrow(() -> new IllegalArgumentException("플레이리스트를 찾을 수 없습니다."));
 
 		Pageable pageable = PageRequest.of(offset / limit, limit);
-		Page<com.sevencode.speakle.playlist.entity.CustomPlaylistTrack> tracks = getTracksBySortOption(playlistId, pageable, sortBy, order);
+		Page<com.sevencode.speakle.playlist.entity.CustomPlaylistTrack> tracks = getTracksBySortOptionOptimized(playlistId, pageable, sortBy, order);
 
 		CustomPlaylistTracksResponse response = new CustomPlaylistTracksResponse();
 		response.setHref("/api/playlists/" + playlistId + "/tracks");
@@ -327,8 +328,8 @@ public class CustomPlaylistService {
 		com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Track trackInfo = new com.sevencode.speakle.playlist.dto.response.CustomPlaylistTrack.Track();
 		trackInfo.setId(track.getSongId());
 
-		// Song 정보 조회
-		Song song = songRepository.findById(track.getSongId()).orElse(null);
+		// Song 정보 조회 (N+1 문제 해결: JOIN FETCH로 이미 로딩된 데이터 사용)
+		Song song = track.getSong();
 
 		if (song != null) {
 			// 실제 Song 정보 사용
@@ -502,7 +503,313 @@ public class CustomPlaylistService {
 		}
 	}
 
-	private Page<com.sevencode.speakle.playlist.entity.CustomPlaylistTrack> getTracksBySortOption(
+	/**
+	 * 특정 노래의 플레이리스트 포함 여부 상세 확인
+	 */
+	@Transactional(readOnly = true)
+	public Map<String, Object> checkSongPlaylistMembership(UserPrincipal auth, String songId) {
+		if (auth == null) {
+			return Map.of(
+				"status", 401,
+				"message", "사용자 인증이 필요합니다.",
+				"error", "Authentication required"
+			);
+		}
+
+		try {
+			// 사용자의 모든 플레이리스트 조회
+			List<CustomPlaylist> userPlaylists = playlistRepository.findByUserIdOrderByCreatedAtDesc(auth.userId());
+
+			// 노래가 포함된 플레이리스트들 확인
+			List<Long> playlistsWithSong = trackRepository.findPlaylistIdsByUserIdAndSongId(auth.userId(), songId);
+
+			// 플레이리스트 정보와 포함 여부를 함께 반환
+			List<Map<String, Object>> playlistInfo = userPlaylists.stream()
+				.map(playlist -> Map.<String, Object>of(
+					"playlistId", playlist.getId(),
+					"name", playlist.getName(),
+					"description", playlist.getDescription() != null ? playlist.getDescription() : "",
+					"trackCount", playlist.getTrackCount(),
+					"containsSong", playlistsWithSong.contains(playlist.getId())
+				))
+				.toList();
+
+			return Map.of(
+				"status", 200,
+				"message", "플레이리스트 멤버십 확인이 완료되었습니다.",
+				"data", Map.of(
+					"songId", songId,
+					"playlists", playlistInfo,
+					"totalPlaylists", userPlaylists.size(),
+					"playlistsWithSong", playlistsWithSong.size()
+				)
+			);
+		} catch (Exception e) {
+			log.error("플레이리스트 멤버십 확인 실패 - userId: {}, songId: {}, error: {}",
+				auth.userId(), songId, e.getMessage(), e);
+			return Map.of(
+				"status", 500,
+				"message", "플레이리스트 멤버십 확인 중 오류가 발생했습니다.",
+				"error", e.getMessage()
+			);
+		}
+	}
+
+	/**
+	 * 선택한 플레이리스트에 노래 추가
+	 */
+	@Transactional
+	public Map<String, Object> addSongToSelectedPlaylist(UserPrincipal auth, String songId, Long playlistId) {
+		if (auth == null) {
+			return Map.of(
+				"status", 401,
+				"message", "사용자 인증이 필요합니다.",
+				"error", "Authentication required"
+			);
+		}
+
+		try {
+			// 플레이리스트 소유권 확인
+			CustomPlaylist playlist = playlistRepository.findByIdAndUserId(playlistId, auth.userId())
+				.orElseThrow(() -> new IllegalArgumentException("플레이리스트를 찾을 수 없거나 권한이 없습니다."));
+
+			// Song 존재성 확인
+			if (!songRepository.existsById(songId)) {
+				return Map.of(
+					"status", 404,
+					"message", "존재하지 않는 노래입니다.",
+					"error", "Song not found"
+				);
+			}
+
+			// 이미 플레이리스트에 있는지 확인
+			if (trackRepository.existsByPlaylistIdAndSongId(playlistId, songId)) {
+				return Map.of(
+					"status", 409,
+					"message", "이미 플레이리스트에 포함된 노래입니다.",
+					"data", Map.of(
+						"playlistId", playlistId,
+						"playlistName", playlist.getName(),
+						"songId", songId,
+						"alreadyAdded", true
+					)
+				);
+			}
+
+			// 트랙 추가
+			com.sevencode.speakle.playlist.entity.CustomPlaylistTrack track =
+				new com.sevencode.speakle.playlist.entity.CustomPlaylistTrack(playlistId, auth.userId(), songId);
+			trackRepository.save(track);
+
+			log.info("노래를 플레이리스트에 추가 완료 - userId: {}, playlistId: {}, songId: {}",
+				auth.userId(), playlistId, songId);
+
+			return Map.of(
+				"status", 200,
+				"message", "노래가 플레이리스트에 추가되었습니다.",
+				"data", Map.of(
+					"playlistId", playlistId,
+					"playlistName", playlist.getName(),
+					"songId", songId,
+					"addedAt", track.getAddedAt().toString(),
+					"success", true
+				)
+			);
+
+		} catch (IllegalArgumentException e) {
+			return Map.of(
+				"status", 404,
+				"message", e.getMessage(),
+				"error", "Not found"
+			);
+		} catch (Exception e) {
+			log.error("플레이리스트에 노래 추가 실패 - userId: {}, playlistId: {}, songId: {}, error: {}",
+				auth.userId(), playlistId, songId, e.getMessage(), e);
+			return Map.of(
+				"status", 500,
+				"message", "노래 추가 중 오류가 발생했습니다.",
+				"error", e.getMessage()
+			);
+		}
+	}
+
+	/**
+	 * 가장 오래된 플레이리스트에 노래 추가 (하트 버튼용)
+	 */
+	@Transactional
+	public Map<String, Object> addSongToOldestPlaylist(UserPrincipal auth, String songId) {
+		if (auth == null) {
+			return Map.of(
+				"status", 401,
+				"message", "사용자 인증이 필요합니다.",
+				"error", "Authentication required"
+			);
+		}
+
+		try {
+			// 사용자의 가장 오래된 플레이리스트 조회 (생성 시간 순)
+			List<CustomPlaylist> userPlaylists = playlistRepository.findByUserIdOrderByCreatedAtAsc(auth.userId());
+
+			if (userPlaylists.isEmpty()) {
+				return Map.of(
+					"status", 404,
+					"message", "플레이리스트가 없습니다. 먼저 플레이리스트를 생성해주세요.",
+					"error", "No playlist found"
+				);
+			}
+
+			CustomPlaylist oldestPlaylist = userPlaylists.get(0);
+
+			// Song 존재성 확인
+			if (!songRepository.existsById(songId)) {
+				return Map.of(
+					"status", 404,
+					"message", "존재하지 않는 노래입니다.",
+					"error", "Song not found"
+				);
+			}
+
+			// 이미 플레이리스트에 있는지 확인
+			if (trackRepository.existsByPlaylistIdAndSongId(oldestPlaylist.getId(), songId)) {
+				return Map.of(
+					"status", 409,
+					"message", "이미 플레이리스트에 포함된 노래입니다.",
+					"data", Map.of(
+						"playlistId", oldestPlaylist.getId(),
+						"playlistName", oldestPlaylist.getName(),
+						"songId", songId,
+						"alreadyAdded", true
+					)
+				);
+			}
+
+			// 트랙 추가
+			com.sevencode.speakle.playlist.entity.CustomPlaylistTrack track =
+				new com.sevencode.speakle.playlist.entity.CustomPlaylistTrack(oldestPlaylist.getId(), auth.userId(), songId);
+			trackRepository.save(track);
+
+			log.info("노래를 가장 오래된 플레이리스트에 추가 완료 - userId: {}, playlistId: {}, songId: {}",
+				auth.userId(), oldestPlaylist.getId(), songId);
+
+			return Map.of(
+				"status", 200,
+				"message", String.format("노래가 \"%s\"에 추가되었습니다.", oldestPlaylist.getName()),
+				"data", Map.of(
+					"playlistId", oldestPlaylist.getId(),
+					"playlistName", oldestPlaylist.getName(),
+					"songId", songId,
+					"addedAt", track.getAddedAt().toString(),
+					"success", true,
+					"isOldest", true
+				)
+			);
+
+		} catch (Exception e) {
+			log.error("가장 오래된 플레이리스트에 노래 추가 실패 - userId: {}, songId: {}, error: {}",
+				auth.userId(), songId, e.getMessage(), e);
+			return Map.of(
+				"status", 500,
+				"message", "노래 추가 중 오류가 발생했습니다.",
+				"error", e.getMessage()
+			);
+		}
+	}
+
+	/**
+	 * 모든 플레이리스트에서 노래 삭제 (하트 버튼 해제용)
+	 */
+	@Transactional
+	public Map<String, Object> removeSongFromAllPlaylists(UserPrincipal auth, String songId) {
+		if (auth == null) {
+			return Map.of(
+				"status", 401,
+				"message", "사용자 인증이 필요합니다.",
+				"error", "Authentication required"
+			);
+		}
+
+		try {
+			log.info("모든 플레이리스트에서 노래 삭제 시작 - userId: {}, songId: {}", auth.userId(), songId);
+
+			// 해당 노래가 포함된 사용자의 플레이리스트 ID 목록 조회
+			List<Long> playlistIds = trackRepository.findPlaylistIdsByUserIdAndSongId(auth.userId(), songId);
+
+			if (playlistIds.isEmpty()) {
+				return Map.of(
+					"status", 404,
+					"message", "해당 노래가 포함된 플레이리스트가 없습니다.",
+					"error", "Song not found in any playlist"
+				);
+			}
+
+			int deletedCount = 0;
+			List<String> deletedFromPlaylists = new ArrayList<>();
+
+			// 각 플레이리스트에서 노래 삭제
+			for (Long playlistId : playlistIds) {
+				CustomPlaylist playlist = playlistRepository.findById(playlistId).orElse(null);
+				if (playlist != null && playlist.getUserId().equals(auth.userId())) {
+					trackRepository.deleteByPlaylistIdAndSongId(playlistId, songId);
+					deletedFromPlaylists.add(playlist.getName());
+					deletedCount++;
+					log.info("플레이리스트에서 노래 삭제 완료 - playlistId: {}, playlistName: {}, songId: {}",
+						playlistId, playlist.getName(), songId);
+				}
+			}
+
+			log.info("모든 플레이리스트에서 노래 삭제 완료 - userId: {}, songId: {}, deletedCount: {}",
+				auth.userId(), songId, deletedCount);
+
+			return Map.of(
+				"status", 200,
+				"message", String.format("노래가 %d개 플레이리스트에서 삭제되었습니다.", deletedCount),
+				"data", Map.of(
+					"songId", songId,
+					"deletedCount", deletedCount,
+					"deletedFromPlaylists", deletedFromPlaylists,
+					"success", true
+				)
+			);
+
+		} catch (Exception e) {
+			log.error("모든 플레이리스트에서 노래 삭제 실패 - userId: {}, songId: {}, error: {}",
+				auth.userId(), songId, e.getMessage(), e);
+			return Map.of(
+				"status", 500,
+				"message", "노래 삭제 중 오류가 발생했습니다.",
+				"error", e.getMessage()
+			);
+		}
+	}
+
+	// private Page<com.sevencode.speakle.playlist.entity.CustomPlaylistTrack> getTracksBySortOption(
+	// 	Long playlistId, Pageable pageable, String sortBy, String order) {
+
+	// 	// 기본값 설정
+	// 	if (sortBy == null) sortBy = "addedAt";
+	// 	if (order == null) order = "asc";
+
+	// 	switch (sortBy.toLowerCase()) {
+	// 		case "addedAt":
+	// 		case "added_at":
+	// 			return "desc".equalsIgnoreCase(order)
+	// 				? trackRepository.findByPlaylistIdOrderByAddedAtDesc(playlistId, pageable)
+	// 				: trackRepository.findByPlaylistIdOrderByAddedAt(playlistId, pageable);
+
+	// 		case "playCount":
+	// 		case "play_count":
+	// 			return "asc".equalsIgnoreCase(order)
+	// 				? trackRepository.findByPlaylistIdOrderByPlayCountAsc(playlistId, pageable)
+	// 				: trackRepository.findByPlaylistIdOrderByPlayCountDesc(playlistId, pageable);
+
+	// 		default:
+	// 			// 기본값: 추가 순
+	// 			return trackRepository.findByPlaylistIdOrderByAddedAt(playlistId, pageable);
+	// 	}
+	// }
+
+	// N+1 문제 해결을 위한 최적화된 메서드
+	private Page<com.sevencode.speakle.playlist.entity.CustomPlaylistTrack> getTracksBySortOptionOptimized(
 		Long playlistId, Pageable pageable, String sortBy, String order) {
 
 		// 기본값 설정
@@ -513,18 +820,18 @@ public class CustomPlaylistService {
 			case "addedAt":
 			case "added_at":
 				return "desc".equalsIgnoreCase(order)
-					? trackRepository.findByPlaylistIdOrderByAddedAtDesc(playlistId, pageable)
-					: trackRepository.findByPlaylistIdOrderByAddedAt(playlistId, pageable);
+					? trackRepository.findByPlaylistIdOrderByAddedAtDescOptimized(playlistId, pageable)
+					: trackRepository.findByPlaylistIdOrderByAddedAtOptimized(playlistId, pageable);
 
 			case "playCount":
 			case "play_count":
 				return "asc".equalsIgnoreCase(order)
-					? trackRepository.findByPlaylistIdOrderByPlayCountAsc(playlistId, pageable)
-					: trackRepository.findByPlaylistIdOrderByPlayCountDesc(playlistId, pageable);
+					? trackRepository.findByPlaylistIdOrderByPlayCountAscOptimized(playlistId, pageable)
+					: trackRepository.findByPlaylistIdOrderByPlayCountDescOptimized(playlistId, pageable);
 
 			default:
 				// 기본값: 추가 순
-				return trackRepository.findByPlaylistIdOrderByAddedAt(playlistId, pageable);
+				return trackRepository.findByPlaylistIdOrderByAddedAtOptimized(playlistId, pageable);
 		}
 	}
 }

@@ -187,4 +187,62 @@ public class CustomPlaylistController {
 		Map<String, Object> result = customPlaylistService.checkSongsInUserPlaylists(auth, songIds);
 		return ResponseEntity.ok(result);
 	}
+
+	@Operation(
+		summary = "특정 노래의 플레이리스트 포함 여부 확인",
+		description = "특정 노래가 사용자의 어떤 플레이리스트에 포함되어 있는지 확인합니다."
+	)
+	@GetMapping("/songs/{songId}/membership")
+	public ResponseEntity<Map<String, Object>> checkSongPlaylistMembership(
+		@AuthenticationPrincipal @Parameter(hidden = true) UserPrincipal auth,
+		@Parameter(description = "노래 ID", required = true)
+		@PathVariable String songId) {
+
+		Map<String, Object> result = customPlaylistService.checkSongPlaylistMembership(auth, songId);
+		return ResponseEntity.ok(result);
+	}
+
+	@Operation(
+		summary = "노래를 플레이리스트에 추가 (플레이리스트 선택 방식)",
+		description = "사용자가 선택한 플레이리스트에 노래를 추가합니다. 스포티파이와 유사한 방식입니다."
+	)
+	@PostMapping("/songs/{songId}/add")
+	public ResponseEntity<Map<String, Object>> addSongToSelectedPlaylist(
+		@AuthenticationPrincipal @Parameter(hidden = true) UserPrincipal auth,
+		@Parameter(description = "노래 ID", required = true)
+		@PathVariable String songId,
+		@Parameter(description = "플레이리스트 ID", required = true)
+		@RequestParam Long playlistId) {
+
+		Map<String, Object> result = customPlaylistService.addSongToSelectedPlaylist(auth, songId, playlistId);
+		return ResponseEntity.ok(result);
+	}
+
+	@Operation(
+		summary = "노래를 가장 오래된 플레이리스트에 추가 (하트 버튼용)",
+		description = "하트 버튼 클릭 시 사용자의 가장 오래된 플레이리스트에 노래를 추가합니다."
+	)
+	@PostMapping("/songs/{songId}/add-to-oldest")
+	public ResponseEntity<Map<String, Object>> addSongToOldestPlaylist(
+		@AuthenticationPrincipal @Parameter(hidden = true) UserPrincipal auth,
+		@Parameter(description = "노래 ID", required = true)
+		@PathVariable String songId) {
+
+		Map<String, Object> result = customPlaylistService.addSongToOldestPlaylist(auth, songId);
+		return ResponseEntity.ok(result);
+	}
+
+	@Operation(
+		summary = "모든 플레이리스트에서 노래 삭제 (하트 버튼 해제용)",
+		description = "하트 버튼 해제 시 사용자의 모든 플레이리스트에서 해당 노래를 삭제합니다."
+	)
+	@DeleteMapping("/songs/{songId}/remove-from-all")
+	public ResponseEntity<Map<String, Object>> removeSongFromAllPlaylists(
+		@AuthenticationPrincipal @Parameter(hidden = true) UserPrincipal auth,
+		@Parameter(description = "노래 ID", required = true)
+		@PathVariable String songId) {
+
+		Map<String, Object> result = customPlaylistService.removeSongFromAllPlaylists(auth, songId);
+		return ResponseEntity.ok(result);
+	}
 }
