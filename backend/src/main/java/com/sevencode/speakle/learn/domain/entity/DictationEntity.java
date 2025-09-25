@@ -46,6 +46,9 @@ public class DictationEntity {
     @Column(name = "origin_sentence")
     private String originSentence;
 
+    @Column(name = "korean")
+    private String korean;
+
     @Column(name = "answer")
     private String answer;
 
