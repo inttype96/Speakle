@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useSpotifyPlayer } from '@/contexts/SpotifyPlayerContext'
 import { Button } from '@/components/ui/button'
 import { ElasticSlider } from '@/components/ui/elastic-slider'
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react'
@@ -84,6 +85,7 @@ interface SpotifyWebPlayerProps {
 }
 
 export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTimeUpdate, startTime, endTime }: SpotifyWebPlayerProps) {
+  const { shouldStopPlayer, setIsPlaying: setGlobalIsPlaying, stopSignal } = useSpotifyPlayer();
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(50)
   const [isMuted, setIsMuted] = useState(false)
@@ -212,7 +214,9 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         if (!state) return
 
         setCurrentTrack(state.track_window.current_track)
-        setIsPlaying(!state.paused)
+        const playing = !state.paused
+        setIsPlaying(playing)
+        setGlobalIsPlaying(playing)  // 전역 상태도 업데이트
         setPosition(state.position)
         setDuration(state.track_window.current_track.duration_ms)
 
@@ -220,6 +224,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         if (validatedEndTime && !state.paused && state.position >= validatedEndTime) {
           spotifyPlayer.pause()
           setIsPlaying(false)
+          setGlobalIsPlaying(false)  // 전역 상태도 업데이트
           onTimeUpdate?.(validatedEndTime, false)
           return
         }
@@ -303,6 +308,44 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
     return () => clearInterval(interval)
   }, [isPlaying, duration, endTime, onTimeUpdate, player])
 
+  // stopSignal이 변경되면 플레이어 정지
+  useEffect(() => {
+    console.log('🔍 SpotifyWebPlayer stopSignal check:', { stopSignal, shouldStopPlayer, hasPlayer: !!player, isPlaying });
+
+    if (stopSignal > 0) {
+      const stopPlayer = async () => {
+        try {
+          console.log('🛑 IMMEDIATE: Stopping Spotify player due to page leave')
+
+          // 즉시 상태 업데이트 (UI 반응성)
+          setIsPlaying(false)
+          setGlobalIsPlaying(false)  // 전역 상태도 업데이트
+          setPosition(0)
+          onTimeUpdate?.(0, false)
+
+          // player가 있는 경우에만 SDK 호출
+          if (player) {
+            try {
+              // Web Playback SDK로 일시정지
+              await player.pause()
+              console.log('✅ SDK pause successful')
+            } catch (sdkError) {
+              console.error('SDK pause failed:', sdkError)
+            }
+          } else {
+            console.log('ℹ️ No player instance, only updating UI state')
+          }
+
+          console.log('🎯 Spotify player stop sequence completed')
+        } catch (error) {
+          console.error('플레이어 정지 실패:', error)
+        }
+      }
+
+      // 즉시 실행 (await 없이)
+      stopPlayer()
+    }
+  }, [stopSignal, shouldStopPlayer, player, onTimeUpdate, setGlobalIsPlaying])
 
   // 트랙 재생
   const playTrack = async (trackUri: string, seekTo?: number) => {
@@ -358,18 +401,22 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
     try {
       if (isPlaying) {
         await player.pause()
+        setIsPlaying(false)
+        setGlobalIsPlaying(false)
         toast.success('재생을 일시정지했습니다')
       } else {
         // 새로운 트랙이거나, startTime이 설정되어 있고 현재 위치가 startTime과 다를 때
-        const shouldSeekToStart = currentTrack?.id !== trackId || 
+        const shouldSeekToStart = currentTrack?.id !== trackId ||
           (validatedStartTime !== undefined && Math.abs(position - validatedStartTime) > 1000) // 1초 이상 차이날 때
-        
+
         if (shouldSeekToStart) {
           // startTime 위치에서 재생
           await playTrack(trackId, validatedStartTime)
         } else {
           // 같은 트랙이고 위치가 맞으면 현재 위치에서 재생
           await player.resume()
+          setIsPlaying(true)
+          setGlobalIsPlaying(true)
           toast.success('재생을 재개했습니다')
         }
       }
