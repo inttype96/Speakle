@@ -90,7 +90,6 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(50)
   const [isMuted, setIsMuted] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [player, setPlayer] = useState<SpotifyPlayer | null>(null)
   const [deviceId, setDeviceId] = useState<string>('')
   const [currentTrack, setCurrentTrack] = useState<SpotifyTrack | null>(null)
@@ -363,7 +362,6 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
     }
 
     try {
-      setLoading(true)
       const tokenResponse = await getSpotifyTokenAPI()
       const spotifyToken = tokenResponse.data.accessToken
 
@@ -396,16 +394,12 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
     } catch (error) {
       console.error('트랙 재생 실패:', error)
       toast.error('트랙 재생에 실패했습니다')
-    } finally {
-      setLoading(false)
     }
   }
 
   // 재생/일시정지 토글
   const handlePlayPause = async () => {
-    if (!player || loading) return
-
-    setLoading(true)
+    if (!player) return
     try {
       if (isPlaying) {
         await player.pause()
@@ -428,8 +422,6 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
     } catch (error) {
       console.error('재생/일시정지 실패:', error)
       toast.error('재생 제어에 실패했습니다')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -489,13 +481,10 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
       {/* 재생/일시정지 버튼 */}
       <Button
         onClick={handlePlayPause}
-        disabled={loading}
         size="lg"
-        className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
+        className="bg-primary hover:bg-primary/90 text-primary-foreground w-12 h-12 flex items-center justify-center"
       >
-        {loading ? (
-          <div className="animate-spin h-5 w-5"></div>
-        ) : isPlaying ? (
+        {isPlaying ? (
           <Pause className="w-5 h-5" />
         ) : (
           <Play className="w-5 h-5" />
