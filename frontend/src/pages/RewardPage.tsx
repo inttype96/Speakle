@@ -319,7 +319,7 @@ export default function RewardPage() {
         <div className="min-h-screen bg-black text-white">
             <Navbar />
             <div className="relative isolate px-6 pt-14 lg:px-8">
-                <div className="mx-auto py-6 max-w-7xl px-6 lg:px-8">
+                <div className="w-full max-w-screen-xl mx-auto py-6 px-6 lg:px-8">
                     {/* Header */}
                     <div className="mb-8 flex items-center justify-between">
                         <div>

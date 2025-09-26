@@ -29,18 +29,18 @@ export default function IndexPage() {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_1fr]">
 
         {/* 왼쪽 섹션 */}
-        <div className="flex flex-col items-center justify-center text-center py-24 px-9 group">
+        <div className="flex flex-col items-center justify-start text-center pt-24 pb-6 px-9 group">
           <div className="relative">
             <img
               src={HeadphoneImage}
               alt="Headset"
-              className="w-[21rem] h-[21rem] object-contain mx-auto transition-all duration-500 group-hover:scale-105 group-hover:rotate-1 filter drop-shadow-2xl"
+              className="w-[32rem] h-[32rem] object-contain mx-auto transition-all duration-500 group-hover:scale-105 group-hover:rotate-1 filter drop-shadow-2xl"
             />
-            <h1 className="absolute inset-0 flex items-center justify-center text-6xl font-black font-['Inter'] text-white transition-all duration-300 group-hover:text-purple-200 tracking-tight">
+            <h1 className="absolute inset-0 flex items-center justify-center text-8xl font-black font-['Inter'] text-white transition-all duration-300 group-hover:text-purple-200 tracking-tight">
               Speakle
             </h1>
           </div>
-          <p className="mt-6 text-xl text-gray-300 leading-relaxed transition-colors duration-300 group-hover:text-gray-100 font-['Pretendard'] font-light">
+          <p className="-mt-10 text-xl text-gray-300 leading-relaxed transition-colors duration-300 group-hover:text-gray-100 font-['Pretendard'] font-light">
             음악처럼 스며드는 영어학습 <br />
             <span className="font-medium">듣고, 따라하고, 오래 남는</span> 영어
           </p>
@@ -51,10 +51,10 @@ export default function IndexPage() {
           {/* 오늘의 기분 카드 */}
           <Card className="bg-[#B5A6E0] text-black rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] cursor-pointer group">
             <CardContent className="py-2 px-5">
-              <p className="font-bold text-lg mb-2 transition-colors duration-300 group-hover:text-gray-800 font-['Pretendard'] tracking-tight">
+              <p className="font-bold text-xl mb-2 transition-colors duration-300 group-hover:text-gray-800 font-['Pretendard'] tracking-tight">
                 오늘의 기분이나 상황은 어떠신가요?
               </p>
-              <p className="text-sm text-gray-800 transition-colors duration-300 group-hover:text-gray-700 mb-2 font-['Pretendard'] font-medium leading-relaxed">
+              <p className="text-m text-[#694869] transition-colors duration-300 group-hover:text-gray-700 mb-2 font-['Pretendard'] font-medium leading-relaxed">
                 장소와 상황, 분위기에 맞춘 영어 학습을 시작해보세요.
               </p>
               <div className="flex justify-end">
@@ -72,10 +72,10 @@ export default function IndexPage() {
           {/* 랜덤 노래 카드 */}
           <Card className="bg-[#4A3B63] text-white rounded-2xl shadow-lg hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] cursor-pointer group">
             <CardContent className="py-2 px-5">
-              <p className="font-bold text-lg mb-2 transition-colors duration-300 group-hover:text-gray-100 font-['Pretendard'] tracking-tight">
+              <p className="font-bold text-xl mb-2 transition-colors duration-300 group-hover:text-gray-100 font-['Pretendard'] tracking-tight">
                 랜덤 노래로 학습하기
               </p>
-              <p className="text-sm text-gray-300 transition-colors duration-300 group-hover:text-gray-200 mb-2 font-['Pretendard'] font-medium leading-relaxed">
+              <p className="text-m text-gray-300 transition-colors duration-300 group-hover:text-gray-200 mb-2 font-['Pretendard'] font-medium leading-relaxed">
                 <span className="font-bold text-purple-300 transition-colors duration-300 group-hover:text-purple-200">Speakle</span>이 추천하는 노래로 영어 학습을 시작해보세요.
               </p>
               <div className="flex justify-end">

@@ -4,7 +4,6 @@ import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/common/navbar";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
@@ -23,8 +22,6 @@ const TOP_RIGHT_MODE = "스피킹";
 
 // 기본값(쿼리가 없을 때)
 const DEFAULT_LEARNED_SONG_ID = 1;
-const DEFAULT_SITUATION = "daily_conversation";
-const DEFAULT_LOCATION = "cafe";
 const DEFAULT_SONG_ID = "1";
 const TOTAL_QUESTIONS = 3;
 const POINTS_PER_Q = 100;
@@ -105,7 +102,6 @@ export default function SpeakingPage() {
 
   const progressPct = Math.round(((qNum - 1) / TOTAL_QUESTIONS) * 100);
   const isLastQuestion = qNum >= TOTAL_QUESTIONS;
-  const title = useMemo(() => `문제 ${qNum}`, [qNum]);
 
   /** ✅ qNum 동기화 (learnedSongId별로 저장) */
   useEffect(() => {
@@ -127,8 +123,8 @@ export default function SpeakingPage() {
     (async () => {
       const res = await evaluateSpeaking({
         learnedSongId,
-        situation,
-        location,
+        situation: situation || "",
+        location: location || "",
         songId,
         questionNumber: qNum,
       });

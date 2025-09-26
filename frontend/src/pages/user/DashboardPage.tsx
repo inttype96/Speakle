@@ -108,14 +108,26 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="bg-background text-foreground">
+      <div className="bg-background text-foreground font-sans min-h-screen">
+        {/* Google Fonts Link */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Pretendard:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
         <Navbar />
-        <div className="relative isolate px-6 pt-24 lg:px-8">
+        <div aria-hidden className="h-16 md:h-20" />
+
+        {/* 상단 여백 추가 */}
+        <div className="h-8" />
+
+        <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20">
           <div className="container mx-auto py-6 max-w-4xl">
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">대시보드를 불러오는 중...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563eb] mx-auto mb-4"></div>
+                <p className="font-['Pretendard'] text-white/80">대시보드를 불러오는 중...</p>
               </div>
             </div>
           </div>
@@ -126,16 +138,27 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="bg-background text-foreground">
+    <div className="bg-background text-foreground font-sans min-h-screen">
+      {/* Google Fonts Link */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Pretendard:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+      />
       <Navbar />
+      <div aria-hidden className="h-16 md:h-20" />
 
-      <div className="relative isolate px-6 pt-24 lg:px-8">
+      {/* 상단 여백 추가 */}
+      <div className="h-8" />
+
+      <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20">
         <div className="container mx-auto py-6 max-w-4xl">
           <div className="mb-8 text-center">
-            <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold mb-3 text-white font-['Pretendard']">
               학습 대시보드
             </h1>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-lg font-['Pretendard'] text-white/70">
               오늘도 즐거운 영어 학습하세요! 🎵
             </p>
           </div>
