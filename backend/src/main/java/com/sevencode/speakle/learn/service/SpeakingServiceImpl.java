@@ -82,6 +82,11 @@ public class SpeakingServiceImpl implements SpeakingService {
                     .build();
         }
 
+        if(isNullOrEmpty(req.getLocation()) && isNullOrEmpty(req.getSituation())) {
+            req.setSituation(null);
+            req.setLocation(null);
+        }
+
         // 4. 기존 데이터가 없으면 새로운 speaking 문제 생성
         // 4-1. 문장 조회 (학습한 sentence에서 가져오기)
         List<SentenceEntity> sentences = speakingSentenceRepository.findBySongIdAndSituationAndLocationOrderByIdAsc(req.getSongId(), req.getSituation(), req.getLocation());
@@ -125,6 +130,13 @@ public class SpeakingServiceImpl implements SpeakingService {
                 .artists(song.getArtists())
                 .coreSentence(coreSentence)
                 .build();
+    }
+
+    // ------------------------------------------------------------
+    // null 체크 헬퍼 메서드
+    // ------------------------------------------------------------
+    private boolean isNullOrEmpty(String str) {
+        return str == null || str.isEmpty() || "null".equals(str) || str.isBlank();
     }
 
     /**
