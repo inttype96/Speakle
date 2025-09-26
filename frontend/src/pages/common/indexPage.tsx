@@ -29,18 +29,18 @@ export default function IndexPage() {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_1fr]">
 
         {/* 왼쪽 섹션 */}
-        <div className="flex flex-col items-center justify-center text-center py-24 px-9 group">
+        <div className="flex flex-col items-center justify-start text-center pt-24 pb-6 px-9 group">
           <div className="relative">
             <img
               src={HeadphoneImage}
               alt="Headset"
-              className="w-[21rem] h-[21rem] object-contain mx-auto transition-all duration-500 group-hover:scale-105 group-hover:rotate-1 filter drop-shadow-2xl"
+              className="w-[32rem] h-[32rem] object-contain mx-auto transition-all duration-500 group-hover:scale-105 group-hover:rotate-1 filter drop-shadow-2xl"
             />
-            <h1 className="absolute inset-0 flex items-center justify-center text-6xl font-black font-['Inter'] text-white transition-all duration-300 group-hover:text-purple-200 tracking-tight">
+            <h1 className="absolute inset-0 flex items-center justify-center text-8xl font-black font-['Inter'] text-white transition-all duration-300 group-hover:text-purple-200 tracking-tight">
               Speakle
             </h1>
           </div>
-          <p className="mt-6 text-xl text-gray-300 leading-relaxed transition-colors duration-300 group-hover:text-gray-100 font-['Pretendard'] font-light">
+          <p className="-mt-10 text-xl text-gray-300 leading-relaxed transition-colors duration-300 group-hover:text-gray-100 font-['Pretendard'] font-light">
             음악처럼 스며드는 영어학습 <br />
             <span className="font-medium">듣고, 따라하고, 오래 남는</span> 영어
           </p>
