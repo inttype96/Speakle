@@ -6,7 +6,6 @@ import Navbar from "@/components/common/navbar";
 // shadcn/ui
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -200,8 +199,8 @@ export default function QuizPage() {
       const requestData = {
         learnedSongId,
         songId,
-        situation,
-        location,
+        situation: situation || "",
+        location: location || "",
         questionNumber: qNum,
       };
       
