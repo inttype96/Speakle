@@ -8,13 +8,12 @@ import { pausePlaybackAPI } from "@/services/spotify";
 // shadcn
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
 // icons
-import { ChevronLeft, Volume2, Timer, Play, RotateCcw } from "lucide-react";
+import { ChevronLeft, Timer, Play, RotateCcw } from "lucide-react";
 
 // api
 import {
@@ -38,11 +37,6 @@ const tokenize = (sentence: string): Token[] => {
 
 // ==== 노래 재생 관련 유틸리티 ====
 
-const BOX_BASE =
-  "h-12 w-10 md:h-12 md:w-10 flex items-center justify-center rounded-lg border bg-background/40 text-lg font-medium";
-const BOX_INPUT =
-  "focus:outline-none text-center caret-transparent uppercase";
-const GAP = "w-3 md:w-3"; // 공백 시 간격
 
 export default function DictationPage() {
   const [sp] = useSearchParams();
@@ -67,11 +61,12 @@ export default function DictationPage() {
   const [openResult, setOpenResult] = useState(false);
   const [resultMsg, setResultMsg] = useState<"정답입니다!" | "오답입니다!">("오답입니다!");
 
-  // 노래 재생 관련 상태
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
   const [replayKey, setReplayKey] = useState(0); // Replay 버튼을 위한 key
+
+  // 노래 재생 관련 상태
+  const [_isPlaying, setIsPlaying] = useState(false);
+  const [_currentTime, setCurrentTime] = useState(0);
 
   // 게임 상태
   const [gameState, setGameState] = useState<'ready' | 'countdown' | 'playing' | 'ended'>('ready');
