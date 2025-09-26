@@ -5,7 +5,6 @@ import { loginAPI, getUserProfileAPI } from '@/services/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Navbar from '@/components/common/navbar'
-import Footer from '@/pages/common/footer'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
