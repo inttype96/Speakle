@@ -11,6 +11,7 @@ export type DictationStartReq = {
     title: string;
     artists: string;
     coreSentence: string;
+    korean: string;
     startTime: number;
     duration: number;
     endTime: number;

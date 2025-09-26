@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
 // icons
-import { ChevronLeft, Volume2, Timer, Play, RotateCcw, Languages } from "lucide-react";
+import { ChevronLeft, Timer, Play, RotateCcw, Languages } from "lucide-react";
 
 // api
 import {
