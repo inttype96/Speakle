@@ -64,6 +64,10 @@ export default function DictationPage() {
   const [hasStarted, setHasStarted] = useState(false);
   const [replayKey, setReplayKey] = useState(0); // Replay 버튼을 위한 key
 
+  // 노래 재생 관련 상태
+  const [_isPlaying, setIsPlaying] = useState(false);
+  const [_currentTime, setCurrentTime] = useState(0);
+
   // 게임 상태
   const [gameState, setGameState] = useState<'ready' | 'countdown' | 'playing' | 'ended'>('ready');
   const [countdown, setCountdown] = useState(3);
