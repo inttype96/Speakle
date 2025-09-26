@@ -134,4 +134,16 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+
+  /* 텍스트 입력이 아닌 요소들의 커서 깜빡임 제거 */
+  *:not(input):not(textarea) {
+    caret-color: transparent;
+  }
+
+  /* 포커스 시 outline 제거 (접근성을 위해 필요한 경우만 적용) */
+  button:focus,
+  [role="button"]:focus,
+  a:focus {
+    outline: none;
+  }
 }
