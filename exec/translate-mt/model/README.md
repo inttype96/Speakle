@@ -32,7 +32,6 @@
 - **Learning rate**: 1e-4 (LoRA 파라미터 학습률, 권장 범위: 1e-4 ~ 2e-4)  
 - **Optimizer**: AdamW (weight decay = 0.01)  
 - **Scheduler**: Cosine Annealing (warmup steps = 1,000)  
-- **Precision**: FP16 Mixed Precision  
 - **Max input/output length**: 256 tokens (가사 1줄 기준 충분, 기존 권장값 128 대비 확장)  
 - **Checkpoint/Evaluation frequency**: 1,000 steps  
 
