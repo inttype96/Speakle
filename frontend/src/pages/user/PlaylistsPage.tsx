@@ -158,14 +158,26 @@ export default function PlaylistsPage() {
 
   if (loading) {
     return (
-      <div className="bg-background text-foreground">
+      <div className="bg-background text-foreground font-sans min-h-screen">
+        {/* Google Fonts Link */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Pretendard:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
         <Navbar />
-        <div className="relative isolate px-6 pt-24 lg:px-8">
+        <div aria-hidden className="h-16 md:h-20" />
+
+        {/* 상단 여백 추가 */}
+        <div className="h-8" />
+
+        <div className="w-screen px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '65vw' }}>
           <div className="container mx-auto py-6 max-w-4xl">
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">플레이리스트를 불러오는 중...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4B2199] mx-auto mb-4"></div>
+                <p className="font-['Pretendard'] text-white/70">플레이리스트를 불러오는 중...</p>
               </div>
             </div>
           </div>
@@ -176,21 +188,32 @@ export default function PlaylistsPage() {
   }
 
   return (
-    <div className="bg-background text-foreground">
+    <div className="bg-background text-foreground font-sans min-h-screen">
+      {/* Google Fonts Link */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Pretendard:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+      />
       <Navbar />
+      <div aria-hidden className="h-16 md:h-20" />
 
-      <div className="relative isolate px-6 pt-24 lg:px-8">
-        <div className="container mx-auto py-6 max-w-8xl">
+      {/* 상단 여백 추가 */}
+      <div className="h-8" />
+
+      <div className="w-screen px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '65vw' }}>
+        <div className="container mx-auto py-6 max-w-4xl">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">내 플레이리스트</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-4xl font-bold mb-3 text-white font-['Pretendard']">내 플레이리스트</h1>
+              <p className="text-lg font-['Pretendard'] text-white/70">
                 나만의 음악 컬렉션을 만들어보세요
               </p>
             </div>
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="py-6 px-8 text-lg">
+                <Button className="py-6 px-8 text-lg bg-[#4B2199]/90 hover:bg-[#4B2199] text-white font-['Pretendard'] font-medium rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl border-0">
                   <Plus className="w-5 h-5 mr-2" />
                   플레이리스트 만들기
                 </Button>
@@ -260,44 +283,46 @@ export default function PlaylistsPage() {
           ) : (
             <div className="text-center py-16">
               <div className="mb-6">
-                <Music className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">아직 플레이리스트가 없습니다</h3>
-                <p className="text-muted-foreground mb-6">
+                <Music className="w-16 h-16 text-white/50 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2 text-white font-['Pretendard']">아직 플레이리스트가 없습니다</h3>
+                <p className="text-white/70 mb-6 font-['Pretendard']">
                   첫 번째 플레이리스트를 만들어 좋아하는 음악을 모아보세요!
                 </p>
                 <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="lg">
+                    <Button size="lg" className="bg-[#4B2199]/90 hover:bg-[#4B2199] text-white font-['Pretendard'] font-medium rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl">
                       <Plus className="w-5 h-5 mr-2" />
                       플레이리스트 만들기
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
+                  <DialogContent className="sm:max-w-[425px] backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-lg text-white">
                     <DialogHeader>
-                      <DialogTitle>새 플레이리스트 만들기</DialogTitle>
-                      <DialogDescription>
+                      <DialogTitle className="font-['Pretendard'] text-white">새 플레이리스트 만들기</DialogTitle>
+                      <DialogDescription className="font-['Pretendard'] text-white/70">
                         새로운 플레이리스트를 만들어 좋아하는 음악을 모아보세요.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="name">이름 *</Label>
+                        <Label htmlFor="name" className="font-['Pretendard'] text-white">이름 *</Label>
                         <Input
                           id="name"
                           value={formData.name}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                           placeholder="플레이리스트 이름을 입력하세요"
                           maxLength={100}
+                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50 font-['Pretendard']"
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="description">설명</Label>
+                        <Label htmlFor="description" className="font-['Pretendard'] text-white">설명</Label>
                         <Textarea
                           id="description"
                           value={formData.description}
                           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                          placeholder="플레이리스트에 대한 설명을 입력하세요"
+                          placeholder="플래이리스트에 대한 설명을 입력하세요"
                           maxLength={500}
+                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50 font-['Pretendard']"
                         />
                       </div>
                     </div>
@@ -306,12 +331,14 @@ export default function PlaylistsPage() {
                         type="button"
                         variant="outline"
                         onClick={() => setCreateDialogOpen(false)}
+                        className="border-white/30 text-white hover:bg-white/10 font-['Pretendard']"
                       >
                         취소
                       </Button>
                       <Button
                         onClick={handleCreatePlaylist}
                         disabled={createLoading || !formData.name.trim()}
+                        className="bg-[#4B2199]/90 hover:bg-[#4B2199] text-white font-['Pretendard'] font-medium"
                       >
                         {createLoading ? (
                           <div className="flex items-center gap-2">
@@ -333,10 +360,10 @@ export default function PlaylistsPage() {
 
       {/* 삭제 확인 다이얼로그 */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-lg text-white">
           <DialogHeader>
-            <DialogTitle>플레이리스트 삭제</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="font-['Pretendard'] text-white">플레이리스트 삭제</DialogTitle>
+            <DialogDescription className="font-['Pretendard'] text-white/70">
               정말로 "{selectedPlaylist?.name}" 플레이리스트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
             </DialogDescription>
           </DialogHeader>
@@ -346,6 +373,7 @@ export default function PlaylistsPage() {
               variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
               disabled={deleteLoading}
+              className="border-white/30 text-white hover:bg-white/10 font-['Pretendard']"
             >
               취소
             </Button>
@@ -353,6 +381,7 @@ export default function PlaylistsPage() {
               variant="destructive"
               onClick={confirmDelete}
               disabled={deleteLoading}
+              className="bg-red-500/90 hover:bg-red-500 text-white font-['Pretendard'] font-medium"
             >
               {deleteLoading ? (
                 <div className="flex items-center gap-2">

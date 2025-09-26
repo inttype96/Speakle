@@ -241,15 +241,26 @@ export default function MyPage() {
 
   if (loading) {
     return (
-      <div className="bg-background text-foreground">
+      <div className="bg-background text-foreground font-sans min-h-screen">
+        {/* Google Fonts Link */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Pretendard:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
         <Navbar />
+        <div aria-hidden className="h-16 md:h-20" />
 
-        <div className="relative isolate px-6 pt-24 lg:px-8">
+        {/* 상단 여백 추가 */}
+        <div className="h-8" />
+
+        <div className="w-screen px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '65vw' }}>
           <div className="container mx-auto py-6 max-w-4xl">
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">사용자 정보를 불러오는 중...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563eb] mx-auto mb-4"></div>
+                <p className="font-['Pretendard'] text-slate-300">사용자 정보를 불러오는 중...</p>
               </div>
             </div>
           </div>
@@ -261,40 +272,51 @@ export default function MyPage() {
   }
 
   return (
-    <div className="bg-background text-foreground">
+    <div className="bg-background text-foreground font-sans min-h-screen">
+      {/* Google Fonts Link */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Pretendard:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+      />
       <Navbar />
+      <div aria-hidden className="h-16 md:h-20" />
 
-      <div className="relative isolate px-6 pt-4 lg:px-8">
-        <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
+      {/* 상단 여백 추가 */}
+      <div className="h-8" />
+
+      <div className="w-screen px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '65vw' }}>
+        <div className="mx-auto max-w-2xl py-6">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">마이페이지</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-4xl font-bold mb-3 text-white font-['Pretendard']">마이페이지</h1>
+              <p className="text-lg font-['Pretendard'] text-slate-300">
                 내 정보를 확인하고 관리하세요.
               </p>
             </div>
 
             <div className="flex items-center gap-2">
-              <Button onClick={openEditModal} variant="outline" size="sm">
+              <Button onClick={openEditModal} variant="outline" size="sm" className="border-slate-400/40 text-slate-200 hover:bg-slate-700/50 hover:text-white font-['Pretendard'] transition-all duration-300">
                 프로필 수정
               </Button>
             </div>
           </div>
 
           {error && (
-            <Card className="mb-6 border-destructive">
+            <Card className="mb-6 border-amber-400/50 backdrop-blur-xl bg-slate-900/40 border border-slate-700/50 shadow-2xl rounded-lg">
               <CardContent className="pt-6">
-                <div className="flex items-center gap-2 text-destructive mb-3">
+                <div className="flex items-center gap-2 text-amber-400 mb-3">
                   <span>⚠️</span>
-                  <p className="font-medium">오류가 발생했습니다</p>
+                  <p className="font-medium font-['Pretendard']">오류가 발생했습니다</p>
                 </div>
-                <p className="text-sm mb-3">{error}</p>
+                <p className="text-sm mb-3 text-slate-300 font-['Pretendard']">{error}</p>
                 <div className="flex gap-2">
-                  <Button onClick={loadAllData} variant="outline" size="sm">
+                  <Button onClick={loadAllData} variant="outline" size="sm" className="border-slate-400/40 text-slate-200 hover:bg-slate-700/50 hover:text-white font-['Pretendard'] transition-all duration-300">
                     다시 시도
                   </Button>
                   {error.includes('인증') && (
-                    <Button onClick={handleLogout} variant="destructive" size="sm">
+                    <Button onClick={handleLogout} variant="destructive" size="sm" className="bg-slate-600 hover:bg-slate-700 text-white font-['Pretendard'] font-medium transition-all duration-300">
                       다시 로그인
                     </Button>
                   )}
@@ -306,11 +328,11 @@ export default function MyPage() {
           {profile && (
             <div className="space-y-6">
               {/* 프로필 정보 섹션 */}
-              <Card>
+              <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-700/50 shadow-2xl rounded-lg hover:bg-slate-900/50 transition-all duration-300">
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
+                  <CardTitle className="flex items-center justify-between text-white font-['Pretendard']">
                     <div className="flex items-center gap-2">
-                      <span>👤</span>
+                      <span className="text-[#2563eb]">👤</span>
                       프로필 정보
                     </div>
                   </CardTitle>
@@ -318,45 +340,45 @@ export default function MyPage() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">이름</label>
-                      <p className="text-lg font-semibold">{profile.username}</p>
+                      <label className="text-sm font-medium text-slate-400 font-['Pretendard']">이름</label>
+                      <p className="text-lg font-semibold text-slate-100 font-['Pretendard']">{profile.username}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">이메일</label>
-                      <p className="text-lg">{profile.email}</p>
+                      <label className="text-sm font-medium text-slate-400 font-['Pretendard']">이메일</label>
+                      <p className="text-lg text-slate-100 font-['Pretendard']">{profile.email}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Spotify 연동 설정 섹션 */}
-              <Card>
+              <Card className="backdrop-blur-xl bg-slate-900/40 border border-slate-700/50 shadow-2xl rounded-lg hover:bg-slate-900/50 transition-all duration-300">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <span>🎵</span>
+                  <CardTitle className="flex items-center gap-2 text-white font-['Pretendard']">
+                    <span className="text-[#06b6d4]">🎵</span>
                     Spotify 연동 설정
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {spotifyStatus?.connected ? (
                     <div className="space-y-4">
-                      <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg">
-                        <span className="text-green-600 dark:text-green-400">✓</span>
-                        <span className="text-green-600 dark:text-green-400 font-medium">
+                      <div className="flex items-center gap-2 p-3 bg-violet-500/20 border border-violet-400/30 rounded-lg">
+                        <span className="text-violet-400">✓</span>
+                        <span className="text-violet-300 font-medium font-['Pretendard']">
                           Spotify 계정이 연동되었습니다
                         </span>
                       </div>
 
                       {spotifyProfile && (
                         <div className="space-y-2">
-                          <p className="text-sm font-medium text-muted-foreground">연동된 계정</p>
+                          <p className="text-sm font-medium text-slate-400 font-['Pretendard']">연동된 계정</p>
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold">
+                            <div className="w-10 h-10 rounded-full bg-violet-500 flex items-center justify-center text-white font-semibold shadow-lg">
                               {spotifyProfile.displayName?.charAt(0) || 'S'}
                             </div>
                             <div>
-                              <p className="font-medium">{spotifyProfile.displayName}</p>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="font-medium text-slate-100 font-['Pretendard']">{spotifyProfile.displayName}</p>
+                              <p className="text-sm text-slate-400 font-['Pretendard']">
                                 {spotifyProfile.email}
                               </p>
                             </div>
@@ -364,18 +386,18 @@ export default function MyPage() {
                         </div>
                       )}
 
-                      <Button onClick={handleSpotifyDisconnect} variant="destructive">
+                      <Button onClick={handleSpotifyDisconnect} className="bg-slate-600 hover:bg-slate-700 text-white font-['Pretendard'] font-medium transition-all duration-300 shadow-lg">
                         연동 해제
                       </Button>
                     </div>
                   ) : (
                     <div className="space-y-4">
                       <div className="text-center space-y-2">
-                        <p className="text-muted-foreground">
+                        <p className="text-slate-300 font-['Pretendard']">
                           Spotify 계정을 연동하여 개인화된 음악 학습을 시작하세요
                         </p>
                       </div>
-                      <Button onClick={handleSpotifyConnect} className="w-full">
+                      <Button onClick={handleSpotifyConnect} className="w-full bg-violet-600 hover:bg-violet-700 text-white font-['Pretendard'] font-medium rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl">
                         Spotify 연동하기
                       </Button>
                     </div>
