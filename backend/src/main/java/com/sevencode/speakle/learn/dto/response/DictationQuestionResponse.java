@@ -18,6 +18,7 @@ public class DictationQuestionResponse {
     private String title;
     private String artists;
     private String coreSentence;
+    private String korean;
     private Long startTime;
     private Long duration;
     private Long endTime;
