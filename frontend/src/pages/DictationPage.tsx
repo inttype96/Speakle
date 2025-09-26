@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
 // icons
-import { ChevronLeft, Volume2, Timer, Play, RotateCcw } from "lucide-react";
+import { ChevronLeft, Volume2, Timer, Play, RotateCcw, Languages } from "lucide-react";
 
 // api
 import {
@@ -78,6 +78,9 @@ export default function DictationPage() {
   const [countdown, setCountdown] = useState(3);
   const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+
+   // 한국어 가사 표시/숨김 상태
+  const [showKorean, setShowKorean] = useState(false);
 
   const progress = (qNo / MAX_Q) * 100;
 
@@ -233,7 +236,7 @@ export default function DictationPage() {
         }
       }
 
-      setAnswers((prev) => (prev.length === blanksCount ? prev : initialAnswers));
+      setAnswers(initialAnswers);
       
       // 노래 재생 상태 초기화
       setHasStarted(false);
@@ -263,6 +266,8 @@ export default function DictationPage() {
 
       setElapsed(0);
       setShouldAutoPlay(false);
+      // 한국어 가사 표시 초기화
+      setShowKorean(false);
       // replayKey를 증가시켜서 SpotifyWebPlayer를 완전히 리렌더링
       setReplayKey(prev => prev + 1);
       
@@ -609,7 +614,7 @@ export default function DictationPage() {
                 {/* 게임 진행 중 & 완료 화면 */}
                 {(gameState === 'playing' || gameState === 'ended') && (
                   <>
-                    <div className="flex justify-center gap-4 mb-6">
+                  <div className="flex justify-center gap-4 mb-6">
                       <Button
                         onClick={onReplay}
                         className="h-12 px-6 bg-[#B5A6E0]/80 hover:bg-[#B5A6E0] text-white font-['Pretendard'] font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
@@ -618,6 +623,33 @@ export default function DictationPage() {
                         다시 듣기
                       </Button>
                     </div>
+                  {/* 한국어 가사 표시 영역 */}
+                    {item?.korean && (
+                      <div className="mb-6">
+                        <div className="flex justify-center items-center gap-3 mb-4">
+                          <Button
+                            onClick={() => setShowKorean(!showKorean)}
+                            variant="outline"
+                            size="sm"
+                            className="h-10 px-4 bg-white/10 hover:bg-white/20 border-white/30 text-white hover:text-white font-['Pretendard'] font-medium transition-all duration-200"
+                          >
+                            <Languages size={16} className="mr-2" />
+                            {showKorean ? '한국어 숨기기' : '한국어 보기'}
+                          </Button>
+                        </div>
+                        
+                        {showKorean && (
+                          <div className="backdrop-blur-sm bg-white/5 rounded-xl p-4 border border-white/20 mb-6">
+                            <div className="text-sm font-['Pretendard'] text-white/70 mb-2 text-center">
+                              🇰🇷 한국어 가사
+                            </div>
+                            <div className="text-base sm:text-lg font-['Pretendard'] text-white text-center leading-relaxed">
+                              {item.korean}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* 놀라운 토요일 스타일 게임쇼 입력 그리드 */}
                     <div className="backdrop-blur-sm bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 shadow-2xl">
