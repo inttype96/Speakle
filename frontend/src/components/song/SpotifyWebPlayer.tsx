@@ -494,7 +494,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         className="bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
       >
         {loading ? (
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-foreground"></div>
+          <div className="animate-spin h-5 w-5"></div>
         ) : isPlaying ? (
           <Pause className="w-5 h-5" />
         ) : (
