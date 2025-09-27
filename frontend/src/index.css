@@ -3,11 +3,16 @@
 
 @custom-variant dark (&:is(.dark *));
 
-#root {
+/* #root {
   width: 100vw;
   display: flex;
   align-items: center;
   justify-content: center;
+} */
+
+#root {
+  width: 100%;
+  min-height: 100vh;
 }
 
 body {

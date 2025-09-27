@@ -323,7 +323,7 @@ export default function QuizPage() {
       {/* 상단 여백 추가 */}
       <div className="h-8" />
 
-      <div className="w-screen px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '65vw' }}>
+      <div className="mx-auto px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '1024px', width: '100%' }}>
         {/* 상단 헤더 */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 sm:gap-0">
           <button

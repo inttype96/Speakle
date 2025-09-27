@@ -145,7 +145,7 @@ export default function SynchronizedLyrics({
   }
 
   return (
-    <div>
+    <div className="w-full max-w-full overflow-hidden">
       {/* 번역 진행 상황 표시 */}
       {showTranslationProgress && (
         <div className="mb-4 p-3 bg-muted/50 rounded-lg border">
@@ -183,7 +183,7 @@ export default function SynchronizedLyrics({
                 key={chunk.id}
                 ref={isCurrent ? currentLineRef : undefined}
                 className={cn(
-                  "transition-all duration-500 ease-in-out p-4 rounded-lg cursor-pointer",
+                  "transition-all duration-500 ease-in-out p-4 rounded-lg cursor-pointer w-full max-w-full overflow-hidden",
                   "hover:bg-muted/50",
                   isCurrent && [
                     "bg-primary/15 border-l-4 border-primary",
@@ -196,7 +196,7 @@ export default function SynchronizedLyrics({
               >
                 {/* 영어 가사 */}
                 <div className={cn(
-                  "text-base leading-relaxed transition-all duration-500",
+                  "text-base leading-relaxed transition-all duration-500 break-words",
                   isCurrent && [
                     "text-primary font-bold text-xl",
                     "text-shadow-sm"
@@ -210,7 +210,7 @@ export default function SynchronizedLyrics({
                 {/* 한국어 번역 */}
                 {chunk.korean && (
                   <div className={cn(
-                    "mt-2 text-sm leading-relaxed transition-all duration-500",
+                    "mt-2 text-sm leading-relaxed transition-all duration-500 break-words",
                     isCurrent && [
                       "text-primary/80 font-medium text-base",
                       "opacity-90"

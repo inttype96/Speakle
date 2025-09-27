@@ -247,8 +247,11 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
       })
 
       spotifyPlayer.addListener('playback_error', ({ message }) => {
-        console.error('Failed to perform playback', message)
-        toast.error('재생 실패: ' + message)
+        // "no list was loaded" 오류는 일시적이므로 조용히 처리
+        if (!message.includes('no list was loaded')) {
+          console.error('Failed to perform playback', message)
+          toast.error('재생 실패: ' + message)
+        }
       })
 
       // 플레이어 연결
@@ -278,6 +281,11 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
 
     const interval = setInterval(async () => {
       try {
+        // 플레이어가 없으면 무시
+        if (!player || typeof player.getCurrentState !== 'function') {
+          return
+        }
+
         // 실제 Spotify 재생 상태 가져오기
         const state = await player.getCurrentState()
         if (!state || state.paused) {
@@ -306,8 +314,11 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         // 상위 컴포넌트에 실제 재생 시간 알림
         onTimeUpdate?.(realPosition, true)
 
-      } catch (error) {
-        console.error('재생 위치 업데이트 실패:', error)
+      } catch (error: any) {
+        // getCurrentState 관련 오류는 조용히 처리
+        if (!error?.message?.includes('getCurrentState')) {
+          console.error('재생 위치 업데이트 실패:', error)
+        }
         // 에러 시 기존 방식으로 폴백
         setPosition((prev) => {
           const newPosition = prev + 100
@@ -464,7 +475,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
 
   if (!isSDKReady) {
     return (
-      <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg w-full max-w-full">
         <div className="flex items-center justify-center w-12 h-12">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
         </div>
@@ -477,7 +488,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
   }
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+    <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg w-full max-w-full">
       {/* 재생/일시정지 버튼 */}
       <Button
         onClick={handlePlayPause}

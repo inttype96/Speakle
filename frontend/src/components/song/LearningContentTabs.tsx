@@ -58,7 +58,9 @@ export default function LearningContentTabs({ learningContent }: LearningContent
 
   const getCurrentData = (): (WordEntity | SentenceEntity | ExpressionEntity | IdiomEntity)[] => {
     if (!learningContent) return [];
-    return learningContent[currentSection] || [];
+    const sectionData = learningContent[currentSection];
+    if (!sectionData || !Array.isArray(sectionData)) return [];
+    return sectionData;
   };
 
   const currentData = getCurrentData();
@@ -110,20 +112,21 @@ export default function LearningContentTabs({ learningContent }: LearningContent
       <div
         key={item.id}
         className="p-3 rounded-xl backdrop-blur-sm bg-white/10 border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+        style={{ width: '100%', maxWidth: '100%', minWidth: 0, overflow: 'hidden', wordBreak: 'break-word' }}
       >
         <div className="flex items-start gap-3">
           <Badge className="mt-1 text-xs min-w-[20px] h-5 justify-center shrink-0 bg-[#4B2199] text-white hover:bg-[#B5A6E0] hover:text-black transition-colors duration-200 font-['Pretendard'] font-medium">
             {index + 1}
           </Badge>
-          <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex-1 min-w-0 space-y-2" style={{ maxWidth: '100%', overflow: 'hidden', wordBreak: 'break-word' }}>
             <div className="space-y-1">
-              <p className="font-medium text-sm leading-relaxed break-words font-['Pretendard'] text-white">{main}</p>
-              <p className="text-sm text-white/70 leading-relaxed break-words font-['Pretendard']">{sub}</p>
+              <p className="font-medium text-sm leading-relaxed break-words font-['Pretendard'] text-white max-w-full overflow-hidden">{main}</p>
+              <p className="text-sm text-white/70 leading-relaxed break-words font-['Pretendard'] max-w-full overflow-hidden">{sub}</p>
               {extra && (
                 <p className="text-xs text-white/50 leading-relaxed break-words font-['Pretendard']">{extra}</p>
               )}
             </div>
-            {examples.length > 0 && (
+            {Array.isArray(examples) && examples.length > 0 && (
               <div className="space-y-1">
                 <p className="text-xs font-medium text-white/60 font-['Pretendard']">예시:</p>
                 <div className="space-y-1">
@@ -142,7 +145,7 @@ export default function LearningContentTabs({ learningContent }: LearningContent
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" style={{ width: '100%', maxWidth: '100%', minWidth: 0, overflow: 'hidden' }}>
       {/* Google Fonts Link */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
@@ -169,7 +172,7 @@ export default function LearningContentTabs({ learningContent }: LearningContent
             >
               <Icon className="h-4 w-4 shrink-0" />
               {section.label}
-              {learningContent?.[section.key] && (
+              {learningContent?.[section.key] && Array.isArray(learningContent[section.key]) && (
                 <Badge
                   className={cn(
                     "ml-1 text-xs px-1.5 py-0.5 rounded-md font-['Pretendard'] font-medium transition-colors duration-200",
@@ -187,11 +190,11 @@ export default function LearningContentTabs({ learningContent }: LearningContent
       </div>
 
       {/* 컨텐츠 영역 */}
-      <Card className="min-h-[350px] backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-2xl">
+      <Card className="min-h-[350px] backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-2xl overflow-hidden">
         <CardContent className="pt-5">
           {hasData ? (
             <ScrollArea className="h-[350px] pr-2">
-              <div className="space-y-2">
+              <div className="space-y-2 w-full" style={{ maxWidth: '100%', width: '100%' }}>
                 {currentData.map((item, index) => renderEntityItem(item, index))}
               </div>
             </ScrollArea>
