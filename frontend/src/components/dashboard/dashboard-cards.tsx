@@ -166,6 +166,38 @@ interface RecentSongsCardProps {
 export function RecentSongsCard({ recentSongs, error }: RecentSongsCardProps) {
   const navigate = useNavigate()
 
+  // 최근 학습한 곡 클릭 핸들러
+  const handleRecentSongClick = async (song: LearnedSong) => {
+    try {
+      // learnedSongId가 있는 경우에만 situation, location 조회
+      if (song.learnedSongId) {
+        const accessToken = localStorage.getItem("access_token") || undefined
+        const { getLearnedSongInfo } = await import('@/services/songService')
+        const learnedInfo = await getLearnedSongInfo(song.learnedSongId, accessToken)
+        
+        // situation, location이 있으면 쿼리 파라미터에 포함
+        const params = new URLSearchParams()
+        if (learnedInfo.situation) {
+          params.set('situation', learnedInfo.situation)
+        }
+        if (learnedInfo.location) {
+          params.set('location', learnedInfo.location)
+        }
+        
+        const queryString = params.toString()
+        const url = queryString ? `/songs/${song.songId}?${queryString}` : `/songs/${song.songId}`
+        navigate(url)
+      } else {
+        // learnedSongId가 없으면 기본 동작
+        navigate(`/songs/${song.songId}`)
+      }
+    } catch (error) {
+      console.error('Failed to get learned song info:', error)
+      // 에러 발생 시 기본 동작
+      navigate(`/songs/${song.songId}`)
+    }
+  }
+
   return (
     <BentoCard className="md:col-span-2 backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-lg">
       <div className="flex items-center justify-between mb-4">
@@ -188,7 +220,7 @@ export function RecentSongsCard({ recentSongs, error }: RecentSongsCardProps) {
             <div
               key={song.learnedSongId || index}
               className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer backdrop-blur-sm"
-              onClick={() => navigate(`/songs/${song.songId}`)}
+              onClick={() => handleRecentSongClick(song)}
             >
               <div className="w-10 h-10 bg-[#4B2199]/20 rounded-lg flex items-center justify-center overflow-hidden">
                 {song.albumImgUrl ? (
