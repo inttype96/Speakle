@@ -222,7 +222,9 @@ export default function SpeakingPage() {
       setOpenResult(true);
     } catch (err: any) {
       const status = err?.response?.status;
-      if (status === 415) {
+      if(status === 408){
+        alert("주어진 문장을 정확하게 말씀해주세요");
+      } else if (status === 415) {
         alert("서버가 JSON이 아닌 다른 형식을 기대하고 있습니다. (415)");
       } else if (status === 400) {
         alert("요청 형식이 올바르지 않습니다. (400)");
