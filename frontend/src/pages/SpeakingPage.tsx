@@ -24,7 +24,7 @@ const TOP_RIGHT_MODE = "스피킹";
 const DEFAULT_LEARNED_SONG_ID = 1;
 const DEFAULT_SONG_ID = "1";
 const TOTAL_QUESTIONS = 3;
-const POINTS_PER_Q = 100;
+const POINTS_PER_Q = 5;
 
 /** 초기 qNum: 1) URL ?q= → 2) localStorage(learnedSongId별 키) → 3) 1 */
 function getInitialQ(search: string, storageKey: string): number {
@@ -43,9 +43,9 @@ const mmss = (sec: number) =>
 
 // 발음 점수에 따른 평가 메시지
 const getSpeakingMessage = (score: number): string => {
-  if (score >= 4) return "훌륭한 발음입니다! 🌟";
-  if (score >= 3) return "괜찮은 발음입니다! 👍";
-  return "발음을 더 연습해보세요! 💪";
+  if (score >= 4) return "훌륭한 발음입니다🌟";
+  if (score >= 3) return "괜찮은 발음입니다👍";
+  return "발음을 더 연습해보세요💪";
 };
 
 export default function SpeakingPage() {
@@ -222,7 +222,9 @@ export default function SpeakingPage() {
       setOpenResult(true);
     } catch (err: any) {
       const status = err?.response?.status;
-      if (status === 415) {
+      if(status === 408){
+        alert("주어진 문장을 정확하게 말씀해주세요");
+      } else if (status === 415) {
         alert("서버가 JSON이 아닌 다른 형식을 기대하고 있습니다. (415)");
       } else if (status === 400) {
         alert("요청 형식이 올바르지 않습니다. (400)");
@@ -289,7 +291,7 @@ export default function SpeakingPage() {
       {/* 상단 여백 추가 */}
       <div className="h-8" />
 
-      <div className="w-screen px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '65vw' }}>
+      <div className="mx-auto px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '1024px', width: '100%' }}>
         {/* 상단 헤더 */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 sm:gap-0">
           <button
@@ -310,7 +312,7 @@ export default function SpeakingPage() {
         </div>
 
         {/* 게임 스타일 진행 표시 */}
-        <div className="backdrop-blur-xl bg-white/10 rounded-2xl p-6 border border-white/20 shadow-2xl mb-8">
+        <div className="backdrop-blur-xl bg-white/10 rounded-2xl p-6 border border-white/20 shadow-2xl mb-4">
           <div className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-2 sm:gap-0">
             <div className="text-sm font-['Pretendard'] font-bold text-white">
               Question {qNum} of {TOTAL_QUESTIONS}
@@ -333,50 +335,49 @@ export default function SpeakingPage() {
         {/* 게임 스타일 스피킹 본문 */}
         <div className="flex justify-center w-full">
           <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-2xl overflow-hidden max-w-5xl w-full">
-            <CardHeader className="flex flex-col gap-3 p-3 sm:p-4 lg:p-5 text-center items-center">
+            <CardHeader className="flex flex-col gap-2 p-2 sm:p-3 lg:p-4 pb-1 text-center items-center">
               <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between w-full">
                 <div className="flex items-center gap-2">
                   <div className="backdrop-blur-sm bg-white/20 px-3 py-1.5 rounded-full border border-white/30">
                     <span className="font-['Pretendard'] font-bold text-white text-sm">문제 {qNum}</span>
                   </div>
-                  <Badge className="bg-[#4B2199]/80 text-white border-[#B5A6E0]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
-                    {POINTS_PER_Q} points
-                  </Badge>
                 </div>
 
                 <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
-                  <div className="flex items-center gap-2 bg-gradient-to-r from-[#4B2199]/20 to-[#B5A6E0]/20 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl shadow-lg">
-                    <Timer size={16} className="text-[#B5A6E0] animate-pulse sm:w-[18px] sm:h-[18px]" />
-                    <span className="tabular-nums text-white font-['Inter'] font-bold text-base sm:text-lg tracking-wide drop-shadow-md">{mmss(elapsed)}</span>
-                  </div>
-                  <Badge className="bg-[#B5A6E0]/80 text-white border-[#4B2199]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
+                  <Badge className="bg-[#7545c2]/80 text-white border-[#6a3cb7]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
                     Medium
                   </Badge>
-                </div>
-              </div>
 
-              <div className="space-y-4 sm:space-y-6 w-full text-center">
-                <div className="text-xs font-['Pretendard'] text-white/80">주어진 문장을 정확한 발음으로 따라 읽어주세요</div>
+                  <Badge className="bg-[#7545c2]/80 text-white border-[#6a3cb7]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
+                    {POINTS_PER_Q} points
+                  </Badge>
+
+                  <div className="relative group">
+                    <button
+                      type="button"
+                      onClick={speak}
+                      className="inline-flex items-center gap-1.5 bg-[#6a3cb7]/80 hover:bg-[#9e6beb]/90 text-white border-[#B5A6E0]/50 rounded-full py-1 px-3 text-xs font-['Pretendard'] font-medium transition-all duration-300 shadow-lg hover:shadow-xl border"
+                    >
+                      <Volume2 size={14} />
+                      Hint
+                    </button>
+                    {/* 툴팁 */}
+                    <div className="absolute top-full right-0 mt-3 px-4 py-3 bg-gray-900 text-white text-sm font-['Pretendard'] font-medium rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-2xl border border-gray-700">
+                      클릭 시 원어민 발음을 들을 수 있습니다
+                      <div className="absolute bottom-full right-4 w-0 h-0 border-l-5 border-r-5 border-b-5 border-transparent border-b-gray-900"></div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardHeader>
-
-            <CardContent className="space-y-6 pb-8 text-center">
+            <CardContent className="space-y-8 pb-3 pt-3 text-center">
+              <div className="w-full text-center mt-3">
+                <div className="text-s font-['Pretendard'] text-white/90">주어진 문장을 정확한 발음으로 따라 읽어주세요</div>
+              </div>
               <div className="backdrop-blur-sm bg-white/5 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/20">
-                <div className="font-['Pretendard'] font-medium leading-relaxed text-lg sm:text-xl lg:text-2xl text-white">
+                <div className="font-['Pretendard'] font-medium leading-relaxed text-lg sm:text-xl lg:text-1xl text-white">
                   {evalData?.coreSentence ?? "문장을 불러오는 중..."}
                 </div>
-              </div>
-
-              <div className="flex justify-center">
-                <Button
-                  type="button"
-                  onClick={speak}
-                  className="h-10 sm:h-12 rounded-xl px-4 sm:px-6 bg-[#B5A6E0]/80 hover:bg-[#B5A6E0] text-white font-['Pretendard'] font-medium transition-all duration-300 shadow-lg hover:shadow-xl"
-                  variant="secondary"
-                >
-                  <Volume2 size={18} className="mr-2" />
-                  원어민 발음 듣기
-                </Button>
               </div>
 
               <div className="flex flex-col items-center gap-4">
@@ -387,14 +388,14 @@ export default function SpeakingPage() {
                     "grid place-items-center rounded-full transition-all duration-300 shadow-2xl",
                     "h-20 w-20 sm:h-24 sm:w-24",
                     recording
-                      ? "bg-gradient-to-br from-rose-500/90 to-rose-600/90 hover:from-rose-500 hover:to-rose-600 animate-pulse"
-                      : "bg-gradient-to-br from-[#4B2199]/90 to-[#B5A6E0]/90 hover:from-[#4B2199] hover:to-[#B5A6E0]",
+                      ? "bg-rose-500 hover:bg-rose-600 animate-pulse"
+                      : "bg-[#6a3cb7] hover:bg-[#9e6beb]",
                   ].join(" ")}
                   title={recording ? "녹음 중지" : "녹음 시작"}
                 >
                   {recording ? <MicOff size={28} className="text-white" /> : <Mic size={28} className="text-white" />}
                 </button>
-                <div className="text-sm font-['Pretendard'] text-white/80">마이크 버튼을 눌러 발음해보세요</div>
+                <div className="text-s font-['Pretendard'] text-white/90">마이크 버튼을 누르면 녹음이 시작됩니다🎵</div>
                 {recUrl && (
                   <div className="w-full max-w-md">
                     <audio src={recUrl} controls className="w-full rounded-lg" />
@@ -412,10 +413,6 @@ export default function SpeakingPage() {
                   답안 제출 →
                 </Button>
               </div>
-
-              <div className="backdrop-blur-sm bg-white/10 rounded-xl px-4 py-2 border border-white/20">
-                <div className="text-sm font-['Pretendard'] text-white">현재 점수: <span className="font-bold text-[#B5A6E0]">{lastScore ?? 0} / 4</span></div>
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -424,16 +421,16 @@ export default function SpeakingPage() {
       <Dialog open={openResult} onOpenChange={setOpenResult}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-gray-900 dark:text-gray-700 mb-3">
+            <DialogTitle className="text-white-900 dark:text-white-700 mb-3">
               {lastScore !== null ? getSpeakingMessage(lastScore) : "발음 평가 중..."}
             </DialogTitle>
             <DialogDescription className="space-y-2">
               {evalData && (
                 <>
-                  <div><span>문장: </span>{evalData.coreSentence}</div>
+                  <div><span>문제: </span>{evalData.coreSentence}</div>
                   <div>
                     <span>점수: </span>
-                    {lastScore} {lastRawScore ? `(raw: ${Number(lastRawScore).toFixed(2)})` : ""}
+                    {lastScore} 점
                   </div>
                 </>
               )}
@@ -445,11 +442,11 @@ export default function SpeakingPage() {
             </Button>
 
             {!isLastQuestion ? (
-              <Button type="button" className="w-full sm:w-auto" onClick={onNextQuestion}>
+              <Button type="button" className="w-full sm:w-auto bg-[#6a3cb7] hover:bg-[#9e6beb] text-white" onClick={onNextQuestion}>
                 다음 문제
               </Button>
             ) : (
-              <Button type="button" className="w-full sm:w-auto" onClick={finishFromModal}>
+              <Button type="button" className="w-full sm:w-auto bg-[#6a3cb7] hover:bg-[#9e6beb] text-white" onClick={finishFromModal}>
                 스피킹 종료
               </Button>
             )}
@@ -461,7 +458,7 @@ export default function SpeakingPage() {
       <Dialog open={openSummary} onOpenChange={setOpenSummary}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-gray-900 dark:text-gray-700, mb-3">스피킹 결과 요약</DialogTitle>
+            <DialogTitle className="text-white-900 dark:text-white-700, mb-3">스피킹 결과 요약</DialogTitle>
             <DialogDescription asChild>
               <div className="space-y-3 pt-2">
                 <div className="text-sm">
@@ -477,8 +474,7 @@ export default function SpeakingPage() {
                         <span className={r.isCorrect ? "text-green-500" : "text-rose-500"}>
                           {r.isCorrect ? "정답" : "오답"}
                         </span>{" "}
-                        | 점수 {r.score}
-                        {typeof r.rawScore !== "undefined" ? ` (raw: ${Number(r.rawScore).toFixed(2)})` : ""}
+                        (  {r.score}점 )
                       </div>
                     </div>
                   ))}
