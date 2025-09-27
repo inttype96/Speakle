@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Skeleton } from "@/components/ui/skeleton";
 
 // icons
-import { Clock, Flame, ChevronLeft, Gamepad2, Type, MicVocal, Keyboard, Plus } from "lucide-react";
+import { Clock, Flame, ChevronLeft, Gamepad2, Type, MicVocal, Keyboard, Plus, CheckCircle } from "lucide-react";
 
 
 const SONG_DETAIL_SAMPLE: SongDetail = {
@@ -83,6 +83,11 @@ export default function SongDetailPage() {
   const [initLearningLoading, setInitLearningLoading] = useState(false);
   const [learned, setLearned] = useState<null | { learnedSongId: number }>(null);
 
+  // 개별 학습 모드 로딩 상태
+  const [quizLoading, setQuizLoading] = useState(false);
+  const [speakingLoading, setSpeakingLoading] = useState(false);
+  const [dictationLoading, setDictationLoading] = useState(false);
+
   // 가사 동기화를 위한 상태
   const [currentPlayTime, setCurrentPlayTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -112,6 +117,43 @@ export default function SongDetailPage() {
       // 필요하면 토스트/에러 UI 추가
     } finally {
       setInitLearningLoading(false);
+    }
+  };
+
+  // 학습 세션 생성 및 페이지 이동
+  const handleDirectLearn = async (mode: "cloze" | "speaking" | "dictation") => {
+    const setLoading = {
+      cloze: setQuizLoading,
+      speaking: setSpeakingLoading,
+      dictation: setDictationLoading
+    }[mode];
+
+    setLoading(true);
+    try {
+      const accessToken = localStorage.getItem("access_token") || undefined;
+      const r = await createLearnedSong(
+        { songId, situation, location },
+        accessToken
+      );
+
+      const path = {
+        cloze: "/learn/quiz",
+        speaking: "/learn/speaking",
+        dictation: "/learn/dictation"
+      }[mode];
+
+      const qs = new URLSearchParams();
+      qs.set("songId", songId);
+      qs.set("learnedSongId", String(r.learnedSongId));
+      if (situation) qs.set("situation", situation);
+      if (location) qs.set("location", location);
+
+      navigate(`${path}?${qs.toString()}`);
+    } catch (e) {
+      console.error(e);
+      // 에러 처리 - 필요시 토스트 추가
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -221,11 +263,11 @@ export default function SongDetailPage() {
   }
 
   return (
-    <div className="bg-background text-foreground">
+    <div className="bg-background text-foreground overflow-x-hidden">
       <Navbar />
       <div aria-hidden className="h-16 md:h-20" />
 
-      <div className="mx-auto max-w-6xl px-4 py-6 space-y-6">
+      <div className="mx-auto px-4 py-6 space-y-6" style={{ width: '100%', maxWidth: '1024px', minWidth: 0 }}>
         {/* 상단 헤더 */}
         <div className="flex items-center">
           <Button variant="ghost" asChild>
@@ -235,8 +277,8 @@ export default function SongDetailPage() {
           </Button>
         </div>
 
-        {/* 상단: 앨범/타이틀/메타 */}
-        <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-0">
+        {/* 상단: 앨범/타이틀/메타/학습버튼 */}
+        <div className="grid grid-cols-1 md:grid-cols-[200px_1fr_280px] gap-0">
           {/* 앨범 커버 */}
           <div className="p-4 md:pr-2">
             <div className="relative aspect-square overflow-hidden rounded-md bg-muted max-w-[200px] mx-auto md:mx-0">
@@ -288,7 +330,7 @@ export default function SongDetailPage() {
                   </div>
 
                   {/* 스포티파이 플레이어 */}
-                  <div className="max-w-md">
+                  <div className="w-full max-w-lg">
                     <SpotifyWebPlayer
                       trackId={data.songId}
                       trackName={data.title}
@@ -297,26 +339,89 @@ export default function SongDetailPage() {
                     />
                   </div>
 
-                  {/* 액션 버튼들 */}
-                  <div className="flex flex-col gap-2 max-w-md">
-                    {/* 학습 버튼 */}
-                    <Button size="lg" onClick={() => handleOpenLearn()}>
-                      <Gamepad2 className="mr-2 h-5 w-5" />
-                      Speakle과 집중 학습하기
-                    </Button>
-
-                    {/* 플레이리스트 추가 버튼 */}
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={() => setShowPlaylistModal(true)}
-                    >
-                      <Plus className="mr-2 h-5 w-5" />
-                      플레이리스트에 추가
-                    </Button>
-                  </div>
+                  {/* 플레이리스트 추가 버튼 */}
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => setShowPlaylistModal(true)}
+                    className="w-full max-w-lg"
+                  >
+                    <Plus className="mr-2 h-5 w-5" />
+                    플레이리스트에 추가
+                  </Button>
                 </CardContent>
               </>
+            ) : null}
+          </div>
+
+          {/* 학습 버튼들 */}
+          <div className="p-4">
+            {loading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            ) : data ? (
+              <div className="space-y-3">
+                {/* 학습 버튼들 그리드 */}
+                <div className="grid grid-cols-2 gap-3 w-full">
+                  {/* Speakle과 집중 학습하기 */}
+                  <div className="h-20 flex items-start justify-start bg-black text-white font-semibold text-xs leading-snug border border-muted rounded-md p-3 cursor-pointer hover:bg-muted/10 transition-colors font-['Pretendard']"
+                       onClick={() => handleOpenLearn()}>
+                    <div className="text-left">
+                      Speakle과<br />집중 학습하기
+                    </div>
+                  </div>
+
+                  {/* 빈칸 퀴즈 */}
+                  <div className="h-20 flex flex-col items-start justify-start rounded-md bg-[#6C5F8D]/60 hover:bg-[#6C5F8D]/80 p-3 cursor-pointer transition-colors"
+                       onClick={() => handleDirectLearn("cloze")}>
+                    <div className="font-bold text-xs mb-2 text-white font-['Pretendard']">빈칸 퀴즈</div>
+                    {quizLoading ? (
+                      <div className="flex items-center justify-center w-full h-full">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center w-full h-full">
+                        <CheckCircle className="h-5 w-5 mb-1 text-white" />
+                        <div className="text-xs text-white/80 text-center font-['Pretendard']">Fill in the ___</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Speaking 연습 */}
+                  <div className="h-20 flex flex-col items-start justify-start rounded-md bg-[#6C5F8D]/60 hover:bg-[#6C5F8D]/80 p-3 cursor-pointer transition-colors"
+                       onClick={() => handleDirectLearn("speaking")}>
+                    <div className="font-bold text-xs mb-2 text-white font-['Pretendard']">Speaking</div>
+                    {speakingLoading ? (
+                      <div className="flex items-center justify-center w-full h-full">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center w-full h-full">
+                        <MicVocal className="h-5 w-5 mb-1 text-white" />
+                        
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 딕테이션 게임 */}
+                  <div className="h-20 flex flex-col items-start justify-start rounded-md bg-[#6C5F8D]/60 hover:bg-[#6C5F8D]/80 p-3 cursor-pointer transition-colors"
+                       onClick={() => handleDirectLearn("dictation")}>
+                    <div className="font-bold text-xs mb-2 text-white font-['Pretendard']">딕테이션</div>
+                    {dictationLoading ? (
+                      <div className="flex items-center justify-center w-full h-full">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center w-full h-full">
+                        <Keyboard className="h-5 w-5 mb-1 text-white" />
+                        
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             ) : null}
           </div>
         </div>
@@ -330,7 +435,7 @@ export default function SongDetailPage() {
 
           <TabsContent value="lyrics" className="space-y-4">
             {/* 시간 동기화된 영한 가사 */}
-            <Card className="bg-muted/40">
+            <Card className="bg-muted/40 w-full max-w-full overflow-hidden">
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   영어 동기화 가사

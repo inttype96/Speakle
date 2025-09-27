@@ -79,7 +79,7 @@ export default function LoginPage() {
       <div className="h-16" />
 
       {/* BODY */}
-      <div className="w-screen px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '65vw' }}>
+      <div className="mx-auto px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '1024px', width: '100%' }}>
         <main className="mx-auto max-w-[1280px]">
           <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-16 py-12">
             {/* Left – 보라 패널 */}

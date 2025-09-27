@@ -77,6 +77,9 @@ export default function DictationPage() {
    // 한국어 가사 표시/숨김 상태
   const [showKorean, setShowKorean] = useState(false);
 
+  // 메모장 상태
+  const [memoText, setMemoText] = useState("");
+
   const progress = (qNo / MAX_Q) * 100;
 
   // 카운트다운 시작 함수
@@ -263,14 +266,19 @@ export default function DictationPage() {
       setShouldAutoPlay(false);
       // 한국어 가사 표시 초기화
       setShowKorean(false);
+      // 메모장 초기화
+      setMemoText("");
       // replayKey를 증가시켜서 SpotifyWebPlayer를 완전히 리렌더링
       setReplayKey(prev => prev + 1);
       
-      // 포커스 초기화
+      // 포커스 초기화 - 첫 번째 빈 칸에 포커스
       setTimeout(() => {
-        const first = inputsRef.current.find((el) => !!el);
-        first?.focus();
-      }, 0);
+        const firstEmptyIndex = initialAnswers.findIndex((answer) => answer === "");
+        const targetInput = firstEmptyIndex !== -1
+          ? inputsRef.current[firstEmptyIndex]
+          : inputsRef.current.find((el) => !!el);
+        targetInput?.focus();
+      }, 100);
     } catch (error) {
       console.error('fetchQuestion 에러:', error);
       // 에러 발생 시 기본값으로 설정
@@ -328,16 +336,50 @@ export default function DictationPage() {
 
   // 입력 핸들러
   const handleChange = (inputIdx: number, v: string) => {
+    // 공백이나 탭 입력 시 무시하고 다음 칸으로 이동
+    if (v.includes(' ') || v.includes('\t')) {
+      const nextInput = inputsRef.current[inputIdx + 1];
+      if (nextInput) {
+        nextInput.focus();
+      }
+      return;
+    }
+
     const val = (v || "").slice(-1).toUpperCase(); // 마지막 한 글자만, 대문자로 변환
     setAnswers((prev) => {
       const next = [...prev];
       next[inputIdx] = val;
       return next;
     });
+
+    // 글자 입력 후 자동으로 다음 칸으로 이동
+    if (val && inputIdx < inputsRef.current.length - 1) {
+      const nextInput = inputsRef.current[inputIdx + 1];
+      if (nextInput) {
+        nextInput.focus();
+      }
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, inputIdx: number) => {
     const key = e.key;
+
+    // 스페이스바 입력 시 아무 동작도 하지 않음 (입력 막기)
+    if (key === " ") {
+      e.preventDefault();
+      return;
+    }
+
+    // Shift, Ctrl, Alt 등 수정 키는 무시 (다음 칸으로 이동하지 않음)
+    if (key === "Shift" || key === "Control" || key === "Alt" || key === "Meta" || key === "CapsLock") {
+      return;
+    }
+
+    // Tab 키는 기본 동작 막기
+    if (key === "Tab") {
+      e.preventDefault();
+      return;
+    }
 
     // Backspace 처리
     if (key === "Backspace") {
@@ -403,8 +445,6 @@ export default function DictationPage() {
 
     // 대소문자 무시하고 비교
     const isCorrect = userAnswer.toLowerCase() === correct.toLowerCase();
-    setResultMsg(isCorrect ? "정답입니다!" : "오답입니다!");
-    setOpenResult(true);
 
     try {
       // 점수 규칙: 정답 5점/오답 0점
@@ -419,7 +459,19 @@ export default function DictationPage() {
       console.error('submitDictation 에러:', error);
       // 에러가 발생해도 UI는 정상적으로 표시
     }
-  }, [item, composedUserAnswer, userId]);
+
+    // 마지막 문제인 경우 바로 게임 결과로, 아니면 정답 모달 표시
+    if (qNo >= MAX_Q) {
+      // 마지막 문제 완료 → 바로 요약 모달로
+      const summary = await completeDictation(learnedSongId);
+      setSummary(summary);
+      setOpenSummary(true);
+    } else {
+      // 마지막 문제가 아니면 정답 모달 표시
+      setResultMsg(isCorrect ? "정답입니다!" : "오답입니다!");
+      setOpenResult(true);
+    }
+  }, [item, composedUserAnswer, userId, qNo, learnedSongId]);
 
   // 다음 문제
   const onNext = useCallback(async () => {
@@ -448,6 +500,42 @@ export default function DictationPage() {
   // 요약 모달
   const [openSummary, setOpenSummary] = useState(false);
   const [summary, setSummary] = useState<Awaited<ReturnType<typeof completeDictation>> | null>(null);
+
+  // 전역 키보드 이벤트 핸들러
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // 모달이 열려있거나 게임이 진행중이 아닐 때는 무시
+      if (openResult || openSummary || gameState !== 'playing') return;
+
+      // 알파벳이나 숫자 입력 시 현재 포커스된 입력칸이나 첫 번째 빈 칸에 포커스
+      if (/^[A-Za-z0-9']$/.test(e.key)) {
+        const activeElement = document.activeElement;
+        const isInputFocused = inputsRef.current.some(input => input === activeElement);
+        const isMemoFocused = activeElement?.tagName === 'TEXTAREA';
+
+        if (!isInputFocused && !isMemoFocused) {
+          // 현재 포커스가 입력칸에 없으면 첫 번째 빈 칸에 포커스
+          const firstEmptyIndex = answers.findIndex((answer) => answer === "");
+          const targetInput = firstEmptyIndex !== -1
+            ? inputsRef.current[firstEmptyIndex]
+            : inputsRef.current.find((el) => !!el);
+
+          if (targetInput) {
+            targetInput.focus();
+            // 키 입력을 해당 입력칸에 전달
+            setTimeout(() => {
+              const event = new Event('input', { bubbles: true });
+              targetInput.value = e.key.toUpperCase();
+              targetInput.dispatchEvent(event);
+            }, 0);
+          }
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [answers, openResult, openSummary, gameState]);
 
   // 곡 상세로
   const goSong = () => {
@@ -487,7 +575,7 @@ export default function DictationPage() {
       {/* 상단 여백 추가 */}
       <div className="h-8" />
 
-      <div className="w-screen px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '65vw' }}>
+      <div className="mx-auto px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '1024px', width: '100%' }}>
         {/* 상단 헤더 */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 sm:gap-0">
           <button
@@ -646,59 +734,95 @@ export default function DictationPage() {
                       </div>
                     )}
 
-                    {/* 놀라운 토요일 스타일 게임쇼 입력 그리드 */}
-                    <div className="backdrop-blur-sm bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 shadow-2xl">
-                      <div className="mb-6 text-center">
-                        <div className="text-lg sm:text-xl font-['Pretendard'] font-bold text-white mb-2">
-                          🎤 가사를 입력하세요
+                    {/* 입력 그리드와 메모장을 나란히 배치 */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* 놀라운 토요일 스타일 게임쇼 입력 그리드 */}
+                      <div className="lg:col-span-2 backdrop-blur-sm bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 shadow-2xl">
+                        <div className="mb-6 text-center">
+                          <div className="text-lg sm:text-xl font-['Pretendard'] font-bold text-white mb-2">
+                            🎤 가사를 입력하세요
+                          </div>
+                          <div className="text-sm font-['Pretendard'] text-white/70">
+                            알파벳과 숫자만 입력하세요 (대소문자 구분 안함)
+                          </div>
                         </div>
-                        <div className="text-sm font-['Pretendard'] text-white/70">
-                          알파벳과 숫자만 입력하세요 (대소문자 구분 안함)
-                        </div>
+
+                        <section className="mx-auto flex flex-col gap-4 items-center max-w-4xl">
+                          <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+                            {tokens.map((t, ti) => {
+                              if (!t.isInput) {
+                                // 공백은 간격, 문장부호는 그대로 보여줌
+                                if (t.ch === " ") return <div key={ti} className="w-4 sm:w-6" />;
+                                return (
+                                  <div
+                                    key={ti}
+                                    className="h-10 w-8 sm:h-12 sm:w-10 flex items-center justify-center rounded-xl border-2 border-dashed border-[#B5A6E0]/50 bg-white/5 text-base sm:text-lg font-['Inter'] font-bold text-[#B5A6E0] backdrop-blur-sm shadow-lg"
+                                  >
+                                    {t.ch}
+                                  </div>
+                                );
+                              }
+                              const inputIdx = inputMap[ti];
+                              const hasValue = answers[inputIdx] && answers[inputIdx] !== "";
+                              return (
+                                <input
+                                  key={ti}
+                                  ref={(el: HTMLInputElement | null) => {
+                                    inputsRef.current[inputIdx] = el;
+                                  }}
+                                  className={`h-10 w-8 sm:h-12 sm:w-10 flex items-center justify-center rounded-xl border-2 text-center caret-transparent uppercase text-base sm:text-lg font-['Inter'] font-black transition-all duration-300 shadow-lg hover:shadow-xl focus:shadow-2xl ${
+                                    hasValue
+                                      ? 'border-[#4B2199] bg-gradient-to-br from-[#4B2199]/20 to-[#B5A6E0]/20 text-white backdrop-blur-md'
+                                      : 'border-white/30 bg-white/10 text-white/50 backdrop-blur-sm hover:border-[#B5A6E0]/60 focus:border-[#4B2199] focus:bg-white/20'
+                                  } focus:outline-none focus:ring-2 focus:ring-[#B5A6E0]/50`}
+                                  value={answers[inputIdx] || ""}
+                                  onChange={(e) => handleChange(inputIdx, e.target.value)}
+                                  onKeyDown={(e) => handleKeyDown(e, inputIdx)}
+                                  maxLength={1}
+                                  inputMode="text"
+                                  autoCapitalize="off"
+                                  autoCorrect="off"
+                                  spellCheck={false}
+                                  placeholder="?"
+                                />
+                              );
+                            })}
+                          </div>
+                        </section>
                       </div>
 
-                      <section className="mx-auto flex flex-col gap-4 items-center max-w-4xl">
-                        <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-                          {tokens.map((t, ti) => {
-                            if (!t.isInput) {
-                              // 공백은 간격, 문장부호는 그대로 보여줌
-                              if (t.ch === " ") return <div key={ti} className="w-4 sm:w-6" />;
-                              return (
-                                <div
-                                  key={ti}
-                                  className="h-10 w-8 sm:h-12 sm:w-10 flex items-center justify-center rounded-xl border-2 border-dashed border-[#B5A6E0]/50 bg-white/5 text-base sm:text-lg font-['Inter'] font-bold text-[#B5A6E0] backdrop-blur-sm shadow-lg"
-                                >
-                                  {t.ch}
-                                </div>
-                              );
-                            }
-                            const inputIdx = inputMap[ti];
-                            const hasValue = answers[inputIdx] && answers[inputIdx] !== "";
-                            return (
-                              <input
-                                key={ti}
-                                ref={(el: HTMLInputElement | null) => {
-                                  inputsRef.current[inputIdx] = el;
-                                }}
-                                className={`h-10 w-8 sm:h-12 sm:w-10 flex items-center justify-center rounded-xl border-2 text-center caret-transparent uppercase text-base sm:text-lg font-['Inter'] font-black transition-all duration-300 shadow-lg hover:shadow-xl focus:shadow-2xl ${
-                                  hasValue
-                                    ? 'border-[#4B2199] bg-gradient-to-br from-[#4B2199]/20 to-[#B5A6E0]/20 text-white backdrop-blur-md'
-                                    : 'border-white/30 bg-white/10 text-white/50 backdrop-blur-sm hover:border-[#B5A6E0]/60 focus:border-[#4B2199] focus:bg-white/20'
-                                } focus:outline-none focus:ring-2 focus:ring-[#B5A6E0]/50`}
-                                value={answers[inputIdx] || ""}
-                                onChange={(e) => handleChange(inputIdx, e.target.value)}
-                                onKeyDown={(e) => handleKeyDown(e, inputIdx)}
-                                maxLength={1}
-                                inputMode="text"
-                                autoCapitalize="off"
-                                autoCorrect="off"
-                                spellCheck={false}
-                                placeholder="?"
-                              />
-                            );
-                          })}
+                      {/* 메모장 */}
+                      <div className="backdrop-blur-sm bg-white/5 rounded-2xl p-6 border border-white/20 shadow-2xl">
+                        <div className="mb-4 text-center">
+                          <div className="text-lg font-['Pretendard'] font-bold text-white mb-2">
+                            📝 메모장
+                          </div>
+                          <div className="text-xs font-['Pretendard'] text-white/70">
+                            들리는 대로 자유롭게 메모하세요
+                          </div>
                         </div>
-                      </section>
+
+                        <textarea
+                          value={memoText}
+                          onChange={(e) => setMemoText(e.target.value)}
+                          className="w-full h-48 p-4 rounded-xl bg-white/10 border border-white/30 text-white font-['Pretendard'] text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-[#B5A6E0]/50 focus:border-[#4B2199] placeholder-white/50 backdrop-blur-sm"
+                          placeholder="들리는 대로 적어보세요...&#10;&#10;예시:&#10;hello world&#10;헬로 월드&#10;..."
+                          spellCheck={false}
+                          autoCorrect="off"
+                        />
+
+                        <div className="mt-3 flex justify-between items-center">
+                          <div className="text-xs font-['Pretendard'] text-white/50">
+                            {memoText.length}자
+                          </div>
+                          <button
+                            onClick={() => setMemoText("")}
+                            className="text-xs font-['Pretendard'] text-white/70 hover:text-white transition-colors duration-200 px-2 py-1 rounded hover:bg-white/10"
+                          >
+                            지우기
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="flex justify-center mt-8">
@@ -720,72 +844,197 @@ export default function DictationPage() {
 
       {/* 결과 모달 */}
       <Dialog open={openResult} onOpenChange={setOpenResult}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{resultMsg}</DialogTitle>
-            <DialogDescription>
-              {resultMsg === "정답입니다!"
-                ? "완벽해요! 다음 문제로 이동해 주세요."
-                : "빈칸 중 하나라도 틀리면 오답입니다! 다시 들어보고 수정해 보세요."}
+        <DialogContent className="sm:max-w-3xl backdrop-blur-sm bg-[#1a1a2e]/95 border border-white/10">
+          <DialogHeader className="border-b border-white/10 pb-4">
+            <DialogTitle className="text-2xl font-['Pretendard'] font-bold text-white">
+              {resultMsg === "정답입니다!" ? (
+                <span className="text-[#B5A6E0]">정답입니다</span>
+              ) : (
+                <span className="text-white">오답입니다</span>
+              )}
+            </DialogTitle>
+            <DialogDescription className="text-sm font-['Pretendard'] text-white/60 mt-2">
+              문제 {qNo} / {MAX_Q}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-2">
-            {/* 닫기: 입력값을 그대로 유지하고 모달만 닫음 (재시도) */}
-            <Button variant="secondary" onClick={() => setOpenResult(false)}>닫기</Button>
-            <Button onClick={onNext}>{qNo < MAX_Q ? "다음 문제" : "결과 보기"}</Button>
+
+          <div className="space-y-8 py-6">
+            {/* 내가 쓴 답 */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-5 bg-[#4B2199]"></div>
+                <span className="text-sm font-['Pretendard'] font-semibold text-white/80 uppercase tracking-wider">Your Answer</span>
+              </div>
+              <div className="flex flex-wrap justify-center gap-1.5 p-6 bg-white/5 border border-white/10">
+                {tokens.map((t, ti) => {
+                  if (!t.isInput) {
+                    if (t.ch === " ") return <div key={ti} className="w-3" />;
+                    return (
+                      <div
+                        key={ti}
+                        className="h-10 w-8 flex items-center justify-center border border-white/20 bg-white/5 text-base font-['Inter'] font-medium text-white/40"
+                      >
+                        {t.ch}
+                      </div>
+                    );
+                  }
+                  const inputIdx = inputMap[ti];
+                  const userChar = answers[inputIdx] || "";
+                  const correctChar = item?.coreSentence[ti].toUpperCase() || "";
+                  const isCorrectChar = userChar === correctChar;
+
+                  return (
+                    <div
+                      key={ti}
+                      className={`h-10 w-8 flex items-center justify-center border-2 text-base font-['Inter'] font-bold transition-all ${
+                        userChar
+                          ? isCorrectChar
+                            ? 'border-[#B5A6E0] bg-[#B5A6E0]/20 text-[#B5A6E0]'
+                            : 'border-red-500/60 bg-red-500/10 text-red-400'
+                          : 'border-white/20 bg-white/5 text-white/20'
+                      }`}
+                    >
+                      {userChar || ""}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 정답 */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-5 bg-[#B5A6E0]"></div>
+                <span className="text-sm font-['Pretendard'] font-semibold text-white/80 uppercase tracking-wider">Correct Answer</span>
+              </div>
+              <div className="flex flex-wrap justify-center gap-1.5 p-6 bg-[#4B2199]/10 border border-[#4B2199]/30">
+                {tokens.map((t, ti) => {
+                  if (!t.isInput) {
+                    if (t.ch === " ") return <div key={ti} className="w-3" />;
+                    return (
+                      <div
+                        key={ti}
+                        className="h-10 w-8 flex items-center justify-center border border-[#4B2199]/30 bg-[#4B2199]/10 text-base font-['Inter'] font-medium text-[#B5A6E0]/60"
+                      >
+                        {t.ch}
+                      </div>
+                    );
+                  }
+
+                  const correctChar = item?.coreSentence[ti].toUpperCase() || "";
+                  return (
+                    <div
+                      key={ti}
+                      className="h-10 w-8 flex items-center justify-center border-2 border-[#B5A6E0] bg-[#B5A6E0]/20 text-[#B5A6E0] text-base font-['Inter'] font-bold"
+                    >
+                      {correctChar}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="border-t border-white/10 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setOpenResult(false)}
+              className="bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30 font-['Pretendard'] font-medium"
+            >
+              다시 듣기
+            </Button>
+            <Button
+              onClick={onNext}
+              className="bg-[#4B2199] hover:bg-[#4B2199]/80 text-white font-['Pretendard'] font-medium border-0"
+            >
+              {qNo < MAX_Q ? "다음 문제" : "결과 보기"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* 요약 모달 */}
       <Dialog open={openSummary} onOpenChange={setOpenSummary}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>게임 결과 요약</DialogTitle>
-            <DialogDescription>수고했어요! 점수를 확인하고 곡으로 돌아가세요.</DialogDescription>
+        <DialogContent className="sm:max-w-2xl backdrop-blur-sm bg-[#1a1a2e]/95 border border-white/10">
+          <DialogHeader className="border-b border-white/10 pb-4">
+            <DialogTitle className="text-2xl font-['Pretendard'] font-bold text-white">
+              게임 결과
+            </DialogTitle>
+            <DialogDescription className="text-sm font-['Pretendard'] text-white/60 mt-2">
+              수고하셨습니다
+            </DialogDescription>
           </DialogHeader>
 
           {summary && (
-            <div className="space-y-4">
+            <div className="space-y-6 py-6">
+              {/* 점수 요약 */}
               <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="p-3 rounded-xl bg-muted">
-                  <div className="text-xs text-muted-foreground">총 문제</div>
-                  <div className="text-2xl font-bold">{summary.summary.totalQuestions}</div>
+                <div className="p-4 bg-white/5 border border-white/10">
+                  <div className="text-xs font-['Pretendard'] text-white/60 uppercase tracking-wider mb-2">Total</div>
+                  <div className="text-2xl font-['Inter'] font-bold text-white">{summary.summary.totalQuestions}</div>
                 </div>
-                <div className="p-3 rounded-xl bg-muted">
-                  <div className="text-xs text-muted-foreground">정답</div>
-                  <div className="text-2xl font-bold text-green-500">{summary.summary.correctAnswers}</div>
+                <div className="p-4 bg-[#B5A6E0]/10 border border-[#B5A6E0]/30">
+                  <div className="text-xs font-['Pretendard'] text-white/60 uppercase tracking-wider mb-2">Correct</div>
+                  <div className="text-2xl font-['Inter'] font-bold text-[#B5A6E0]">{summary.summary.correctAnswers}</div>
                 </div>
-                <div className="p-3 rounded-xl bg-muted">
-                  <div className="text-xs text-muted-foreground">점수</div>
-                  <div className="text-2xl font-bold">{summary.summary.totalScore}</div>
+                <div className="p-4 bg-[#4B2199]/10 border border-[#4B2199]/30">
+                  <div className="text-xs font-['Pretendard'] text-white/60 uppercase tracking-wider mb-2">Score</div>
+                  <div className="text-2xl font-['Inter'] font-bold text-white">{summary.summary.totalScore}</div>
                 </div>
               </div>
 
-              <Separator />
-
-              <div className="space-y-2 max-h-60 overflow-auto pr-1">
-                {summary.results.map((r) => (
-                  <div key={r.dictationResultId} className="text-sm p-3 rounded-lg border">
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium">문제 #{r.dictationId}</div>
-                      <Badge variant={r.isCorrect ? "default" : "secondary"}>
-                        {r.isCorrect ? "정답" : "오답"}
-                      </Badge>
+              {/* 문제별 결과 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-1 h-5 bg-[#4B2199]"></div>
+                  <span className="text-sm font-['Pretendard'] font-semibold text-white/80 uppercase tracking-wider">Details</span>
+                </div>
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                  {summary.results.map((r, index) => (
+                    <div key={r.dictationResultId} className="p-4 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-['Pretendard'] font-medium text-white">
+                          문제 {index + 1}
+                        </span>
+                        <span className={`text-xs font-['Pretendard'] font-semibold px-3 py-1 ${
+                          r.isCorrect
+                            ? 'bg-[#B5A6E0]/20 text-[#B5A6E0] border border-[#B5A6E0]/30'
+                            : 'bg-red-500/10 text-red-400 border border-red-500/30'
+                        }`}>
+                          {r.isCorrect ? "CORRECT" : "WRONG"}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex gap-2 text-xs">
+                          <span className="text-white/40 font-['Pretendard']">입력:</span>
+                          <span className="text-white/70 font-['Inter']">{r.meta.userAnswer || "(빈 답안)"}</span>
+                        </div>
+                        <div className="flex gap-2 text-xs">
+                          <span className="text-white/40 font-['Pretendard']">정답:</span>
+                          <span className="text-[#B5A6E0]/80 font-['Inter']">{r.meta.correctAnswer}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="mt-1 text-muted-foreground">
-                      <span className="block">입력: {r.meta.userAnswer}</span>
-                      <span className="block">정답: {r.meta.correctAnswer}</span>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="secondary" onClick={() => setOpenSummary(false)}>닫기</Button>
-            <Button onClick={goSong}>곡으로 돌아가기</Button>
+          <DialogFooter className="border-t border-white/10 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setOpenSummary(false)}
+              className="bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30 font-['Pretendard'] font-medium"
+            >
+              닫기
+            </Button>
+            <Button
+              onClick={goSong}
+              className="bg-[#4B2199] hover:bg-[#4B2199]/80 text-white font-['Pretendard'] font-medium border-0"
+            >
+              곡으로 돌아가기
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
