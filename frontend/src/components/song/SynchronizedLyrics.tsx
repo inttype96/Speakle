@@ -183,26 +183,26 @@ export default function SynchronizedLyrics({
                 key={chunk.id}
                 ref={isCurrent ? currentLineRef : undefined}
                 className={cn(
-                  "transition-all duration-500 ease-in-out p-4 rounded-lg cursor-pointer w-full max-w-full overflow-hidden",
-                  "hover:bg-muted/50",
+                  "transition-all duration-500 ease-in-out p-4 rounded-lg cursor-pointer w-full max-w-full",
+                  "hover:bg-slate-800/30",
                   isCurrent && [
-                    "bg-primary/15 border-l-4 border-primary",
-                    "transform scale-105 shadow-md",
-                    "ring-2 ring-primary/20"
+                    "bg-gradient-to-r from-purple-900/40 to-slate-800/60 border-l-4 border-purple-400",
+                    "shadow-xl shadow-purple-500/20",
+                    "ring-2 ring-purple-400/30 backdrop-blur-sm"
                   ],
-                  isPast && "opacity-50",
-                  isFuture && "opacity-70"
+                  isPast && "opacity-40",
+                  isFuture && "opacity-65"
                 )}
               >
                 {/* 영어 가사 */}
                 <div className={cn(
                   "text-base leading-relaxed transition-all duration-500 break-words",
                   isCurrent && [
-                    "text-primary font-bold text-xl",
-                    "text-shadow-sm"
+                    "text-white font-bold text-xl drop-shadow-lg",
+                    "text-shadow-lg"
                   ],
-                  isPast && "text-muted-foreground font-normal",
-                  isFuture && "text-foreground/80 font-medium"
+                  isPast && "text-slate-500 font-normal",
+                  isFuture && "text-slate-300 font-medium"
                 )}>
                   {chunk.english}
                 </div>
@@ -212,11 +212,11 @@ export default function SynchronizedLyrics({
                   <div className={cn(
                     "mt-2 text-sm leading-relaxed transition-all duration-500 break-words",
                     isCurrent && [
-                      "text-primary/80 font-medium text-base",
-                      "opacity-90"
+                      "text-purple-200 font-medium text-base drop-shadow-md",
+                      "opacity-95"
                     ],
-                    isPast && "text-muted-foreground/60",
-                    isFuture && "text-muted-foreground/70"
+                    isPast && "text-slate-600",
+                    isFuture && "text-slate-400"
                   )}>
                     {chunk.korean}
                   </div>

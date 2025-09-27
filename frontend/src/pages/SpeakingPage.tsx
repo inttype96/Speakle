@@ -305,7 +305,7 @@ export default function SpeakingPage() {
 
           <div className="backdrop-blur-sm bg-white/10 rounded-xl px-3 sm:px-4 py-2.5 text-right border border-white/20">
             <div className="text-xs font-['Pretendard'] text-white/70 truncate max-w-[200px] sm:max-w-none">
-              {evalData ? `${evalData.title} - ${evalData.artists}` : "Loading..."}
+              {evalData ? `${evalData.title} - ${evalData.artists.replace(/[\[\]']/g, '')}` : "Loading..."}
             </div>
             <div className="text-sm font-['Pretendard'] font-bold text-white">{TOP_RIGHT_MODE}</div>
           </div>

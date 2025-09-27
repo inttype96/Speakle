@@ -589,7 +589,7 @@ export default function DictationPage() {
 
           <div className="backdrop-blur-sm bg-white/10 rounded-xl px-3 sm:px-4 py-2.5 text-right border border-white/20">
             <div className="text-xs font-['Pretendard'] text-white/70 truncate max-w-[200px] sm:max-w-none">
-              {item ? `${item.title} - ${item.artists}` : "Loading..."}
+              {item ? `${item.title} - ${item.artists.replace(/[\[\]']/g, '')}` : "Loading..."}
             </div>
             <div className="text-sm font-['Pretendard'] font-bold text-white">딕테이션</div>
           </div>
@@ -685,7 +685,7 @@ export default function DictationPage() {
                       key={`${item.songId}-${replayKey}-${shouldAutoPlay}`}
                       trackId={item.songId}
                       trackName={item.title}
-                      artistName={item.artists}
+                      artistName={item.artists.replace(/[\[\]']/g, '')}
                       onTimeUpdate={handleTimeUpdate}
                       startTime={item.startTime ? Math.max(0, item.startTime - 2000) : undefined}
                       endTime={item.endTime}

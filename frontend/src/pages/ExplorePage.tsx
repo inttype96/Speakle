@@ -260,7 +260,7 @@ export default function ExplorePage() {
         <div className="flex justify-center mb-8">
           <Button
             size="lg"
-            className="px-12 py-4 text-lg font-['Pretendard'] font-bold bg-gradient-to-r from-purple-600 to-purple-600 hover:from-purple-700 hover:to-blue-700 rounded-2xl shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105 backdrop-blur-sm border-0"
+            className="px-12 py-4 text-lg font-['Pretendard'] font-bold bg-[#4B2199] hover:bg-[#5A2BB8] text-white border border-[#B5A6E0]/30 hover:border-[#B5A6E0] rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
             onClick={handleRecommend}
             disabled={!canRecommend}
           >

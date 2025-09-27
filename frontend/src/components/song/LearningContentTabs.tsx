@@ -111,7 +111,7 @@ export default function LearningContentTabs({ learningContent }: LearningContent
     return (
       <div
         key={item.id}
-        className="p-3 rounded-xl backdrop-blur-sm bg-white/10 border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+        className="p-3 rounded-xl backdrop-blur-sm bg-slate-800/40 border border-slate-600/50 hover:bg-slate-700/60 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
         style={{ width: '100%', maxWidth: '100%', minWidth: 0, overflow: 'hidden', wordBreak: 'break-word' }}
       >
         <div className="flex items-start gap-3">
@@ -190,7 +190,7 @@ export default function LearningContentTabs({ learningContent }: LearningContent
       </div>
 
       {/* 컨텐츠 영역 */}
-      <Card className="min-h-[350px] backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-2xl overflow-hidden">
+      <Card className="min-h-[350px] backdrop-blur-sm bg-gradient-to-br from-slate-900/70 to-slate-800/50 border border-slate-700/60 shadow-xl rounded-2xl overflow-hidden">
         <CardContent className="pt-5">
           {hasData ? (
             <ScrollArea className="h-[350px] pr-2">
@@ -200,7 +200,7 @@ export default function LearningContentTabs({ learningContent }: LearningContent
             </ScrollArea>
           ) : (
             <div className="flex flex-col items-center justify-center h-[350px] text-center space-y-3">
-              <div className="w-14 h-14 backdrop-blur-sm bg-white/20 rounded-full flex items-center justify-center border border-white/30">
+              <div className="w-14 h-14 backdrop-blur-sm bg-slate-800/60 rounded-full flex items-center justify-center border border-slate-600/50">
                 {(() => {
                   const section = SECTIONS.find(s => s.key === currentSection);
                   const Icon = section?.icon || BookOpen;

@@ -145,7 +145,7 @@ export default function SongListView({
       {/* 추천 키워드 (추천 페이지에서만) */}
       {showRecommendationKeywords && keywords && (
         <div className="max-w-5xl mx-auto">
-          <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl">
+          <Card className="bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 shadow-2xl hover:border-slate-600/60 transition-all duration-300">
             <CardContent className="pt-5 pb-4">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -154,7 +154,7 @@ export default function SongListView({
                     variant="default"
                     size="sm"
                     onClick={() => setShowKeywords(!showKeywords)}
-                    className="bg-[#4B2199] hover:bg-[#B5A6E0] hover:text-black text-white font-['Pretendard'] font-semibold rounded-xl px-3 py-1.5 text-sm transition-all duration-300"
+                    className="bg-slate-800 hover:bg-slate-700 text-slate-100 font-['Pretendard'] font-semibold rounded-lg px-4 py-2 text-sm transition-all duration-300 border border-slate-600/40 hover:border-slate-500"
                   >
                   {showKeywords ? (
                     <>
@@ -162,23 +162,38 @@ export default function SongListView({
                     </>
                   ) : (
                     <>
-                      보러 가기 <ChevronDown className="ml-1 h-4 w-4" />
+                      보러가기 <ChevronDown className="ml-1 h-4 w-4" />
                     </>
                   )}
                 </Button>
               </div>
+
+              {/* 미리보기 (항상 표시) */}
+              <div className="pt-2">
+                <div className="flex flex-wrap gap-2">
+                  {[...keywords.words, ...keywords.phrases].slice(0, 5).map((keyword, idx) => (
+                    <Badge
+                      key={idx}
+                      className="bg-slate-800/60 text-slate-200 border border-slate-600/40 hover:bg-slate-700 hover:text-white transition-all duration-300 text-xs px-3 py-1.5 font-['Pretendard'] font-medium rounded-md"
+                    >
+                      {keyword}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
               {showKeywords && (() => {
                 const allKeywords = [...keywords.words, ...keywords.phrases];
                 const totalPages = Math.ceil(allKeywords.length / 10);
                 const currentKeywords = allKeywords.slice(keywordPage * 10, (keywordPage + 1) * 10);
 
                 return (
-                  <div className="pt-3">
+                  <div className="pt-3 border-t border-slate-700/40 mt-3">
                     <div className="flex flex-wrap gap-2">
                       {currentKeywords.map((keyword, idx) => (
                         <Badge
                           key={idx}
-                          className="bg-white/20 text-white border-white/30 hover:bg-[#B5A6E0] hover:text-black transition-all duration-300 text-xs px-3 py-1.5 font-['Pretendard'] font-medium rounded-lg"
+                          className="bg-slate-800/60 text-slate-200 border border-slate-600/40 hover:bg-slate-700 hover:text-white transition-all duration-300 text-xs px-3 py-1.5 font-['Pretendard'] font-medium rounded-md"
                         >
                           {keyword}
                         </Badge>
@@ -191,11 +206,11 @@ export default function SongListView({
                           size="sm"
                           onClick={() => setKeywordPage(Math.max(0, keywordPage - 1))}
                           disabled={keywordPage === 0}
-                          className="h-8 w-8 p-0"
+                          className="h-8 w-8 p-0 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
                         >
                           <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <span className="text-sm text-white/70 font-['Pretendard'] font-medium">
+                        <span className="text-sm text-slate-400 font-['Pretendard'] font-medium">
                           {keywordPage + 1} / {totalPages}
                         </span>
                         <Button
@@ -203,7 +218,7 @@ export default function SongListView({
                           size="sm"
                           onClick={() => setKeywordPage(Math.min(totalPages - 1, keywordPage + 1))}
                           disabled={keywordPage === totalPages - 1}
-                          className="h-8 w-8 p-0"
+                          className="h-8 w-8 p-0 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
                         >
                           <ChevronRight className="h-4 w-4" />
                         </Button>
@@ -220,7 +235,7 @@ export default function SongListView({
 
       {/* 상위 결과 */}
       <div className="max-w-7xl mx-auto">
-        <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl">
+        <Card className="bg-[#121212] backdrop-blur-xl border border-white/10 shadow-2xl">
           <CardContent className="p-0">
           {loading ? (
             <FeaturedSkeleton showFeaturedSection={showFeaturedSection} />

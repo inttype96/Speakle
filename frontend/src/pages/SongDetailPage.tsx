@@ -422,7 +422,7 @@ export default function SongDetailPage() {
                     <SpotifyWebPlayer
                       trackId={data.songId}
                       trackName={data.title}
-                      artistName={data.artists}
+                      artistName={data.artists.replace(/[\[\]']/g, '')}
                       onTimeUpdate={handleTimeUpdate}
                     />
                   </div>
@@ -523,7 +523,7 @@ export default function SongDetailPage() {
 
           <TabsContent value="lyrics" className="space-y-4">
             {/* 시간 동기화된 영한 가사 */}
-            <Card className="bg-muted/40 w-full max-w-full overflow-hidden">
+            <Card className="bg-gradient-to-br from-indigo-950/40 to-slate-900/30 backdrop-blur-xl border border-indigo-400/40 shadow-2xl w-full max-w-full overflow-hidden">
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   영어 동기화 가사
@@ -565,7 +565,7 @@ export default function SongDetailPage() {
           <TabsContent value="notes">
             {/* 학습 내용 탭 */}
             {learningError ? (
-              <Card>
+              <Card className="bg-gradient-to-br from-slate-900/60 to-slate-800/40 backdrop-blur-sm border border-slate-700/50">
                 <CardContent className="py-10 text-center space-y-3">
                   <p className="text-sm text-destructive">{learningError}</p>
                   <Button variant="outline" onClick={fetchLearningContentData}>
