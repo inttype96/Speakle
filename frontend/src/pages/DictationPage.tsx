@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Badge } from "@/components/ui/badge";
 
 // icons
-import { ChevronLeft, Timer, Play, RotateCcw, Languages } from "lucide-react";
+import { ChevronLeft, /*Timer,*/ Play, RotateCcw, Languages } from "lucide-react";
 
 // api
 import {
@@ -119,8 +119,8 @@ export default function DictationPage() {
   }, [gameState]);
 
   // mmss 포맷 함수
-  const mmss = (sec: number) =>
-    `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+  // const mmss = (sec: number) =>
+  //   `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 
   // 노래 재생 시간 업데이트 핸들러
   const handleTimeUpdate = useCallback((time: number, playing: boolean) => {
@@ -557,8 +557,7 @@ export default function DictationPage() {
     const queryString = queryParams.toString();
     const to = `/songs/${songId}${queryString ? `?${queryString}` : ""}`;
     navigate(to);
-  };
-
+  };  
   return (
     <div className="bg-background text-foreground font-sans min-h-screen">
       {/* Google Fonts Link */}
@@ -595,7 +594,7 @@ export default function DictationPage() {
         </div>
 
         {/* 게임 스타일 진행 표시 */}
-        <div className="backdrop-blur-xl bg-white/10 rounded-2xl p-6 border border-white/20 shadow-2xl mb-8">
+        <div className="backdrop-blur-xl bg-white/10 rounded-2xl p-6 border border-white/20 shadow-2xl mb-4">
           <div className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-2 sm:gap-0">
             <div className="text-sm font-['Pretendard'] font-bold text-white">
               Question {qNo} of {MAX_Q}
@@ -620,24 +619,45 @@ export default function DictationPage() {
           <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-2xl overflow-hidden max-w-5xl w-full">
             <CardContent className="p-6 text-center">
               {/* 헤더 섹션 */}
-              <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between w-full mb-6">
+              <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between w-full mb-15">
                 <div className="flex items-center gap-2">
                   <div className="backdrop-blur-sm bg-white/20 px-3 py-1.5 rounded-full border border-white/30">
                     <span className="font-['Pretendard'] font-bold text-white text-sm">문제 {qNo}</span>
                   </div>
-                  <Badge className="bg-[#4B2199]/80 text-white border-[#B5A6E0]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
-                    5 points
-                  </Badge>
                 </div>
 
                 <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
-                  <div className="flex items-center gap-2 bg-gradient-to-r from-[#4B2199]/20 to-[#B5A6E0]/20 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl shadow-lg">
-                    <Timer size={16} className="text-[#B5A6E0] animate-pulse sm:w-[18px] sm:h-[18px]" />
-                    <span className="tabular-nums text-white font-['Inter'] font-bold text-base sm:text-lg tracking-wide drop-shadow-md">{mmss(elapsed)}</span>
-                  </div>
-                  <Badge className="bg-[#B5A6E0]/80 text-white border-[#4B2199]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
+                  <Badge className="bg-[#7545c2]/80 text-white border-[#6a3cb7]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
                     Medium
                   </Badge>
+                  <Badge className="bg-[#7545c2]/80 text-white border-[#6a3cb7]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
+                    5 points
+                  </Badge>
+
+                  <button
+                    onClick={onReplay}
+                    className="inline-flex items-center gap-1.5 bg-[#7545c2]/80 hover:bg-[#9e6beb] text-white border-[#B5A6E0]/50 rounded-full py-1 px-3 text-xs font-['Pretendard'] font-medium transition-all duration-300 shadow-lg hover:shadow-xl border"
+                  >
+                    <RotateCcw size={12} />
+                    다시 듣기
+                  </button>
+
+                  {item?.korean && (
+                    <div className="relative group">
+                      <button
+                        onClick={() => setShowKorean(!showKorean)}
+                        className="inline-flex items-center gap-1.5 bg-[#6a3cb7]/80 hover:bg-[#9e6beb]/90 text-white border-[#B5A6E0]/50 rounded-full py-1 px-3 text-xs font-['Pretendard'] font-medium transition-all duration-300 shadow-lg hover:shadow-xl border"
+                      >
+                        <Languages size={14} />
+                        {'Hint'}
+                      </button>
+                      {/* 툴팁 */}
+                      <div className="absolute top-full right-0 mt-3 px-4 py-3 bg-gray-900 text-white text-sm font-['Pretendard'] font-medium rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-2xl border border-gray-700">
+                        {showKorean ? '클릭 시 한국어 번역을 숨길 수 있습니다' : '클릭 시 하단에서 한국어 번역을 확인할 수 있습니다'}
+                        <div className="absolute bottom-full right-4 w-0 h-0 border-l-5 border-r-5 border-b-5 border-transparent border-b-gray-900"></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -696,42 +716,7 @@ export default function DictationPage() {
                 {/* 게임 진행 중 & 완료 화면 */}
                 {(gameState === 'playing' || gameState === 'ended') && (
                   <>
-                  <div className="flex justify-center gap-4 mb-6">
-                      <Button
-                        onClick={onReplay}
-                        className="h-12 px-6 bg-[#B5A6E0]/80 hover:bg-[#B5A6E0] text-white font-['Pretendard'] font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                      >
-                        <RotateCcw size={16} className="mr-2" />
-                        다시 듣기
-                      </Button>
-                    </div>
-                  {/* 한국어 가사 표시 영역 */}
-                    {item?.korean && (
-                      <div className="mb-6">
-                        <div className="flex justify-center items-center gap-3 mb-4">
-                          <Button
-                            onClick={() => setShowKorean(!showKorean)}
-                            variant="outline"
-                            size="sm"
-                            className="h-10 px-4 bg-white/10 hover:bg-white/20 border-white/30 text-white hover:text-white font-['Pretendard'] font-medium transition-all duration-200"
-                          >
-                            <Languages size={16} className="mr-2" />
-                            {showKorean ? '한국어 숨기기' : '한국어 보기'}
-                          </Button>
-                        </div>
-                        
-                        {showKorean && (
-                          <div className="backdrop-blur-sm bg-white/5 rounded-xl p-4 border border-white/20 mb-6">
-                            <div className="text-sm font-['Pretendard'] text-white/70 mb-2 text-center">
-                              🇰🇷 한국어 가사
-                            </div>
-                            <div className="text-base sm:text-lg font-['Pretendard'] text-white text-center leading-relaxed">
-                              {item.korean}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    
 
                     {/* 입력 그리드와 메모장을 나란히 배치 */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -824,12 +809,26 @@ export default function DictationPage() {
                       </div>
                     </div>
 
+                    {/* 한국어 가사 표시 영역 */}
+                    {item?.korean && showKorean && (
+                      <div className="mb-6">
+                        <div className="backdrop-blur-sm bg-white/5 rounded-xl p-4 border border-white/20 mb-6">
+                          <div className="text-lg sm:text-xl font-['Pretendard'] font-bold text-white mb-2">
+                            🔓 한국어 가사
+                          </div>
+                          <div className="text-base sm:text-2sm font-['Pretendard'] text-white text-center leading-relaxed">
+                            {item.korean}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex justify-center mt-8">
                       <Button
                         onClick={onSubmit}
-                        className="h-14 sm:h-16 px-8 sm:px-12 bg-[#4B2199]/90 hover:bg-[#4B2199] text-white font-['Pretendard'] font-bold text-lg sm:text-xl rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+                        className="h-12 sm:h-14 rounded-xl px-6 sm:px-8 bg-[#4B2199]/90 hover:bg-[#4B2199] text-white font-['Pretendard'] font-bold text-base sm:text-lg disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300 shadow-xl hover:shadow-2xl disabled:hover:shadow-xl"
                       >
-                       답안 제출
+                      답안 제출 →
                       </Button>
                     </div>
                   </>
