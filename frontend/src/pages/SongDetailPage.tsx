@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Skeleton } from "@/components/ui/skeleton";
 
 // icons
-import { Clock, Flame, ChevronLeft, Gamepad2, Type, MicVocal, Keyboard, Plus, CheckCircle } from "lucide-react";
+import { Clock, Flame, ChevronLeft, /* Gamepad2, */ Type, MicVocal, Keyboard, Plus, CheckCircle } from "lucide-react";
 
 
 const SONG_DETAIL_SAMPLE: SongDetail = {
@@ -83,10 +83,10 @@ export default function SongDetailPage() {
   const [initLearningLoading, setInitLearningLoading] = useState(false);
   const [learned, setLearned] = useState<null | { learnedSongId: number }>(null);
 
-  // 개별 학습 모드 로딩 상태
-  const [quizLoading, setQuizLoading] = useState(false);
-  const [speakingLoading, setSpeakingLoading] = useState(false);
-  const [dictationLoading, setDictationLoading] = useState(false);
+  // 개별 학습 모드 로딩 상태 (주석 처리)
+  // const [quizLoading] = useState(false);
+  // const [speakingLoading] = useState(false);
+  // const [dictationLoading] = useState(false);
 
   // 직접 학습 모달 상태
   const [directLearnModal, setDirectLearnModal] = useState<{
@@ -465,48 +465,48 @@ export default function SongDetailPage() {
                   <div className="h-20 flex flex-col items-start justify-start rounded-md bg-[#6C5F8D]/60 hover:bg-[#6C5F8D]/80 p-3 cursor-pointer transition-colors"
                        onClick={() => handleDirectLearn("cloze")}>
                     <div className="font-bold text-xs mb-2 text-white font-['Pretendard']">빈칸 퀴즈</div>
-                    {quizLoading ? (
+                    {/* quizLoading ? (
                       <div className="flex items-center justify-center w-full h-full">
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                       </div>
-                    ) : (
+                    ) : ( */}
                       <div className="flex flex-col items-center justify-center w-full h-full">
                         <CheckCircle className="h-5 w-5 mb-1 text-white" />
                         <div className="text-xs text-white/80 text-center font-['Pretendard']">Fill in the ___</div>
                       </div>
-                    )}
+                    {/* ) */}
                   </div>
 
                   {/* Speaking 연습 */}
                   <div className="h-20 flex flex-col items-start justify-start rounded-md bg-[#6C5F8D]/60 hover:bg-[#6C5F8D]/80 p-3 cursor-pointer transition-colors"
                        onClick={() => handleDirectLearn("speaking")}>
                     <div className="font-bold text-xs mb-2 text-white font-['Pretendard']">Speaking</div>
-                    {speakingLoading ? (
+                    {/* speakingLoading ? (
                       <div className="flex items-center justify-center w-full h-full">
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                       </div>
-                    ) : (
+                    ) : ( */}
                       <div className="flex flex-col items-center justify-center w-full h-full">
                         <MicVocal className="h-5 w-5 mb-1 text-white" />
-                        
+
                       </div>
-                    )}
+                    {/* ) */}
                   </div>
 
                   {/* 딕테이션 게임 */}
                   <div className="h-20 flex flex-col items-start justify-start rounded-md bg-[#6C5F8D]/60 hover:bg-[#6C5F8D]/80 p-3 cursor-pointer transition-colors"
                        onClick={() => handleDirectLearn("dictation")}>
                     <div className="font-bold text-xs mb-2 text-white font-['Pretendard']">딕테이션</div>
-                    {dictationLoading ? (
+                    {/* dictationLoading ? (
                       <div className="flex items-center justify-center w-full h-full">
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                       </div>
-                    ) : (
+                    ) : ( */}
                       <div className="flex flex-col items-center justify-center w-full h-full">
                         <Keyboard className="h-5 w-5 mb-1 text-white" />
-                        
+
                       </div>
-                    )}
+                    {/* ) */}
                   </div>
                 </div>
               </div>
