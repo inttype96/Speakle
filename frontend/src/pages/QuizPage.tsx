@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 // icons
-import { ChevronLeft, Timer, SkipForward } from "lucide-react";
+import { ChevronLeft/*, Timer, SkipForward*/ } from "lucide-react";
 
 // 서비스 & 타입
 import {
@@ -49,8 +49,8 @@ function getInitialQ(search: string, storageKey: string): number {
   return 1;
 }
 
-const mmss = (sec: number) =>
-  `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+// const mmss = (sec: number) =>
+//   `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 
 // 빈칸을 정답 단어 길이에 맞는 언더바로 변환하는 함수
 const formatQuestionWithBlanks = (question: string, correctAnswers: string[]): string => {
@@ -128,12 +128,12 @@ function InlineBlankInputs({
                   }
                 }}
                 style={{ width: getInputWidth(i) }}
-                className="h-10 sm:h-12 px-3 sm:px-4 rounded-xl border-2 border-white/30 bg-white text-black shadow-inner
-                           outline-none focus:ring-2 focus:ring-[#B5A6E0] focus:border-[#4B2199] text-base sm:text-lg font-['Pretendard'] font-medium
-                           text-center placeholder:text-center placeholder:text-gray-500
-                           transition-all duration-300 ease-in-out hover:border-[#B5A6E0] hover:shadow-lg
-                           focus:bg-white focus:shadow-xl"
-                placeholder="정답"
+                className="h-8 sm:h-9 px-2 sm:px-3 mx-1 rounded-md border-0 border-b-2 border-white/50 bg-white/85 text-black shadow-sm
+                          outline-none focus:ring-1 focus:ring-[#B5A6E0]/60 focus:border-[#4B2199] text-sm sm:text-base font-['Pretendard'] font-medium
+                          text-center placeholder:text-center placeholder:text-gray-400 placeholder:font-normal placeholder:text-sm
+                          transition-all duration-200 ease-in-out hover:border-white/70 hover:bg-white/95
+                          focus:bg-white focus:shadow-sm transform hover:scale-[1.02] focus:scale-[1.02]"
+                placeholder="빈칸"
               />
             )}
             {isLastText && null}
@@ -178,7 +178,7 @@ export default function QuizPage() {
   const [scoreThis, setScoreThis] = useState<number>(0); // 이번 문제 점수
   const [complete, setComplete] = useState<CompleteRes["data"] | null>(null);
   const [openSummary, setOpenSummary] = useState(false); // ✅ 완료 모달
-  const [elapsed, setElapsed] = useState(0);
+  // const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, String(qNum));
@@ -212,16 +212,16 @@ export default function QuizPage() {
       setIsCorrect(null);
       setScoreThis(0);
       setOpenResult(false);
-      setElapsed(0);
+      // setElapsed(0);
     })();
   }, [qNum, learnedSongId, songId, situation, location]);
 
   // 타이머
-  useEffect(() => {
-    if (!question || complete) return;
-    const id = setInterval(() => setElapsed((s) => s + 1), 1000);
-    return () => clearInterval(id);
-  }, [question, complete]);
+  // useEffect(() => {
+  //   if (!question || complete) return;
+  //   const id = setInterval(() => setElapsed((s) => s + 1), 1000);
+  //   return () => clearInterval(id);
+  // }, [question, complete]);
 
   const answerTokens = useMemo(
     () => (question ? question.answer.map(normalizeToken) : []),
@@ -291,20 +291,20 @@ export default function QuizPage() {
   }, [question, isCorrect, scoreThis, userInputs, learnedSongId, STORAGE_KEY]);
 
   // 스킵: 오답 저장 후 다음
-  const onSkip = useCallback(async () => {
-    if (!question) return;
-    await marking({
-      userId: userId || 0,
-      blankId: question.blankId,
-      isCorrect: false,
-      score: 0,
-      originSentence: question.originSentence,
-      question: question.question,
-      correctAnswer: question.answer,
-      userAnswer: Array.from({ length: question.answer.length }, () => ""),
-    });
-    if (qNum < TOTAL_QUESTIONS) setQNum((n) => n + 1);
-  }, [question, qNum]);
+  // const onSkip = useCallback(async () => {
+  //   if (!question) return;
+  //   await marking({
+  //     userId: userId || 0,
+  //     blankId: question.blankId,
+  //     isCorrect: false,
+  //     score: 0,
+  //     originSentence: question.originSentence,
+  //     question: question.question,
+  //     correctAnswer: question.answer,
+  //     userAnswer: Array.from({ length: question.answer.length }, () => ""),
+  //   });
+  //   if (qNum < TOTAL_QUESTIONS) setQNum((n) => n + 1);
+  // }, [question, qNum]);
 
   const isCompleted = !!complete;
 
@@ -344,7 +344,7 @@ export default function QuizPage() {
         </div>
 
         {/* 게임 스타일 진행 표시 */}
-        <div className="backdrop-blur-xl bg-white/10 rounded-2xl p-6 border border-white/20 shadow-2xl mb-8">
+        <div className="backdrop-blur-xl bg-white/10 rounded-2xl p-6 border border-white/20 shadow-2xl mb-4">
           <div className="flex flex-col sm:flex-row items-center justify-between mb-4 gap-2 sm:gap-0">
             <div className="text-sm font-['Pretendard'] font-bold text-white">
               Question {qNum} of {TOTAL_QUESTIONS}
@@ -374,21 +374,20 @@ export default function QuizPage() {
                     <div className="backdrop-blur-sm bg-white/20 px-3 py-1.5 rounded-full border border-white/30">
                       <span className="font-['Pretendard'] font-bold text-white text-sm">문제 {qNum}</span>
                     </div>
-                    <Badge className="bg-[#4B2199]/80 text-white border-[#B5A6E0]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
-                      {POINTS_PER_Q} points
-                    </Badge>
                   </div>
 
                   <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
-                    <div className="flex items-center gap-2 bg-gradient-to-r from-[#4B2199]/20 to-[#B5A6E0]/20 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl shadow-lg">
-                      <Timer size={16} className="text-[#B5A6E0] animate-pulse sm:w-[18px] sm:h-[18px]" />
-                      <span className="tabular-nums text-white font-['Inter'] font-bold text-base sm:text-lg tracking-wide drop-shadow-md">{mmss(elapsed)}</span>
-                    </div>
-                    <Badge className="bg-[#B5A6E0]/80 text-white border-[#4B2199]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
+                    <Badge className="bg-[#7545c2]/80 text-white border-[#6a3cb7]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
                       Medium
+                    </Badge>
+                    
+                    <Badge className="bg-[#7545c2]/80 text-white border-[#6a3cb7]/50 rounded-full py-1 px-2 text-xs font-['Pretendard'] font-medium">
+                      {POINTS_PER_Q} points
                     </Badge>
                   </div>
                 </div>
+
+                <div className="h-6" />
 
                 <div className="space-y-4 sm:space-y-6 w-full text-center">
 
@@ -411,8 +410,8 @@ export default function QuizPage() {
                   </CardTitle>
 
                   <div className="text-center">
-                    <p className="text-base font-['Pretendard'] font-medium text-white backdrop-blur-sm bg-[#4B2199]/20 rounded-xl px-4 py-3 border border-[#B5A6E0]/30 inline-block">
-                      {question?.korean ?? "문제를 불러오는 중..."}
+                    <p className="inline-flex items-center gap-3 backdrop-blur-sm bg-gradient-to-r from-[#4B2199]/25 to-[#7545c2]/25 rounded-2xl px-6 py-4 border border-[#B5A6E0]/40 shadow-lg text-base font-['Pretendard'] font-medium text-white italic">
+                      🇰🇷 "{question?.korean ?? "문제를 불러오는 중..."}"
                     </p>
                   </div>
                 </div>
@@ -420,21 +419,22 @@ export default function QuizPage() {
 
               <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 lg:p-8 pt-0 flex flex-col items-center">
                 {/* 게임 스타일 액션 버튼들 */}
-                <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between w-full">
-                  <Button
+                <div className="flex justify-center">
+                {/* <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between w-full"> */}
+                  {/* <Button
                     variant="ghost"
                     className="w-full sm:w-auto h-10 sm:h-12 px-4 sm:px-6 font-['Pretendard'] font-medium text-white/70 hover:text-white hover:bg-white/10 border border-white/30 rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105"
                     onClick={onSkip}
                   >
                     <SkipForward size={16} className="mr-2" />
                     Skip
-                  </Button>
+                  </Button> */}
 
                   <Button
-                    className="w-full sm:w-auto h-10 sm:h-12 px-6 sm:px-8 font-['Pretendard'] font-bold text-base sm:text-lg bg-[#4B2199] hover:bg-[#5A2BB8] text-white border-2 border-[#B5A6E0]/50 hover:border-[#B5A6E0] rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+                    className="h-12 sm:h-14 rounded-xl px-6 sm:px-8 bg-[#4B2199]/90 hover:bg-[#4B2199] text-white font-['Pretendard'] font-bold text-base sm:text-lg disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300 shadow-xl hover:shadow-2xl disabled:hover:shadow-xl"
                     onClick={onSubmitAnswer}
                   >
-                    <span className="hidden sm:inline">Next Question →</span>
+                    <span className="hidden sm:inline">답안 제출 →</span>
                     <span className="sm:hidden">다음 →</span>
                   </Button>
                 </div>
