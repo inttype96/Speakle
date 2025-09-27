@@ -475,7 +475,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
 
   if (!isSDKReady) {
     return (
-      <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg w-full max-w-full">
+      <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-slate-900/70 to-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg w-full max-w-full">
         <div className="flex items-center justify-center w-12 h-12">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
         </div>
@@ -488,7 +488,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
   }
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg w-full max-w-full">
+    <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-slate-900/70 to-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg w-full max-w-full">
       {/* 재생/일시정지 버튼 */}
       <Button
         onClick={handlePlayPause}
@@ -516,7 +516,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
               {formatTime(position)}
             </span>
             <div
-              className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 cursor-pointer hover:h-3 transition-all duration-200"
+              className="flex-1 bg-slate-700/80 rounded-full h-2 cursor-pointer hover:h-3 transition-all duration-200"
               onClick={handleProgressClick}
             >
               <div
@@ -537,7 +537,7 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
           variant="ghost"
           size="sm"
           onClick={toggleMute}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="p-2 hover:bg-slate-700/50"
         >
           {isMuted || volume === 0 ? (
             <VolumeX className="w-4 h-4" />

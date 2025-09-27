@@ -337,7 +337,7 @@ export default function QuizPage() {
 
           <div className="backdrop-blur-sm bg-white/10 rounded-xl px-3 sm:px-4 py-2.5 text-right border border-white/20">
             <div className="text-xs font-['Pretendard'] text-white/70 truncate max-w-[200px] sm:max-w-none">
-              {question ? `${question.title} - ${question.artists}` : "Loading..."}
+              {question ? `${question.title} - ${question.artists.replace(/[\[\]']/g, '')}` : "Loading..."}
             </div>
             <div className="text-sm font-['Pretendard'] font-bold text-white">{TOP_RIGHT_MODE}</div>
           </div>
@@ -448,42 +448,73 @@ export default function QuizPage() {
 
       {/* 정답/오답 모달 */}
       <Dialog open={openResult} onOpenChange={setOpenResult}>
-        <DialogContent className="backdrop-blur-xl bg-white/95 border border-white/30 shadow-2xl rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-center font-['Pretendard'] font-bold text-2xl mb-4">
+        <DialogContent className="sm:max-w-3xl backdrop-blur-sm bg-[#1a1a2e]/95 border border-white/10">
+          <DialogHeader className="border-b border-white/10 pb-4">
+            <DialogTitle className="text-2xl font-['Pretendard'] font-bold text-white">
               {isCorrect ? (
-                <span className="text-green-600">정답입니다! 🎉</span>
+                <span className="text-[#B5A6E0]">정답입니다</span>
               ) : (
-                <span className="text-red-600">오답입니다! 😢</span>
+                <span className="text-white">오답입니다</span>
               )}
             </DialogTitle>
-            <DialogDescription className="space-y-4 font-['Pretendard']">
-              {question && (
-                <>
-                  <div className="p-4 bg-gray-50 rounded-xl">
-                    <span className="font-semibold text-gray-700">문제: </span>
-                    <span className="text-gray-900">{question.question}</span>
-                  </div>
-                  <div className="p-4 bg-green-50 rounded-xl border border-green-200">
-                    <span className="font-semibold text-green-700">정답: </span>
-                    <span className="text-green-900 font-medium">{question.answer.join(", ")}</span>
-                  </div>
-                  <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
-                    <span className="font-semibold text-blue-700">내 답: </span>
-                    <span className="text-blue-900 font-medium">{userInputs.join(", ") || "—"}</span>
-                  </div>
-                  <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
-                    <span className="font-semibold text-purple-700">점수: </span>
-                    <span className="text-purple-900 font-bold text-lg">{scoreThis} / {POINTS_PER_Q}</span>
-                  </div>
-                </>
-              )}
+            <DialogDescription className="text-sm font-['Pretendard'] text-white/60 mt-2">
+              문제 {qNum} / {TOTAL_QUESTIONS}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-3 pt-4">
+
+          <div className="space-y-8 py-6">
+            {question && (
+              <>
+                {/* 문제 */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-5 bg-[#4B2199]"></div>
+                    <span className="text-sm font-['Pretendard'] font-semibold text-white/80 uppercase tracking-wider">Question</span>
+                  </div>
+                  <div className="p-6 bg-white/5 border border-white/10 rounded-xl">
+                    <span className="text-white font-['Pretendard']">{question.question}</span>
+                  </div>
+                </div>
+
+                {/* 정답 */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-5 bg-[#B5A6E0]"></div>
+                    <span className="text-sm font-['Pretendard'] font-semibold text-white/80 uppercase tracking-wider">Correct Answer</span>
+                  </div>
+                  <div className="p-6 bg-white/5 border border-white/10 rounded-xl">
+                    <span className="text-[#B5A6E0] font-['Pretendard'] font-medium">{question.answer.join(", ")}</span>
+                  </div>
+                </div>
+
+                {/* 내 답 */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-5 bg-slate-400"></div>
+                    <span className="text-sm font-['Pretendard'] font-semibold text-white/80 uppercase tracking-wider">Your Answer</span>
+                  </div>
+                  <div className="p-6 bg-white/5 border border-white/10 rounded-xl">
+                    <span className="text-slate-300 font-['Pretendard'] font-medium">{userInputs.join(", ") || "—"}</span>
+                  </div>
+                </div>
+
+                {/* 점수 */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-5 bg-[#4B2199]"></div>
+                    <span className="text-sm font-['Pretendard'] font-semibold text-white/80 uppercase tracking-wider">Score</span>
+                  </div>
+                  <div className="p-6 bg-white/5 border border-white/10 rounded-xl">
+                    <span className="text-white font-['Pretendard'] font-bold text-lg">{scoreThis} / {POINTS_PER_Q}</span>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter className="gap-3 pt-4 border-t border-white/10">
             <Button
-              variant="secondary"
-              className="font-['Pretendard'] font-medium px-6 py-2 rounded-xl"
+              variant="outline"
+              className="font-['Pretendard'] font-medium px-6 py-2 bg-white/5 border-white/20 text-white hover:bg-white/10"
               onClick={() => setOpenResult(false)}
             >
               닫기
@@ -491,7 +522,7 @@ export default function QuizPage() {
 
             {!isLastQuestion ? (
               <Button
-                className="font-['Pretendard'] font-bold px-6 py-2 bg-[#4B2199] hover:bg-[#5A2BB8] text-white rounded-xl"
+                className="font-['Pretendard'] font-bold px-6 py-2 bg-[#4B2199] hover:bg-[#5A2BB8] text-white"
                 onClick={onNextQuestion}
                 disabled={qNum >= TOTAL_QUESTIONS}
               >
@@ -499,7 +530,7 @@ export default function QuizPage() {
               </Button>
             ) : (
               <Button
-                className="font-['Pretendard'] font-bold px-6 py-2 bg-[#4B2199] hover:bg-[#5A2BB8] text-white rounded-xl"
+                className="font-['Pretendard'] font-bold px-6 py-2 bg-[#4B2199] hover:bg-[#5A2BB8] text-white"
                 onClick={finishFromModal}
               >
                 퀴즈 종료
@@ -511,61 +542,85 @@ export default function QuizPage() {
 
       {/* 전체 결과 모달 */}
       <Dialog open={openSummary} onOpenChange={setOpenSummary}>
-        <DialogContent className="max-w-2xl backdrop-blur-xl bg-white/95 border border-white/30 shadow-2xl rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-center font-['Pretendard'] font-bold text-2xl text-[#4B2199] mb-4">
-              🎊 퀴즈 완료! 🎊
+        <DialogContent className="sm:max-w-2xl backdrop-blur-sm bg-[#1a1a2e]/95 border border-white/10">
+          <DialogHeader className="border-b border-white/10 pb-4">
+            <DialogTitle className="text-2xl font-['Pretendard'] font-bold text-white">
+              게임 결과
             </DialogTitle>
+            <DialogDescription className="text-sm font-['Pretendard'] text-white/60 mt-2">
+              수고하셨습니다
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-6">
-            <div className="text-center p-4 bg-[#4B2199]/10 rounded-xl border border-[#B5A6E0]/30">
-              <div className="font-['Pretendard'] font-bold text-lg text-[#4B2199]">
-                총 문제 {complete?.summary.totalQuestions}개 · 정답{" "}
-                <span className="text-green-600">{complete?.summary.correctAnswers}개</span> · 총점{" "}
-                <span className="text-[#4B2199] text-xl">{complete?.summary.totalScore}점</span>
-              </div>
-            </div>
 
-            <div className="space-y-3 max-h-[50vh] overflow-auto pr-2">
-              {complete?.results.map((r, index) => (
-                <div key={r.blankResultId} className="backdrop-blur-sm bg-white/80 rounded-xl border border-gray-200 p-4 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 bg-[#4B2199] rounded-full flex items-center justify-center text-white text-xs font-bold">
-                      {index + 1}
-                    </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                      r.isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                    }`}>
-                      {r.isCorrect ? "정답" : "오답"} | {r.score}점
-                    </span>
-                  </div>
-                  <div className="font-['Pretendard'] font-medium text-gray-900 mb-2">
-                    {formatQuestionWithBlanks(r.meta.question, r.meta.correctAnswer)}
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    <div>
-                      <span className="font-semibold text-green-600">정답: </span>
-                      <span className="text-green-700">{r.meta.correctAnswer.join(", ")}</span>
-                    </div>
-                    <div>
-                      <span className="font-semibold text-blue-600">내 답: </span>
-                      <span className="text-blue-700">{r.meta.userAnswer.join(", ") || "—"}</span>
-                    </div>
-                  </div>
+          {complete && (
+            <div className="space-y-6 py-6">
+              {/* 점수 요약 */}
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="p-4 bg-white/5 border border-white/10">
+                  <div className="text-xs font-['Pretendard'] text-white/60 uppercase tracking-wider mb-2">Total</div>
+                  <div className="text-2xl font-['Inter'] font-bold text-white">{complete.summary.totalQuestions}</div>
+                </div>
+                <div className="p-4 bg-[#B5A6E0]/10 border border-[#B5A6E0]/30">
+                  <div className="text-xs font-['Pretendard'] text-white/60 uppercase tracking-wider mb-2">Correct</div>
+                  <div className="text-2xl font-['Inter'] font-bold text-[#B5A6E0]">{complete.summary.correctAnswers}</div>
+                </div>
+                <div className="p-4 bg-[#4B2199]/10 border border-[#4B2199]/30">
+                  <div className="text-xs font-['Pretendard'] text-white/60 uppercase tracking-wider mb-2">Score</div>
+                  <div className="text-2xl font-['Inter'] font-bold text-white">{complete.summary.totalScore}</div>
+                </div>
+              </div>
+
+              {/* 문제별 결과 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-1 h-5 bg-[#4B2199]"></div>
+                  <span className="text-sm font-['Pretendard'] font-semibold text-white/80 uppercase tracking-wider">Details</span>
+                </div>
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                  {complete.results.map((r, index) => (
+                    <div key={r.blankResultId} className="p-4 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-['Pretendard'] font-medium text-white">
+                          문제 {index + 1}
+                        </span>
+                        <span className={`text-xs font-['Pretendard'] font-semibold px-3 py-1 ${
+                          r.isCorrect
+                            ? 'bg-[#B5A6E0]/20 text-[#B5A6E0] border border-[#B5A6E0]/30'
+                            : 'bg-slate-500/20 text-slate-400 border border-slate-500/30'
+                        }`}>
+                          {r.isCorrect ? "CORRECT" : "WRONG"} | {r.score}점
+                        </span>
+                      </div>
+                      <div className="font-['Pretendard'] font-medium text-white/90 mb-3">
+                        {formatQuestionWithBlanks(r.meta.question, r.meta.correctAnswer)}
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-[#B5A6E0]">정답:</span>
+                          <span className="text-white/80">{r.meta.correctAnswer.join(", ")}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-slate-400">내 답:</span>
+                          <span className="text-white/80">{r.meta.userAnswer.join(", ") || "—"}</span>
+                        </div>
+                      </div>
                 </div>
               ))}
+                </div>
+              </div>
             </div>
-          </div>
-          <DialogFooter className="gap-3 pt-6">
+          )}
+
+          <DialogFooter className="gap-3 pt-4 border-t border-white/10">
             <Button
-              variant="secondary"
-              className="font-['Pretendard'] font-medium px-6 py-2 rounded-xl"
+              variant="outline"
+              className="font-['Pretendard'] font-medium px-6 py-2 bg-white/5 border-white/20 text-white hover:bg-white/10"
               onClick={() => setOpenSummary(false)}
             >
               닫기
             </Button>
             <Button
-              className="font-['Pretendard'] font-bold px-6 py-2 bg-[#4B2199] hover:bg-[#5A2BB8] text-white rounded-xl"
+              className="font-['Pretendard'] font-bold px-6 py-2 bg-[#4B2199] hover:bg-[#5A2BB8] text-white"
               onClick={() => {
                 const params = new URLSearchParams();
                 if (situation) params.set('situation', situation);
