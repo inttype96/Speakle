@@ -619,7 +619,7 @@ export default function DictationPage() {
           <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-2xl overflow-hidden max-w-5xl w-full">
             <CardContent className="p-6 text-center">
               {/* 헤더 섹션 */}
-              <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between w-full mb-15">
+              <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between w-full mb-16">
                 <div className="flex items-center gap-2">
                   <div className="backdrop-blur-sm bg-white/20 px-3 py-1.5 rounded-full border border-white/30">
                     <span className="font-['Pretendard'] font-bold text-white text-sm">문제 {qNo}</span>
