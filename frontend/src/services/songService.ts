@@ -18,6 +18,30 @@ export type LearnedRes = {
   };
 };
 
+export type LearnedSongInfoRes = {
+  status: number;
+  message: string;
+  data: {
+    situation: string;
+    location: string;
+  };
+};
+
+export async function getLearnedSongInfo(
+  learnedSongId: number,
+  accessToken?: string
+): Promise<{ situation: string; location: string }> {
+  const response = await http.get<LearnedSongInfoRes>(
+    `/user/${learnedSongId}/info`,
+    {
+      headers: {
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+    }
+  );
+  return response.data.data;
+}
+
 // accessToken은 로컬스토리지에서 꺼내오거나, 인터셉터를 쓰면 생략 가능
 export async function createLearnedSong(
   payload: LearnedReq,
