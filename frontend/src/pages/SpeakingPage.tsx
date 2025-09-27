@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Mic, MicOff, Volume2, Timer } from "lucide-react";
+import { ChevronLeft, Mic, MicOff, Volume2, /* Timer */ } from "lucide-react";
 
 import {
   evaluateSpeaking,
@@ -38,8 +38,8 @@ function getInitialQ(search: string, storageKey: string): number {
   return 1;
 }
 
-const mmss = (sec: number) =>
-  `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+// const mmss = (sec: number) =>
+//   `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
 
 // 발음 점수에 따른 평가 메시지
 const getSpeakingMessage = (score: number): string => {
@@ -81,7 +81,7 @@ export default function SpeakingPage() {
   const chunksRef = useRef<Blob[]>([]);
 
   // 타이머/모달/결과
-  const [elapsed, setElapsed] = useState(0);
+  const [_elapsed, setElapsed] = useState(0);
   const [openResult, setOpenResult] = useState(false);
   const [lastIsCorrect, setLastIsCorrect] = useState<boolean | null>(null);
   const [lastScore, setLastScore] = useState<number | null>(null);
