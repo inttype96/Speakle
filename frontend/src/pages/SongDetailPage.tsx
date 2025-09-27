@@ -88,6 +88,66 @@ export default function SongDetailPage() {
   const [speakingLoading, setSpeakingLoading] = useState(false);
   const [dictationLoading, setDictationLoading] = useState(false);
 
+  // 직접 학습 모달 상태
+  const [directLearnModal, setDirectLearnModal] = useState<{
+    open: boolean;
+    mode: "cloze" | "speaking" | "dictation" | null;
+    preparing: boolean;
+    waitingForSession: boolean;
+  }>({
+    open: false,
+    mode: null,
+    preparing: false,
+    waitingForSession: false
+  });
+
+  // learned 상태와 learningContent가 모두 준비되었을 때 대기 중인 직접 학습 모달 처리
+  useEffect(() => {
+    console.log("useEffect 실행", {
+      learned: learned?.learnedSongId,
+      learningContent: !!learningContent,
+      waitingForSession: directLearnModal.waitingForSession,
+      mode: directLearnModal.mode
+    });
+
+    if (learned?.learnedSongId && learningContent && directLearnModal.waitingForSession) {
+      console.log("세션과 학습 내용 모두 준비 완료, 페이지 이동 시작");
+
+      // 준비 완료 상태로 변경
+      setDirectLearnModal(prev => ({
+        ...prev,
+        preparing: false,
+        waitingForSession: false
+      }));
+
+      // 잠시 후 페이지 이동
+      setTimeout(() => {
+        const path = {
+          cloze: "/learn/quiz",
+          speaking: "/learn/speaking",
+          dictation: "/learn/dictation"
+        }[directLearnModal.mode!];
+
+        const qs = new URLSearchParams();
+        qs.set("songId", songId);
+        qs.set("learnedSongId", String(learned.learnedSongId));
+        if (situation) qs.set("situation", situation);
+        if (location) qs.set("location", location);
+
+        console.log("페이지 이동", path);
+        navigate(`${path}?${qs.toString()}`);
+
+        // 모달 닫기
+        setDirectLearnModal({
+          open: false,
+          mode: null,
+          preparing: false,
+          waitingForSession: false
+        });
+      }, 800);
+    }
+  }, [learned, learningContent, directLearnModal.waitingForSession, directLearnModal.mode, songId, situation, location, navigate]);
+
   // 가사 동기화를 위한 상태
   const [currentPlayTime, setCurrentPlayTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -122,20 +182,11 @@ export default function SongDetailPage() {
 
   // 학습 세션 생성 및 페이지 이동
   const handleDirectLearn = async (mode: "cloze" | "speaking" | "dictation") => {
-    const setLoading = {
-      cloze: setQuizLoading,
-      speaking: setSpeakingLoading,
-      dictation: setDictationLoading
-    }[mode];
+    console.log("handleDirectLearn 호출됨", { mode, learned, learnedSongId: learned?.learnedSongId });
 
-    setLoading(true);
-    try {
-      const accessToken = localStorage.getItem("access_token") || undefined;
-      const r = await createLearnedSong(
-        { songId, situation, location },
-        accessToken
-      );
-
+    // 세션과 학습 내용이 모두 준비되어 있으면 바로 이동
+    if (learned?.learnedSongId && learningContent) {
+      console.log("세션과 학습 내용이 모두 준비됨, 바로 이동");
       const path = {
         cloze: "/learn/quiz",
         speaking: "/learn/speaking",
@@ -144,16 +195,53 @@ export default function SongDetailPage() {
 
       const qs = new URLSearchParams();
       qs.set("songId", songId);
-      qs.set("learnedSongId", String(r.learnedSongId));
+      qs.set("learnedSongId", String(learned.learnedSongId));
       if (situation) qs.set("situation", situation);
       if (location) qs.set("location", location);
 
       navigate(`${path}?${qs.toString()}`);
+      return;
+    }
+
+    // 세션이나 학습 내용이 준비되지 않았으면 모달 띄우고 준비 진행
+    if (learned?.learnedSongId) {
+      console.log("세션은 준비됨, 학습 내용 대기 중");
+    } else {
+      console.log("세션이 준비되지 않음, 세션 생성 시작");
+    }
+    setDirectLearnModal({
+      open: true,
+      mode,
+      preparing: true,
+      waitingForSession: true
+    });
+
+    // 세션이 없으면 세션 생성, 있으면 학습 내용만 생성
+    try {
+      if (!learned?.learnedSongId) {
+        console.log("세션 생성 중...");
+        const accessToken = localStorage.getItem("access_token") || undefined;
+        const r = await createLearnedSong(
+          { songId, situation, location },
+          accessToken
+        );
+        setLearned({ learnedSongId: r.learnedSongId });
+      }
+
+      // 학습 내용 생성
+      if (!learningContent) {
+        console.log("학습 내용 생성 중...");
+        await fetchLearningContentData();
+        console.log("학습 내용 생성 완료");
+      }
     } catch (e) {
       console.error(e);
-      // 에러 처리 - 필요시 토스트 추가
-    } finally {
-      setLoading(false);
+      setDirectLearnModal({
+        open: false,
+        mode: null,
+        preparing: false,
+        waitingForSession: false
+      });
     }
   };
 
@@ -528,6 +616,14 @@ export default function SongDetailPage() {
         onSuccess={() => {
         }}
       />
+
+      {/* 직접 학습 준비 모달 */}
+      <DirectLearnModal
+        open={directLearnModal.open}
+        mode={directLearnModal.mode}
+        preparing={directLearnModal.preparing}
+        onClose={() => setDirectLearnModal({ open: false, mode: null, preparing: false, waitingForSession: false })}
+      />
     </div>
   );
 }
@@ -602,6 +698,67 @@ function LearnDialog({
             닫기
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DirectLearnModal({
+  open,
+  mode,
+  preparing,
+  onClose,
+}: {
+  open: boolean;
+  mode: "cloze" | "speaking" | "dictation" | null;
+  preparing: boolean;
+  onClose: () => void;
+}) {
+  const modeLabels = {
+    cloze: "빈칸 퀴즈",
+    speaking: "Speaking 연습",
+    dictation: "딕테이션"
+  };
+
+  const modeIcons = {
+    cloze: <CheckCircle className="h-8 w-8" />,
+    speaking: <MicVocal className="h-8 w-8" />,
+    dictation: <Keyboard className="h-8 w-8" />
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-center font-['Pretendard'] font-bold text-xl">
+            {mode ? modeLabels[mode] : "학습"} 준비
+          </DialogTitle>
+          <DialogDescription className="text-center font-['Pretendard']">
+            {preparing ? "세션을 준비하고 있습니다..." : "준비가 완료되었습니다!"}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-col items-center justify-center py-8">
+          <div className="mb-4 text-[#4B2199]">
+            {mode && modeIcons[mode]}
+          </div>
+
+          {preparing ? (
+            <div className="flex items-center gap-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#4B2199]"></div>
+              <span className="text-sm font-['Pretendard'] text-muted-foreground">
+                세션 준비 중...
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 text-green-600">
+              <CheckCircle className="h-6 w-6" />
+              <span className="text-sm font-['Pretendard'] font-medium">
+                준비 완료! 곧 이동합니다...
+              </span>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
