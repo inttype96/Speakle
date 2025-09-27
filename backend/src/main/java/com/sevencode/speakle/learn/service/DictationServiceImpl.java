@@ -150,8 +150,8 @@ public class DictationServiceImpl implements DictationService{
 
         // 감탄사나 반복 문자 패턴 제외
         String lowerCase = english.toLowerCase();
-        if (lowerCase.matches(".*([a-z])\\1{3,}.*") || // 같은 문자 4번 이상 반복
-                lowerCase.matches(".*(oh+|ah+|yeah+|la+|na+).*") || // 감탄사 패턴
+        if (lowerCase.matches(".*([a-z])\\1{2,}.*") || // 같은 문자 3번 이상 반복
+                lowerCase.matches(".*(oh+|ah+|eh+|uh+|yeah+|la+|na+).*") || // 감탄사 패턴
                 lowerCase.contains("...") || // 생략 부호
                 english.length() < 10) { // 너무 짧은 문장
             return false;
