@@ -123,10 +123,12 @@ public class DictationServiceImpl implements DictationService{
                 .startTime(selectedLyrics.getStartTimeMs())
                 .endTime(endTime)
                 .originSentence(selectedLyrics.getEnglish())
+                .korean(selectedLyrics.getKorean())
                 .answer(selectedLyrics.getEnglish())
                 .level(DictationEntity.Level.BEGINNER)
                 .questionNumber(request.getQuestionNumber())
                 .build();
+
         return dictationRepository.save(dictation);
     }
 
@@ -191,6 +193,7 @@ public class DictationServiceImpl implements DictationService{
                 .title(song.getTitle())
                 .artists(song.getArtists())
                 .coreSentence(dictation.getOriginSentence())
+                .korean(dictation.getKorean())
                 .startTime(dictation.getStartTime())
                 .duration(duration)
                 .endTime(dictation.getEndTime())

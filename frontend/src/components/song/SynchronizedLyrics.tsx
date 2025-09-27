@@ -32,11 +32,13 @@ export default function SynchronizedLyrics({
     if (event.status === 'STARTED') {
       setShowTranslationProgress(true);
     } else if (event.status === 'PROGRESS' && event.chunkId && event.korean) {
-      setRealtimeLyrics(prev => prev.map(chunk =>
-        chunk.id === event.chunkId
-          ? { ...chunk, korean: event.korean || null }
-          : chunk
-      ));
+      setRealtimeLyrics(prev =>
+        prev.map(chunk =>
+          chunk.id === event.chunkId
+            ? { ...chunk, korean: event.korean || null }
+            : chunk
+        ).sort((a, b) => a.startTimeMs - b.startTimeMs)
+      );
     } else if (event.status === 'COMPLETED') {
       setShowTranslationProgress(false);
     } else if (event.status === 'ERROR') {
@@ -49,12 +51,12 @@ export default function SynchronizedLyrics({
     onTranslationUpdate: handleTranslationUpdate
   });
 
-  // lyricChunks가 변경되면 realtimeLyrics 업데이트
+  // lyricChunks가 변경되면 realtimeLyrics 업데이트 (시간순 정렬 보장)
   useEffect(() => {
-    setRealtimeLyrics(lyricChunks);
+    setRealtimeLyrics(lyricChunks.sort((a, b) => a.startTimeMs - b.startTimeMs));
   }, [lyricChunks]);
 
-  // 빈 가사를 제외한 유효한 가사만 필터링
+  // 빈 가사를 제외한 유효한 가사만 필터링 후 시간순 정렬
   const validLyrics = realtimeLyrics
     .filter(chunk => {
       if (!chunk.english || chunk.english.trim() === '') return false;
@@ -66,6 +68,8 @@ export default function SynchronizedLyrics({
 
 
     })
+    // startTimeMs 기준으로 시간순 정렬
+    .sort((a, b) => a.startTimeMs - b.startTimeMs)
     // 중복 제거 (같은 시간대의 중복 가사 제거)
     .filter((chunk, index, array) => {
       const prevChunk = array[index - 1];

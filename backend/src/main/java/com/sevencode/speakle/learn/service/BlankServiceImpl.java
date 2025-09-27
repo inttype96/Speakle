@@ -129,6 +129,8 @@ public class BlankServiceImpl implements BlankService{
             // 4-2. 기존 데이터가 없으면 새로 생성
             // 4-2-1. 랜덤 노래 추천인 경우
             if(isNullOrEmpty(req.getLocation()) && isNullOrEmpty(req.getSituation())) {
+                req.setSituation(null);
+                req.setLocation(null);
                 return createRandomBlankQuestion(req, userId, song);
             }
 
@@ -534,7 +536,7 @@ public class BlankServiceImpl implements BlankService{
     // null 체크 헬퍼 메서드
     // ------------------------------------------------------------
     private boolean isNullOrEmpty(String str) {
-        return str == null || str.isEmpty() || "null".equals(str);
+        return str == null || str.isEmpty() || "null".equals(str) || str.isBlank();
     }
 
     /**
