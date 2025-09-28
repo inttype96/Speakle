@@ -1,16 +1,64 @@
 'use client'
 
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import Drawer from "@/components/common/drawer"
 import { Bars3Icon } from '@heroicons/react/24/solid'
 import { SearchForm } from "@/components/common/search-form"
 import { useAuthStore } from '@/store/auth'
+import { useCustomAlert } from '@/hooks/useCustomAlert'
+import { CustomAlert } from '@/components/common/CustomAlert'
 
 export default function Navbar() {
     const [drawerOpen, setDrawerOpen] = useState(false)
+    const navigate = useNavigate()
     const tokens = useAuthStore((state) => state.tokens)
     const isAuthenticated = !!tokens?.accessToken
+    const { alertState, showAlert, hideAlert } = useCustomAlert()
+
+    // 로그인 확인 후 네비게이션 처리
+    const handleProtectedNavigation = (path: string, serviceName: string) => {
+        if (!isAuthenticated) {
+            showAlert(
+                {
+                    title: "로그인이 필요해요",
+                    message: `${serviceName} 서비스를 이용하려면 로그인이 필요합니다.\n로그인 페이지로 이동하시겠어요?`,
+                    confirmText: "로그인하러 가기",
+                    type: "music"
+                },
+                () => {
+                    const currentPath = window.location.pathname + window.location.search
+                    const loginUrl = `/login?redirect=${encodeURIComponent(currentPath)}`
+                    navigate(loginUrl)
+                }
+            )
+            return
+        }
+        
+        // 로그인된 경우 해당 페이지로 이동
+        navigate(path)
+    }
+
+    // 클릭 이벤트 핸들러들
+    const handleLearningClick = (e: React.MouseEvent) => {
+        e.preventDefault()
+        handleProtectedNavigation("/explore", "Learning")
+    }
+
+    const handlePlaylistClick = (e: React.MouseEvent) => {
+        e.preventDefault()
+        handleProtectedNavigation("/playlists", "Playlist")
+    }
+
+    const handleDashboardClick = (e: React.MouseEvent) => {
+        e.preventDefault()
+        handleProtectedNavigation("/dashboard", "리워드 대시보드")
+    }
+
+    const handleServiceTourClick = (e: React.MouseEvent) => {
+        e.preventDefault()
+        navigate("/tour")
+    }
 
     return (
         <>
@@ -31,18 +79,34 @@ export default function Navbar() {
 
                         {/* Learning, Playlist, 리워드 대시보드, 서비스 둘러보기 - 데스크톱에서만 표시 */}
                         <div className="hidden xl:grid service grid-cols-2 gap-2 text-sm justify-items-start ml-10">
-                            <Link to="/explore" className="px-3 py-1 rounded cursor-pointer transition-colors font-bold text-xl text-white hover:text-gray-300">
+                            <a 
+                                href="/explore" 
+                                onClick={handleLearningClick}
+                                className="px-3 py-1 rounded cursor-pointer transition-colors font-bold text-xl text-white hover:text-gray-300"
+                            >
                                 Learning
-                            </Link>
-                            <Link to="/playlists" className="px-3 py-1 rounded cursor-pointer transition-colors font-bold text-xl text-white hover:text-gray-300">
+                            </a>
+                            <a 
+                                href="/playlists" 
+                                onClick={handlePlaylistClick}
+                                className="px-3 py-1 rounded cursor-pointer transition-colors font-bold text-xl text-white hover:text-gray-300"
+                            >
                                 Playlist
-                            </Link>
-                            <Link to="/dashboard" className="px-3 py-1 rounded cursor-pointer transition-colors text-white hover:text-gray-300">
+                            </a>
+                            <a 
+                                href="/dashboard" 
+                                onClick={handleDashboardClick}
+                                className="px-3 py-1 rounded cursor-pointer transition-colors text-white hover:text-gray-300"
+                            >
                                 리워드 대시보드
-                            </Link>
-                            <Link to="/tour" className="px-3 py-1 rounded cursor-pointer transition-colors text-white hover:text-gray-300">
+                            </a>
+                            <a 
+                                href="/tour" 
+                                onClick={handleServiceTourClick}
+                                className="px-3 py-1 rounded cursor-pointer transition-colors text-white hover:text-gray-300"
+                            >
                                 서비스 둘러보기
-                            </Link>
+                            </a>
                         </div>
 
                         {/* 검색창 - 모바일에서 중앙, 데스크톱에서 확장 */}
@@ -88,8 +152,20 @@ export default function Navbar() {
                     </div>
                 </nav>
             </header>
+            
             {/* 드로워 */}
             <Drawer open={drawerOpen} setOpen={setDrawerOpen} />
+            
+            {/* 커스텀 알림 모달 */}
+            <CustomAlert
+                isOpen={alertState.isOpen}
+                onClose={hideAlert}
+                title={alertState.options.title}
+                message={alertState.options.message}
+                confirmText={alertState.options.confirmText}
+                type={alertState.options.type}
+                onConfirm={alertState.onConfirm}
+            />
         </>
     )
 }
