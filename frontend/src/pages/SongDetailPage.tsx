@@ -103,15 +103,8 @@ export default function SongDetailPage() {
 
   // learned 상태와 learningContent가 모두 준비되었을 때 대기 중인 직접 학습 모달 처리
   useEffect(() => {
-    console.log("useEffect 실행", {
-      learned: learned?.learnedSongId,
-      learningContent: !!learningContent,
-      waitingForSession: directLearnModal.waitingForSession,
-      mode: directLearnModal.mode
-    });
 
     if (learned?.learnedSongId && learningContent && directLearnModal.waitingForSession) {
-      console.log("세션과 학습 내용 모두 준비 완료, 페이지 이동 시작");
 
       // 준비 완료 상태로 변경
       setDirectLearnModal(prev => ({
@@ -134,7 +127,6 @@ export default function SongDetailPage() {
         if (situation) qs.set("situation", situation);
         if (location) qs.set("location", location);
 
-        console.log("페이지 이동", path);
         navigate(`${path}?${qs.toString()}`);
 
         // 모달 닫기
@@ -182,11 +174,9 @@ export default function SongDetailPage() {
 
   // 학습 세션 생성 및 페이지 이동
   const handleDirectLearn = async (mode: "cloze" | "speaking" | "dictation") => {
-    console.log("handleDirectLearn 호출됨", { mode, learned, learnedSongId: learned?.learnedSongId });
 
     // 세션과 학습 내용이 모두 준비되어 있으면 바로 이동
     if (learned?.learnedSongId && learningContent) {
-      console.log("세션과 학습 내용이 모두 준비됨, 바로 이동");
       const path = {
         cloze: "/learn/quiz",
         speaking: "/learn/speaking",
@@ -205,9 +195,7 @@ export default function SongDetailPage() {
 
     // 세션이나 학습 내용이 준비되지 않았으면 모달 띄우고 준비 진행
     if (learned?.learnedSongId) {
-      console.log("세션은 준비됨, 학습 내용 대기 중");
     } else {
-      console.log("세션이 준비되지 않음, 세션 생성 시작");
     }
     setDirectLearnModal({
       open: true,
@@ -219,7 +207,6 @@ export default function SongDetailPage() {
     // 세션이 없으면 세션 생성, 있으면 학습 내용만 생성
     try {
       if (!learned?.learnedSongId) {
-        console.log("세션 생성 중...");
         const accessToken = localStorage.getItem("access_token") || undefined;
         const r = await createLearnedSong(
           { songId, situation, location },
@@ -230,9 +217,7 @@ export default function SongDetailPage() {
 
       // 학습 내용 생성
       if (!learningContent) {
-        console.log("학습 내용 생성 중...");
         await fetchLearningContentData();
-        console.log("학습 내용 생성 완료");
       }
     } catch (e) {
       console.error(e);

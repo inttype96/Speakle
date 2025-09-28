@@ -356,7 +356,6 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
   // autoPlay 로직 (수정(소연))
   useEffect(() => {
     if (autoPlay && isSDKReady && deviceId && player && !isPlaying) {
-      console.log('🎵 AutoPlay triggered:', { trackId, validatedStartTime })
       const timeout = setTimeout(() => {
         playTrack(trackId, validatedStartTime)
       }, 500) // 플레이어가 완전히 준비될 시간 확보

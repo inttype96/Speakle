@@ -40,8 +40,8 @@ export const useTranslationWebSocket = ({
 
     const client = new Client({
       webSocketFactory: () => new SockJS(WS_URL),
-      debug: (str) => {
-        console.log('[WebSocket Debug]', str);
+      debug: () => {
+        // Debug logs disabled
       },
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
