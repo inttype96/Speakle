@@ -25,6 +25,7 @@ const DictationPage = lazy(() => import("@/pages/DictationPage"));
 const ExplorePage = lazy(() => import("@/pages/ExplorePage"));
 const RecommendationsPage = lazy(() => import("@/pages/RecommendationsPage"));
 const SongDetailPage = lazy(() => import("@/pages/SongDetailPage"));
+const ServiceTourPage = lazy(() => import("@/pages/ServiceTourPage"));
 
 // User pages
 const MyPage = lazy(() => import("@/pages/user/myPage"));
@@ -98,6 +99,10 @@ const router = createBrowserRouter([
       {
         path: "search",
         element: <LazyRoute><RecommendationsPage /></LazyRoute>,
+      },
+      {
+        path: "tour",
+        element: <LazyRoute><ServiceTourPage /></LazyRoute>,
       },
 
       // Song detail

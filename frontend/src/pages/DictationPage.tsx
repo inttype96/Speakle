@@ -78,6 +78,7 @@ export default function DictationPage() {
   // 메모장 상태
   const [memoText, setMemoText] = useState("");
 
+
   const progress = (qNo / MAX_Q) * 100;
 
   // 카운트다운 시작 함수
@@ -450,17 +451,9 @@ export default function DictationPage() {
       // 에러가 발생해도 UI는 정상적으로 표시
     }
 
-    // 마지막 문제인 경우 바로 게임 결과로, 아니면 정답 모달 표시
-    if (qNo >= MAX_Q) {
-      // 마지막 문제 완료 → 바로 요약 모달로
-      const summary = await completeDictation(learnedSongId);
-      setSummary(summary);
-      setOpenSummary(true);
-    } else {
-      // 마지막 문제가 아니면 정답 모달 표시
-      setResultMsg(isCorrect ? "정답입니다!" : "오답입니다!");
-      setOpenResult(true);
-    }
+    // 모든 문제에 대해 먼저 정답/오답 모달 표시
+    setResultMsg(isCorrect ? "정답입니다!" : "오답입니다!");
+    setOpenResult(true);
   }, [item, composedUserAnswer, userId, qNo, learnedSongId]);
 
   // 다음 문제
@@ -524,6 +517,7 @@ export default function DictationPage() {
     document.addEventListener('keydown', handleGlobalKeyDown);
     return () => document.removeEventListener('keydown', handleGlobalKeyDown);
   }, [answers, openResult, openSummary, gameState]);
+
 
   // 곡 상세로
   const goSong = () => {
@@ -713,7 +707,7 @@ export default function DictationPage() {
                       <div className="lg:col-span-2 backdrop-blur-sm bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 shadow-2xl">
                         <div className="mb-6 text-center">
                           <div className="text-lg sm:text-xl font-['Pretendard'] font-bold text-white mb-2">
-                            🎤 가사를 입력하세요
+                             가사를 입력하세요
                           </div>
                           <div className="text-sm font-['Pretendard'] text-white/70">
                             알파벳과 숫자만 입력하세요 (대소문자 구분 안함)
@@ -768,7 +762,7 @@ export default function DictationPage() {
                       <div className="backdrop-blur-sm bg-white/5 rounded-2xl p-6 border border-white/20 shadow-2xl">
                         <div className="mb-4 text-center">
                           <div className="text-lg font-['Pretendard'] font-bold text-white mb-2">
-                            📝 메모장
+                             메모장
                           </div>
                           <div className="text-xs font-['Pretendard'] text-white/70">
                             들리는 대로 자유롭게 메모하세요
@@ -976,7 +970,7 @@ export default function DictationPage() {
                   <div className="w-1 h-5 bg-[#4B2199]"></div>
                   <span className="text-sm font-['Pretendard'] font-semibold text-white/80 uppercase tracking-wider">Details</span>
                 </div>
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                <div className="space-y-2">
                   {summary.results.map((r, index) => (
                     <div key={r.dictationResultId} className="p-4 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
                       <div className="flex items-center justify-between mb-2">

@@ -101,10 +101,12 @@ export default function Navbar() {
                                 리워드 대시보드
                             </a>
                             <a 
-                                href="/explore" 
+                                href="/tour" 
                                 onClick={handleServiceTourClick}
                                 className="px-3 py-1 rounded cursor-pointer transition-colors text-white hover:text-gray-300"
                             >
+                            </Link>
+                            <Link to="/tour" className="px-3 py-1 rounded cursor-pointer transition-colors text-white hover:text-gray-300">
                                 서비스 둘러보기
                             </a>
                         </div>
