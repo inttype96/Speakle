@@ -58,30 +58,9 @@ export const CustomAlert: React.FC<CustomAlertProps> = ({
   }
 
   const getColors = () => {
-    switch (type) {
-      case 'music':
-        return {
-          bgColor: '#000000',
-          button: 'bg-gradient-to-r from-[#4B2199] to-[#4B2199] hover:from-[#9B8BC7] hover:to-[#7A6BA8] text-white hover:text-black'
-        }
-      case 'warning':
-        return {
-          bgColor: '#ea580c',
-          border: 'border-orange-400',
-          button: 'bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white'
-        }
-      case 'error':
-        return {
-          bgColor: '#dc2626',
-          border: 'border-red-400',
-          button: 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white'
-        }
-      default:
-        return {
-          bgColor: '#1e40af',
-          border: 'border-blue-400',
-          button: 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white'
-        }
+    return {
+      bgColor: '#000000',
+      button: 'bg-gradient-to-r from-[#4B2199] to-[#4B2199] hover:from-[#9B8BC7] hover:to-[#7A6BA8] text-white hover:text-black'
     }
   }
 
@@ -101,7 +80,7 @@ export const CustomAlert: React.FC<CustomAlertProps> = ({
       
       {/* 모달 */}
       <div 
-        className={`relative max-w-md w-full ${colors.border} border-2 rounded-3xl transform transition-all duration-300 ${
+        className={`relative max-w-md w-full border-2 rounded-3xl transform transition-all duration-300 ${
           isVisible ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'
         }`}
         style={{
