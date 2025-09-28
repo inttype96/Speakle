@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Mic, MicOff, Volume2, /* Timer */ } from "lucide-react";
+import { ChevronLeft, Mic, Volume2, /* Timer */ } from "lucide-react";
 
 import {
   evaluateSpeaking,
