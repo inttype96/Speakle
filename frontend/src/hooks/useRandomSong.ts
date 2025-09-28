@@ -10,7 +10,7 @@ export function useRandomSong() {
     try {
       setIsLoading(true)
       const songId = await fetchRandomSong()
-      navigate(`/songs/${songId}`)
+      navigate(`/songs/${songId}?source=random`)
     } catch (error) {
       console.error("Failed to fetch random song:", error)
       throw error

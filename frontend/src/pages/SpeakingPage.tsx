@@ -150,6 +150,7 @@ export default function SpeakingPage() {
     return () => clearInterval(id);
   }, [evalData, openSummary]);
 
+
   // 원어민 발음 듣기
   const speak = useCallback(() => {
     if (!evalData?.coreSentence) return;
@@ -419,25 +420,28 @@ export default function SpeakingPage() {
       </div>
       {/* 결과 모달 */}
       <Dialog open={openResult} onOpenChange={setOpenResult}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="text-white-900 dark:text-white-700 mb-3">
+        <DialogContent className="sm:max-w-3xl backdrop-blur-sm bg-[#1a1a2e]/95 border border-white/10">
+          <DialogHeader className="border-b border-white/10 pb-4">
+            <DialogTitle className="text-2xl font-['Pretendard'] font-bold text-white">
               {lastScore !== null ? getSpeakingMessage(lastScore) : "발음 평가 중..."}
             </DialogTitle>
-            <DialogDescription className="space-y-2">
+            <DialogDescription className="space-y-4 text-white/80">
               {evalData && (
                 <>
-                  <div><span>문제: </span>{evalData.coreSentence}</div>
-                  <div>
-                    <span>점수: </span>
-                    {lastScore} 점
+                  <div className="text-lg">
+                    <span className="font-medium text-white/60">문제: </span>
+                    <span className="text-white">{evalData.coreSentence}</span>
+                  </div>
+                  <div className="text-lg">
+                    <span className="font-medium text-white/60">점수: </span>
+                    <span className="text-[#B5A6E0] font-bold">{lastScore} 점</span>
                   </div>
                 </>
               )}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 flex flex-col sm:flex-row">
-            <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={() => setOpenResult(false)}>
+          <DialogFooter className="gap-2 flex flex-col sm:flex-row pt-4">
+            <Button type="button" variant="secondary" className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white border border-white/20" onClick={() => setOpenResult(false)}>
               닫기
             </Button>
 
@@ -456,25 +460,26 @@ export default function SpeakingPage() {
 
       {/* 종료 요약 */}
       <Dialog open={openSummary} onOpenChange={setOpenSummary}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-white-900 dark:text-white-700, mb-3">스피킹 결과 요약</DialogTitle>
+        <DialogContent className="sm:max-w-2xl backdrop-blur-sm bg-[#1a1a2e]/95 border border-white/10">
+          <DialogHeader className="border-b border-white/10 pb-4">
+            <DialogTitle className="text-2xl font-['Pretendard'] font-bold text-white">스피킹 결과 요약</DialogTitle>
             <DialogDescription asChild>
-              <div className="space-y-3 pt-2">
-                <div className="text-sm">
-                  총 문제 {summary.totalQuestions}개 · 정답 {summary.correctAnswers}개 · 총점 {summary.totalScore}점
+              <div className="space-y-4 pt-4">
+                <div className="text-lg font-medium text-white/80">
+                  총 문제 {summary.totalQuestions}개 · 정답 {summary.correctAnswers}개 · 총점 <span className="text-[#B5A6E0] font-bold">{summary.totalScore}점</span>
                 </div>
-                <div className="space-y-3 max-h-[50vh] overflow-auto pr-1">
+                <div className="space-y-3">
                   {summary.results.sort((a, b) => a.q - b.q).map((r) => (
-                    <div key={r.q} className="rounded-xl border p-3 text-sm">
-                      <div className="font-medium">문제 {r.q}</div>
-                      <div className="mt-1">{r.sentence}</div>
-                      <div className="mt-1">
-                        결과:{" "}
-                        <span className={r.isCorrect ? "text-green-500" : "text-rose-500"}>
+                    <div key={r.q} className="rounded-xl border border-white/20 bg-white/5 p-4 text-sm">
+                      <div className="font-medium text-white text-base">문제 {r.q}</div>
+                      <div className="mt-2 text-white/70">{r.sentence}</div>
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className="text-white/60">결과:</span>
+                        <span className={r.isCorrect ? "text-green-400" : "text-rose-400"}>
                           {r.isCorrect ? "정답" : "오답"}
-                        </span>{" "}
-                        (  {r.score}점 )
+                        </span>
+                        <span className="text-white/60">·</span>
+                        <span className="text-[#B5A6E0] font-bold">{r.score}점</span>
                       </div>
                     </div>
                   ))}
@@ -482,9 +487,10 @@ export default function SpeakingPage() {
               </div>
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 flex-col sm:flex-row">
+          <DialogFooter className="gap-2 flex-col sm:flex-row pt-4">
             <Button
               variant="secondary"
+              className="bg-white/10 hover:bg-white/20 text-white border border-white/20"
               onClick={() => {
                 setOpenSummary(false);
                 setQNum(1);
@@ -500,13 +506,16 @@ export default function SpeakingPage() {
             >
               처음으로
             </Button>
-            <Button onClick={() => {
-              const params = new URLSearchParams();
-              if (situation) params.set('situation', situation);
-              if (location) params.set('location', location);
-              const queryString = params.toString();
-              window.location.href = `/songs/${songId}${queryString ? `?${queryString}` : ''}`;
-            }}>
+            <Button
+              className="bg-[#6a3cb7] hover:bg-[#9e6beb] text-white"
+              onClick={() => {
+                const params = new URLSearchParams();
+                if (situation) params.set('situation', situation);
+                if (location) params.set('location', location);
+                const queryString = params.toString();
+                window.location.href = `/songs/${songId}${queryString ? `?${queryString}` : ''}`;
+              }}
+            >
               곡으로 돌아가기
             </Button>
           </DialogFooter>
