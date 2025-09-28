@@ -40,7 +40,7 @@ export default function Navbar() {
                             <Link to="/dashboard" className="px-3 py-1 rounded cursor-pointer transition-colors text-white hover:text-gray-300">
                                 리워드 대시보드
                             </Link>
-                            <Link to="/explore" className="px-3 py-1 rounded cursor-pointer transition-colors text-white hover:text-gray-300">
+                            <Link to="/tour" className="px-3 py-1 rounded cursor-pointer transition-colors text-white hover:text-gray-300">
                                 서비스 둘러보기
                             </Link>
                         </div>
