@@ -187,6 +187,7 @@ export default function QuizPage() {
     window.history.replaceState(null, "", `${window.location.pathname}?${nsp.toString()}`);
   }, [qNum, STORAGE_KEY]);
 
+
   useEffect(() => {
     if (qNum < 1 || qNum > TOTAL_QUESTIONS) {
       setQNum(1);
@@ -576,7 +577,7 @@ export default function QuizPage() {
                   <div className="w-1 h-5 bg-[#4B2199]"></div>
                   <span className="text-sm font-['Pretendard'] font-semibold text-white/80 uppercase tracking-wider">Details</span>
                 </div>
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                <div className="space-y-2">
                   {complete.results.map((r, index) => (
                     <div key={r.blankResultId} className="p-4 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
                       <div className="flex items-center justify-between mb-2">

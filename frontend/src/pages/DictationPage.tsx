@@ -78,6 +78,7 @@ export default function DictationPage() {
   // 메모장 상태
   const [memoText, setMemoText] = useState("");
 
+
   const progress = (qNo / MAX_Q) * 100;
 
   // 카운트다운 시작 함수
@@ -535,6 +536,7 @@ export default function DictationPage() {
     return () => document.removeEventListener('keydown', handleGlobalKeyDown);
   }, [answers, openResult, openSummary, gameState]);
 
+
   // 곡 상세로
   const goSong = () => {
     const songId = item?.songId || songIdFromQuery || "";
@@ -986,7 +988,7 @@ export default function DictationPage() {
                   <div className="w-1 h-5 bg-[#4B2199]"></div>
                   <span className="text-sm font-['Pretendard'] font-semibold text-white/80 uppercase tracking-wider">Details</span>
                 </div>
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                <div className="space-y-2">
                   {summary.results.map((r, index) => (
                     <div key={r.dictationResultId} className="p-4 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
                       <div className="flex items-center justify-between mb-2">
