@@ -71,7 +71,6 @@ export default function DictationPage() {
   const [gameState, setGameState] = useState<'ready' | 'countdown' | 'playing' | 'ended'>('ready');
   const [countdown, setCountdown] = useState(3);
   const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
 
    // 한국어 가사 표시/숨김 상태
   const [showKorean, setShowKorean] = useState(false);
