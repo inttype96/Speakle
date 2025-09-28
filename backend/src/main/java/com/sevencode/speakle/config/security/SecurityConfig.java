@@ -82,8 +82,10 @@ public class SecurityConfig {
 					.requestMatchers("/api/reward/**").authenticated()			// reward
 					.requestMatchers("/api/user/**").authenticated()			// user
 					.requestMatchers("/api/attendance/**").authenticated()		// attendance
+					.requestMatchers("/api/songs/**").authenticated()			// songs
+					.requestMatchers("/api/recommend/**").authenticated()			// recommend
 
-					// 그 외 필요 시 정책 추가
+						// 그 외 필요 시 정책 추가
 					.anyRequest().permitAll()
 				);
 			http.addFilterBefore(new JwtAuthenticationFilter(jwtProvider, eventPublisher), UsernamePasswordAuthenticationFilter.class);
