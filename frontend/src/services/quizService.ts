@@ -211,26 +211,11 @@ export async function completeQuiz(
     };
   }
 
-  // 1차: GET with body (허용된다면 사용)
-  try {
-    const res = await http.request<CompleteRes>({
-      method: "GET",
-      url: "/learn/quiz/complete",
-      headers: {
-        "Content-Type": "application/json",
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      },
-      data: body, // 일부 서버/프록시는 GET body를 무시할 수 있음
-    });
-    return res.data;
-  } catch {
-    // 2차: params 폴백(권장)
-    const res2 = await http.get<CompleteRes>("/learn/quiz/complete", {
-      headers: {
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      },
-      params: { learnedSongId: body.learnedSongId },
-    });
-    return res2.data;
-  }
+  const res2 = await http.get<CompleteRes>("/learn/quiz/complete", {
+    headers: {
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+    params: { learnedSongId: body.learnedSongId },
+  });
+  return res2.data;
 }
