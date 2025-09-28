@@ -1,7 +1,7 @@
 'use client'
 
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle, TransitionChild } from '@headlessui/react'
-import { XMarkIcon, LockClosedIcon, StarIcon, UserIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, LockClosedIcon, AcademicCapIcon, MusicalNoteIcon, TrophyIcon, InformationCircleIcon, UserIcon, UserPlusIcon } from '@heroicons/react/24/outline'
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from '@/components/mode-toggle'
 import { Link } from 'react-router-dom'
@@ -51,33 +51,57 @@ export default function Drawer({ open, setOpen }: { open: boolean, setOpen: (ope
                   <DialogTitle className="text-base font-semibold text-foreground">메뉴</DialogTitle>
                 </div>
                 <div className="relative mt-6 flex-1 px-4 sm:px-6">
+                  {/* 메인 서비스 메뉴 */}
+                  <Button asChild variant="outline" size="lg" className="w-full mb-2">
+                    <Link to="/explore" className="flex items-center justify-center">
+                      <AcademicCapIcon className="h-6 w-6 mr-2" /> Learning
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg" className="w-full mb-2">
+                    <Link to="/playlists" className="flex items-center justify-center">
+                      <MusicalNoteIcon className="h-6 w-6 mr-2" /> Playlist
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg" className="w-full mb-2">
+                    <Link to="/dashboard" className="flex items-center justify-center">
+                      <TrophyIcon className="h-6 w-6 mr-2" /> 리워드 대시보드
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg" className="w-full mb-2">
+                    <Link to="/tour" className="flex items-center justify-center">
+                      <InformationCircleIcon className="h-6 w-6 mr-2" /> 서비스 둘러보기
+                    </Link>
+                  </Button>
+
+                  {/* 구분선 */}
+                  <div className="border-t border-border my-4"></div>
+
                   {/* 로그인 상태에 따른 조건부 렌더링 */}
                   {!isAuthenticated ? (
-                    <Button asChild variant="outline" size="lg" className="w-full mb-2">
-                      <Link to="/login" className="flex items-center justify-center">
-                        <LockClosedIcon className="h-6 w-6 mr-2" /> 로그인
-                      </Link>
-                    </Button>
+                    <>
+                      <Button asChild variant="outline" size="lg" className="w-full mb-2">
+                        <Link to="/login" className="flex items-center justify-center">
+                          <LockClosedIcon className="h-6 w-6 mr-2" /> 로그인
+                        </Link>
+                      </Button>
+                      <Button asChild variant="outline" size="lg" className="w-full mb-2">
+                        <Link to="/signup" className="flex items-center justify-center">
+                          <UserPlusIcon className="h-6 w-6 mr-2" /> 회원가입
+                        </Link>
+                      </Button>
+                    </>
                   ) : (
-                    <Button variant="outline" size="lg" className="w-full mb-2" onClick={handleLogout}>
-                      <LockClosedIcon className="h-6 w-6 mr-2" /> 로그아웃
-                    </Button>
+                    <>
+                      <Button asChild variant="outline" size="lg" className="w-full mb-2">
+                        <Link to="/mypage" className="flex items-center justify-center">
+                          <UserIcon className="h-6 w-6 mr-2" /> 마이페이지
+                        </Link>
+                      </Button>
+                      <Button variant="outline" size="lg" className="w-full mb-2" onClick={handleLogout}>
+                        <LockClosedIcon className="h-6 w-6 mr-2" /> 로그아웃
+                      </Button>
+                    </>
                   )}
-                  <Button variant="outline" size="lg" className="w-full mb-2">
-                    <Link to="/explore" className="flex items-center justify-center">
-                      <StarIcon className="h-6 w-6 mr-2" /> 노래 추천 받기
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" size="lg" className="w-full mb-2">
-                    <Link to="/mypage" className="flex items-center justify-center">
-                      <UserIcon className="h-6 w-6 mr-2" /> 마이페이지
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" size="lg" className="w-full mb-2">
-                    <Link to="/about" className="flex items-center justify-center">
-                      <InformationCircleIcon className="h-6 w-6 mr-2" /> 소개
-                    </Link>
-                  </Button>
                 </div>
                 <div className="relative mt-6 flex-1 px-4 sm:px-6 flex flex-col justify-end">
                   <ModeToggle />
