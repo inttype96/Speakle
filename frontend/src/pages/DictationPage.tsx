@@ -51,6 +51,12 @@ export default function DictationPage() {
   const [item, setItem] = useState<DictationItem | null>(null);
   const lastFetchedQRef = useRef<number | null>(null);
 
+  // 페이지 진입 시 문제 번호 초기화
+  useEffect(() => {
+    setQNo(1);
+    lastFetchedQRef.current = null;
+  }, [learnedSongId]);
+
   // 입력 상태
   const [tokens, setTokens] = useState<Token[]>([]);
   const [answers, setAnswers] = useState<string[]>([]); // 입력칸 인덱스만 관리

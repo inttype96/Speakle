@@ -389,12 +389,12 @@ export default function SpeakingPage() {
                     "grid place-items-center rounded-full transition-all duration-300 shadow-2xl",
                     "h-20 w-20 sm:h-24 sm:w-24",
                     recording
-                      ? "bg-rose-500 hover:bg-rose-600 animate-pulse"
+                      ? "bg-[#9e6beb] hover:bg-[#B5A6E0] animate-pulse"
                       : "bg-[#6a3cb7] hover:bg-[#9e6beb]",
                   ].join(" ")}
                   title={recording ? "녹음 중지" : "녹음 시작"}
                 >
-                  {recording ? <MicOff size={28} className="text-white" /> : <Mic size={28} className="text-white" />}
+                  <Mic size={28} className="text-white" />
                 </button>
                 <div className="text-s font-['Pretendard'] text-white/90">마이크 버튼을 누르면 녹음이 시작됩니다🎵</div>
                 {recUrl && (
