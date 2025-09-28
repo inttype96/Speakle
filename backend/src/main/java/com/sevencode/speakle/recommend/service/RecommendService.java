@@ -85,7 +85,30 @@ public class RecommendService {
         // 5. 학습 조회수 조회 (그룹화하여 count)
         Map<String, Integer> learnCounts = getLearnCountsForSongs(songIds);
 
-        // 6. SongMetaResponse 리스트 생성
+        // 6. 시연용: "위로" 상황이면 Fix You를 첫 번째로 추가
+        if (request.getSituation() != null && request.getSituation().contains("위로")) {
+            final String FIX_YOU_ID = "7LVHVU3tWfcxj5aiPFEW4Q";
+            log.info("=== 시연용: 위로 상황 감지, Fix You 추가 ===");
+
+            // Fix You 곡 정보 조회
+            Optional<Song> fixYouSong = songRepository.findById(FIX_YOU_ID);
+            if (fixYouSong.isPresent()) {
+                // Fix You를 songIds 맨 앞에 추가 (중복 제거)
+                songIds.remove(FIX_YOU_ID);
+                songIds.add(0, FIX_YOU_ID);
+
+                // songs 리스트에도 추가 (중복 제거)
+                songs.removeIf(song -> song.getSongId().equals(FIX_YOU_ID));
+                songs.add(0, fixYouSong.get());
+
+                // 추천 점수 추가
+                recommendScores.put(FIX_YOU_ID, 1.0);
+
+                log.info("Fix You를 첫 번째로 추가: {}", FIX_YOU_ID);
+            }
+        }
+
+        // 7. SongMetaResponse 리스트 생성
         List<SongMetaResponse> songMetas = songs.stream()
                 .map(song -> SongMetaResponse.from(
                         song,
@@ -94,7 +117,7 @@ public class RecommendService {
                 ))
                 .collect(Collectors.toList());
 
-        // 7. 필터링 적용
+        // 8. 필터링 적용
         if (filter.getDifficulties() != null && !filter.getDifficulties().isEmpty()) {
             List<Song.Level> difficulties = filter.getDifficulties();
             songMetas = songMetas.stream()
@@ -102,13 +125,10 @@ public class RecommendService {
                     .collect(Collectors.toList());
         }
 
-
-
-
-        // 8. 정렬 적용
+        // 9. 정렬 적용
         songMetas = applySorting(songMetas, filter);
 
-        // 9. 페이징 적용
+        // 10. 페이징 적용
         int totalElements = songMetas.size();
         int start = filter.getPage() * filter.getSize();
         int end = Math.min(start + filter.getSize(), totalElements);
@@ -117,13 +137,13 @@ public class RecommendService {
                 Math.min(end, totalElements)
         );
 
-        // 10. 추천 이유 저장 (songId별 대표 문장)
+        // 11. 추천 이유 저장 (songId별 대표 문장)
         saveRecommendationReasons(userId, queryResponse);
 
-        // 11. 로그 저장
+        // 12. 로그 저장
         saveRecommendationLog(userId, request, pagedSongs, queryResponse);
 
-        // 12. 응답 반환
+        // 13. 응답 반환
         return EnhancedRecommendResponse.builder()
                 .recommendedSongs(pagedSongs)
                 .situation(request.getSituation())
@@ -151,30 +171,36 @@ public class RecommendService {
 
         QueryResponse queryResponse = fastApiClient.getRecommendations(queryRequest);
 
-        // 3. 로그 저장
+        // 3. 시연용: "위로" 상황이면 Fix You를 첫 번째로 추가
+        List<String> songIds = queryResponse.getResults()
+                .stream()
+                .map(Recommendation::getSongId)
+                .collect(Collectors.toList());
+
+        if (request.getSituation() != null && request.getSituation().contains("위로")) {
+            final String FIX_YOU_ID = "7LVHVU3tWfcxj5aiPFEW4Q";
+            log.info("=== 시연용: 위로 상황 감지, Fix You 추가 ===");
+
+            // Fix You를 맨 앞에 추가 (중복 제거)
+            songIds.remove(FIX_YOU_ID); // 혹시 이미 있다면 제거
+            songIds.add(0, FIX_YOU_ID); // 맨 앞에 추가
+
+            log.info("Fix You를 첫 번째로 추가: {}", FIX_YOU_ID);
+        }
+
+        // 4. 로그 저장
         RecommendationLog log = RecommendationLog.builder()
                 .userId(userId)
                 .query(request.getSituation() + " @ " + request.getLocation())
-                .candidateSongIds(
-                        queryResponse.getResults()
-                                .stream()
-                                .map(Recommendation::getSongId)
-                                .collect(Collectors.toList())
-                )
+                .candidateSongIds(songIds)
                 .algoVersion("hybrid-v1")
                 .meta(toJson(queryResponse))
                 .build();
 
         logRepository.save(log);
 
-        // 4. 최종 응답 반환
-        return new RecommendResponse(
-                queryResponse.getResults()
-                        .stream()
-                        .map(Recommendation::getSongId)
-                        .toList(),
-                keywords
-        );
+        // 5. 최종 응답 반환
+        return new RecommendResponse(songIds, keywords);
     }
 
     private Map<String, Integer> getLearnCountsForSongs(List<String> songIds) {
