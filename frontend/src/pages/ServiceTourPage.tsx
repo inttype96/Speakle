@@ -18,14 +18,12 @@ import {
   Headphones,
   Type,
   MicVocal,
-  BookOpen,
   Music,
-  ArrowRight,
   CheckCircle
 } from "lucide-react";
 
 export default function ServiceTourPage() {
-  const [activeSection, setActiveSection] = useState(0);
+  const [, setActiveSection] = useState(0);
   const sectionsRef = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
@@ -124,7 +122,9 @@ export default function ServiceTourPage() {
 
       {/* 히어로 섹션 */}
       <section
-        ref={(el) => (sectionsRef.current[0] = el)}
+        ref={(el) => {
+          sectionsRef.current[0] = el;
+        }}
         className="relative pt-24 pb-8 px-4"
       >
         <div className="mx-auto max-w-5xl">
@@ -152,7 +152,9 @@ export default function ServiceTourPage() {
       {features.map((feature, index) => (
         <section
           key={feature.id}
-          ref={(el) => (sectionsRef.current[index + 1] = el)}
+          ref={(el) => {
+            sectionsRef.current[index + 1] = el;
+          }}
           className="py-16 md:py-24 px-4"
         >
           <div className="mx-auto max-w-7xl">
