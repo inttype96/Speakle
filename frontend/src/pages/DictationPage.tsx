@@ -104,17 +104,12 @@ export default function DictationPage() {
   const onReplay = () => {
     setGameState('playing');        // 바로 재생 상태로
     setShouldAutoPlay(true);        // 자동재생 활성화
-    setElapsed(0);                  // 타이머 리셋
     setReplayKey(prev => prev + 1); // SpotifyWebPlayer 리렌더링해서 즉시 재생
   };
 
   // 타이머 useEffect
   useEffect(() => {
     if (gameState === 'playing') {
-      const timer = setInterval(() => {
-        setElapsed(prev => prev + 1);
-      }, 1000);
-      return () => clearInterval(timer);
     }
   }, [gameState]);
 
@@ -158,13 +153,11 @@ export default function DictationPage() {
 
   // 딕테이션 페이지 진입 시 음악 자동 정지
   useEffect(() => {
-    console.log('🎵 Dictation: Page entered, checking if music should be stopped');
     const stopMusicOnEntry = async () => {
       try {
         await pausePlaybackAPI();
         setGlobalIsPlaying(false);
         setShouldStopPlayer(true);
-        console.log('✅ Music stopped on dictation page entry');
       } catch (error) {
         console.error('❌ Failed to stop music on dictation page entry:', error);
       }
@@ -261,7 +254,6 @@ export default function DictationPage() {
         }, 1000);
       }
 
-      setElapsed(0);
       setShouldAutoPlay(false);
       // 한국어 가사 표시 초기화
       setShowKorean(false);
@@ -475,12 +467,10 @@ export default function DictationPage() {
   // 다음 문제
   const onNext = useCallback(async () => {
     // 다음 문제로 넘어갈 때 음악 정지
-    console.log('🎵 Dictation: Moving to next question, stopping music');
     try {
       await pausePlaybackAPI();
       setGlobalIsPlaying(false);
       setShouldStopPlayer(true);
-      console.log('✅ Music stopped for next question');
     } catch (error) {
       console.error('❌ Failed to stop music for next question:', error);
     }

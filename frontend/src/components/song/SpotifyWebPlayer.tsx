@@ -356,7 +356,6 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
   // autoPlay 로직 (수정(소연))
   useEffect(() => {
     if (autoPlay && isSDKReady && deviceId && player && !isPlaying) {
-      console.log('🎵 AutoPlay triggered:', { trackId, validatedStartTime })
       const timeout = setTimeout(() => {
         playTrack(trackId, validatedStartTime)
       }, 500) // 플레이어가 완전히 준비될 시간 확보
@@ -398,13 +397,45 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      const message = seekTo !== undefined 
+      const message = seekTo !== undefined
         ? `${trackName} 재생을 ${Math.floor(seekTo / 1000)}초부터 시작했습니다`
         : `${trackName} 재생을 시작했습니다`
       toast.success(message)
     } catch (error) {
       console.error('트랙 재생 실패:', error)
       toast.error('트랙 재생에 실패했습니다')
+    }
+  }
+
+  // 현재 위치에서 재개하는 함수
+  const resumePlayback = async () => {
+    if (!deviceId) {
+      toast.error('플레이어가 준비되지 않았습니다')
+      return
+    }
+
+    try {
+      const tokenResponse = await getSpotifyTokenAPI()
+      const spotifyToken = tokenResponse.data.accessToken
+
+      const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${spotifyToken}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      setIsPlaying(true)
+      setGlobalIsPlaying(true)
+      toast.success('재생을 재개했습니다')
+    } catch (error) {
+      console.error('재생 재개 실패:', error)
+      toast.error('재생 재개에 실패했습니다')
     }
   }
 
@@ -418,16 +449,17 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         setGlobalIsPlaying(false)
         toast.success('재생을 일시정지했습니다')
       } else {
-        // 새로운 트랙이거나, startTime이 설정되어 있고 현재 위치가 startTime과 다를 때
-        const shouldSeekToStart = currentTrack?.id !== trackId ||
-          (validatedStartTime !== undefined && Math.abs(position - validatedStartTime) > 1000) // 1초 이상 차이날 때
+        // 새로운 트랙이거나, startTime이 설정되어 있고 현재 위치가 startTime과 다를 때만 새로 재생
+        const isNewTrack = currentTrack?.id !== trackId
+        const shouldSeekToStart = validatedStartTime !== undefined &&
+          Math.abs(position - validatedStartTime) > 1000 // 1초 이상 차이날 때
 
-        if (shouldSeekToStart) {
-          // startTime 위치에서 재생
+        if (isNewTrack || shouldSeekToStart) {
+          // 새로운 트랙이거나 startTime 위치에서 재생
           await playTrack(trackId, validatedStartTime)
         } else {
-          // 항상 API를 통해 재생 시작 (SDK 로드 문제 해결)
-          await playTrack(trackId, validatedStartTime)
+          // 같은 트랙의 일시정지 상태에서는 현재 위치에서 재개
+          await resumePlayback()
         }
       }
     } catch (error) {
