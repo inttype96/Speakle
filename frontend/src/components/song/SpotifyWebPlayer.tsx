@@ -418,16 +418,20 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         setGlobalIsPlaying(false)
         toast.success('재생을 일시정지했습니다')
       } else {
-        // 새로운 트랙이거나, startTime이 설정되어 있고 현재 위치가 startTime과 다를 때
-        const shouldSeekToStart = currentTrack?.id !== trackId ||
-          (validatedStartTime !== undefined && Math.abs(position - validatedStartTime) > 1000) // 1초 이상 차이날 때
+        // 새로운 트랙이거나, startTime이 설정되어 있고 현재 위치가 startTime과 다를 때만 새로 재생
+        const isNewTrack = currentTrack?.id !== trackId
+        const shouldSeekToStart = validatedStartTime !== undefined &&
+          Math.abs(position - validatedStartTime) > 1000 // 1초 이상 차이날 때
 
-        if (shouldSeekToStart) {
-          // startTime 위치에서 재생
+        if (isNewTrack || shouldSeekToStart) {
+          // 새로운 트랙이거나 startTime 위치에서 재생
           await playTrack(trackId, validatedStartTime)
         } else {
-          // 항상 API를 통해 재생 시작 (SDK 로드 문제 해결)
-          await playTrack(trackId, validatedStartTime)
+          // 같은 트랙의 일시정지 상태에서는 resume 사용
+          await player.resume()
+          setIsPlaying(true)
+          setGlobalIsPlaying(true)
+          toast.success('재생을 재개했습니다')
         }
       }
     } catch (error) {
