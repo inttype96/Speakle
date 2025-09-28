@@ -315,11 +315,16 @@ export default function SongDetailPage() {
 
   const qsRaw = sp.toString(); // 현재 쿼리를 그대로 다음 페이지로 넘길 때 사용
 
-  // 검색으로 온 경우와 추천으로 온 경우 구분
+  // 검색으로 온 경우, 랜덤 추천으로 온 경우, 추천으로 온 경우 구분
   const searchQuery = sp.get("q");
+  const source = sp.get("source");
   const isFromSearch = Boolean(searchQuery);
+  const isFromRandom = source === "random";
   const backUrl = isFromSearch ? `/search${qsRaw ? `?${qsRaw}` : ""}` : `/recommendations${qsRaw ? `?${qsRaw}` : ""}`;
   const backText = isFromSearch ? "검색 결과로" : "추천 목록으로";
+
+  // 랜덤 추천인 경우 뒤로가기 버튼을 숨김
+  const showBackButton = !isFromRandom;
 
   // 학습 내용 로딩 중일 때 전체 화면 로딩 표시
   if (learningLoading && activeTab === "notes") {
@@ -342,13 +347,15 @@ export default function SongDetailPage() {
 
       <div className="mx-auto px-4 py-6 space-y-6" style={{ width: '100%', maxWidth: '1024px', minWidth: 0 }}>
         {/* 상단 헤더 */}
-        <div className="flex items-center">
-          <Button variant="ghost" asChild>
-            <Link to={backUrl}>
-              <ChevronLeft className="mr-1 h-4 w-4" /> {backText}
-            </Link>
-          </Button>
-        </div>
+        {showBackButton && (
+          <div className="flex items-center">
+            <Button variant="ghost" asChild>
+              <Link to={backUrl}>
+                <ChevronLeft className="mr-1 h-4 w-4" /> {backText}
+              </Link>
+            </Button>
+          </div>
+        )}
 
         {/* 상단: 앨범/타이틀/메타/학습버튼 */}
         <div className="grid grid-cols-1 md:grid-cols-[200px_1fr_280px] gap-0">

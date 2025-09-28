@@ -473,7 +473,7 @@ export default function QuizPage() {
                     <span className="text-sm font-['Pretendard'] font-semibold text-white/80 uppercase tracking-wider">Question</span>
                   </div>
                   <div className="p-6 bg-white/5 border border-white/10 rounded-xl">
-                    <span className="text-white font-['Pretendard']">{question.question}</span>
+                    <span className="text-white font-['Pretendard']">{formatQuestionWithBlanks(question.question, question.answer)}</span>
                   </div>
                 </div>
 

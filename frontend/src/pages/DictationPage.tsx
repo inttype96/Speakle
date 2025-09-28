@@ -451,17 +451,9 @@ export default function DictationPage() {
       // 에러가 발생해도 UI는 정상적으로 표시
     }
 
-    // 마지막 문제인 경우 바로 게임 결과로, 아니면 정답 모달 표시
-    if (qNo >= MAX_Q) {
-      // 마지막 문제 완료 → 바로 요약 모달로
-      const summary = await completeDictation(learnedSongId);
-      setSummary(summary);
-      setOpenSummary(true);
-    } else {
-      // 마지막 문제가 아니면 정답 모달 표시
-      setResultMsg(isCorrect ? "정답입니다!" : "오답입니다!");
-      setOpenResult(true);
-    }
+    // 모든 문제에 대해 먼저 정답/오답 모달 표시
+    setResultMsg(isCorrect ? "정답입니다!" : "오답입니다!");
+    setOpenResult(true);
   }, [item, composedUserAnswer, userId, qNo, learnedSongId]);
 
   // 다음 문제
@@ -715,7 +707,7 @@ export default function DictationPage() {
                       <div className="lg:col-span-2 backdrop-blur-sm bg-white/5 rounded-2xl p-6 sm:p-8 border border-white/20 shadow-2xl">
                         <div className="mb-6 text-center">
                           <div className="text-lg sm:text-xl font-['Pretendard'] font-bold text-white mb-2">
-                            🎤 가사를 입력하세요
+                             가사를 입력하세요
                           </div>
                           <div className="text-sm font-['Pretendard'] text-white/70">
                             알파벳과 숫자만 입력하세요 (대소문자 구분 안함)
@@ -770,7 +762,7 @@ export default function DictationPage() {
                       <div className="backdrop-blur-sm bg-white/5 rounded-2xl p-6 border border-white/20 shadow-2xl">
                         <div className="mb-4 text-center">
                           <div className="text-lg font-['Pretendard'] font-bold text-white mb-2">
-                            📝 메모장
+                             메모장
                           </div>
                           <div className="text-xs font-['Pretendard'] text-white/70">
                             들리는 대로 자유롭게 메모하세요
