@@ -398,13 +398,45 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      const message = seekTo !== undefined 
+      const message = seekTo !== undefined
         ? `${trackName} 재생을 ${Math.floor(seekTo / 1000)}초부터 시작했습니다`
         : `${trackName} 재생을 시작했습니다`
       toast.success(message)
     } catch (error) {
       console.error('트랙 재생 실패:', error)
       toast.error('트랙 재생에 실패했습니다')
+    }
+  }
+
+  // 현재 위치에서 재개하는 함수
+  const resumePlayback = async () => {
+    if (!deviceId) {
+      toast.error('플레이어가 준비되지 않았습니다')
+      return
+    }
+
+    try {
+      const tokenResponse = await getSpotifyTokenAPI()
+      const spotifyToken = tokenResponse.data.accessToken
+
+      const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${spotifyToken}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      setIsPlaying(true)
+      setGlobalIsPlaying(true)
+      toast.success('재생을 재개했습니다')
+    } catch (error) {
+      console.error('재생 재개 실패:', error)
+      toast.error('재생 재개에 실패했습니다')
     }
   }
 
@@ -427,11 +459,8 @@ export default function SpotifyWebPlayer({ trackId, trackName, artistName, onTim
           // 새로운 트랙이거나 startTime 위치에서 재생
           await playTrack(trackId, validatedStartTime)
         } else {
-          // 같은 트랙의 일시정지 상태에서는 resume 사용
-          await player.resume()
-          setIsPlaying(true)
-          setGlobalIsPlaying(true)
-          toast.success('재생을 재개했습니다')
+          // 같은 트랙의 일시정지 상태에서는 현재 위치에서 재개
+          await resumePlayback()
         }
       }
     } catch (error) {
