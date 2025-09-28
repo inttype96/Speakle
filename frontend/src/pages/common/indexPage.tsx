@@ -8,28 +8,37 @@ import { useNavigate } from "react-router-dom"
 import SplashCursor from '@/lib/splashCursor'
 import { useRandomSong } from "@/hooks/useRandomSong"
 import { isAuthenticated } from "@/store/auth"
+import { useCustomAlert } from '@/hooks/useCustomAlert'
+import { CustomAlert } from '@/components/common/CustomAlert'
 
 export default function IndexPage() {
   const navigate = useNavigate()
   const { getRandomSong, isLoading } = useRandomSong()
+  const { alertState, showAlert, hideAlert } = useCustomAlert()
 
   const handlePopRecommendation = () => {
     // 로그인 확인
     if (!isAuthenticated()) {
-      alert('팝송 추천을 받으려면 로그인이 필요합니다.')
-      
-      // 현재 페이지를 redirect 파라미터로 저장
-      const currentPath = window.location.pathname + window.location.search
-      const loginUrl = `/login?redirect=${encodeURIComponent(currentPath)}`
-      
-      navigate(loginUrl)
+      showAlert(
+        {
+          title: "로그인이 필요해요",
+          message: "팝송 추천 서비스를 이용하려면 로그인이 필요합니다.\n로그인 페이지로 이동하시겠어요?",
+          confirmText: "로그인하러 가기",
+          type: "music"
+        },
+        () => {
+          // 현재 페이지를 redirect 파라미터로 저장
+          const currentPath = window.location.pathname + window.location.search
+          const loginUrl = `/login?redirect=${encodeURIComponent(currentPath)}`
+          navigate(loginUrl)
+        }
+      )
       return
     }
     
     // 로그인된 경우 팝송 추천 페이지로 이동
     navigate("/explore")
   }
-
 
   return (
     <div className="bg-background min-h-screen flex flex-col font-sans">
@@ -78,7 +87,6 @@ export default function IndexPage() {
               </p>
               <div className="flex justify-end">
                 <Button
-                  // onClick={() => navigate("/explore")}
                   onClick={handlePopRecommendation}
                   className="mt-2 bg-[#4B2199] hover:bg-purple-700 text-white rounded-full px-3 py-1.5 text-sm transition-all duration-300 hover:scale-110 hover:shadow-lg group font-['Pretendard'] font-semibold"
                 >
@@ -154,6 +162,18 @@ export default function IndexPage() {
           </div>
         </div>
       </div>
+
+       {/* 커스텀 알림 모달 */}
+      <CustomAlert
+        isOpen={alertState.isOpen}
+        onClose={hideAlert}
+        title={alertState.options.title}
+        message={alertState.options.message}
+        confirmText={alertState.options.confirmText}
+        type={alertState.options.type}
+        onConfirm={alertState.onConfirm}
+      />
+
       <Footer />
     </div>
   )
