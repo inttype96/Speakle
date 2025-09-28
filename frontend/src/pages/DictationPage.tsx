@@ -103,17 +103,12 @@ export default function DictationPage() {
   const onReplay = () => {
     setGameState('playing');        // 바로 재생 상태로
     setShouldAutoPlay(true);        // 자동재생 활성화
-    setElapsed(0);                  // 타이머 리셋
     setReplayKey(prev => prev + 1); // SpotifyWebPlayer 리렌더링해서 즉시 재생
   };
 
   // 타이머 useEffect
   useEffect(() => {
     if (gameState === 'playing') {
-      const timer = setInterval(() => {
-        setElapsed(prev => prev + 1);
-      }, 1000);
-      return () => clearInterval(timer);
     }
   }, [gameState]);
 
@@ -260,7 +255,6 @@ export default function DictationPage() {
         }, 1000);
       }
 
-      setElapsed(0);
       setShouldAutoPlay(false);
       // 한국어 가사 표시 초기화
       setShowKorean(false);
