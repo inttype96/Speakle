@@ -255,8 +255,8 @@ export default function PlaylistDetailPage() {
         {/* 상단 여백 추가 */}
         <div className="h-8" />
 
-        <div className="w-screen px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '65vw' }}>
-          <div className="container mx-auto py-6 max-w-4xl">
+        <div className="mx-auto px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '1024px', width: '100%' }}>
+          <div className="py-6">
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4B2199] mx-auto mb-4"></div>
@@ -286,8 +286,8 @@ export default function PlaylistDetailPage() {
         {/* 상단 여백 추가 */}
         <div className="h-8" />
 
-        <div className="w-screen px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '65vw' }}>
-          <div className="container mx-auto py-6 max-w-4xl">
+        <div className="mx-auto px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '1024px', width: '100%' }}>
+          <div className="py-6">
             <div className="text-center py-16">
               <Music className="w-16 h-16 text-white/50 mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2 text-white font-['Pretendard']">플레이리스트를 찾을 수 없습니다</h3>
@@ -320,8 +320,8 @@ export default function PlaylistDetailPage() {
       {/* 상단 여백 추가 */}
       <div className="h-8" />
 
-      <div className="w-screen px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '65vw' }}>
-        <div className="container mx-auto py-6 max-w-6xl">
+      <div className="mx-auto px-4 sm:px-8 md:px-12 lg:px-16 xl:px-20" style={{ maxWidth: '1024px', width: '100%' }}>
+        <div className="py-6">
           {/* 플레이리스트 헤더 */}
           <div className="mb-8">
             <div className="flex flex-col md:flex-row gap-6 mb-6">
