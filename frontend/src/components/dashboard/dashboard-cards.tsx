@@ -7,9 +7,6 @@ import {
   TrendingUp,
   Music,
   Star,
-  Zap,
-  Trophy,
-  BookOpen,
   Headphones
 } from 'lucide-react'
 
@@ -59,12 +56,7 @@ export function StreakCard({
       hover={false}
     >
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-[#4B2199]/80 rounded-lg">
-            <Zap className="w-5 h-5 text-white" />
-          </div>
-          <h3 className="text-xl font-bold text-white font-['Pretendard']">{currentStreak}일 연속 출석</h3>
-        </div>
+        <h3 className="text-xl font-bold text-white font-['Pretendard']">{currentStreak}일 연속 출석</h3>
         <div className="text-3xl">🔥</div>
       </div>
 
@@ -106,12 +98,7 @@ export function PointsCard({ balance, level }: PointsCardProps) {
   return (
     <BentoCard className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-lg">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-[#B5A6E0]/80 rounded-lg">
-            <Trophy className="w-5 h-5 text-white" />
-          </div>
-          <h3 className="text-lg font-bold text-white font-['Pretendard']">포인트</h3>
-        </div>
+        <h3 className="text-lg font-bold text-white font-['Pretendard']">포인트</h3>
       </div>
 
       <div className="text-center mb-4">
@@ -138,12 +125,7 @@ export function ExploreCard() {
       onClick={() => navigate('/explore')}
     >
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-[#4B2199]/80 rounded-lg">
-            <BookOpen className="w-5 h-5 text-white" />
-          </div>
-          <h3 className="text-lg font-bold text-white font-['Pretendard']">학습 시작</h3>
-        </div>
+        <h3 className="text-lg font-bold text-white font-['Pretendard']">학습 시작</h3>
       </div>
 
       <p className="text-white/70 mb-4 text-sm font-['Pretendard']">
@@ -201,12 +183,7 @@ export function RecentSongsCard({ recentSongs, error }: RecentSongsCardProps) {
   return (
     <BentoCard className="md:col-span-2 backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-lg">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-[#B5A6E0]/80 rounded-lg">
-            <Music className="w-5 h-5 text-white" />
-          </div>
-          <h3 className="text-lg font-bold text-white font-['Pretendard']">최근 학습한 곡</h3>
-        </div>
+        <h3 className="text-lg font-bold text-white font-['Pretendard']">최근 학습한 곡</h3>
       </div>
 
       {error ? (
@@ -272,12 +249,7 @@ export function RankingCard({ ranking, error }: RankingCardProps) {
   return (
     <BentoCard className="md:col-span-2 backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl rounded-lg">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-[#4B2199]/80 rounded-lg">
-            <TrendingUp className="w-5 h-5 text-white" />
-          </div>
-          <h3 className="text-lg font-bold text-white font-['Pretendard']">포인트 랭킹</h3>
-        </div>
+        <h3 className="text-lg font-bold text-white font-['Pretendard']">포인트 랭킹</h3>
       </div>
 
       {error ? (
@@ -294,25 +266,12 @@ export function RankingCard({ ranking, error }: RankingCardProps) {
             >
               <div className={cn(
                 "w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm font-['Inter']",
-                index === 0 && "bg-yellow-500/90",
-                index === 1 && "bg-gray-400/90",
-                index === 2 && "bg-amber-600/90",
+                index === 0 && "bg-[#B5A6E0]/90",
+                index === 1 && "bg-[#8B7CD6]/90",
+                index === 2 && "bg-[#6B5B95]/90",
                 index > 2 && "bg-[#4B2199]/80"
               )}>
                 {user.rank}
-              </div>
-              <div className="w-10 h-10 rounded-lg bg-[#4B2199]/20 flex items-center justify-center overflow-hidden">
-                {user.profileImageUrl ? (
-                  <img
-                    src={user.profileImageUrl}
-                    alt={user.username}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                ) : (
-                  <span className="text-sm font-medium text-[#B5A6E0] font-['Pretendard']">
-                    {user.username.charAt(0)}
-                  </span>
-                )}
               </div>
               <div className="flex-1">
                 <p className="font-medium text-white font-['Pretendard']">{user.username}</p>
