@@ -316,3 +316,58 @@ S13P21C104/
 ### 🏗️ 아키텍처 <a id="architecture"></a>
 
 ![architecture](/README_img/speakle_architecture.png)
+
+---
+
+## License & Data Attribution
+
+### Model Information  
+
+1. **Embedding Model**  
+   - [`Qwen/Qwen3-Embedding-0.6B`](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B)  
+   - License: [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)  
+     - 상업적 이용, 수정, 배포가 허용됩니다.  
+     - 저작권 고지 및 라이선스 사본을 포함해야 하며, 변경사항이 있을 경우 이를 명시해야 합니다.  
+     - 보증이 제공되지 않으며, 책임 제한 조항이 적용됩니다.  
+
+2. **Translation Model**  
+   - [`NHNDQ/nllb-finetuned-en2ko`](https://huggingface.co/NHNDQ/nllb-finetuned-en2ko)  
+   - License: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.ko)  
+     - 원저작자 표시(CC Attribution), 라이선스 링크 제공, 변경사항 고지가 필요합니다.  
+     - 복제, 배포, 전시, 공연, 포맷 변경, 영리적 이용 및 2차적 저작물 작성이 허용됩니다.  
+     - 추가적인 법적/기술적 제한을 부가할 수 없습니다.  
+
+---
+
+### Dataset Information  
+
+1. **960K Spotify Songs Lyrics Qwen3-0.6B Embeddings**  
+   - License: [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)  
+
+2. **960K Spotify Songs With Lyrics data**  
+   - License: [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ko)  
+   - 비영리적 목적의 공유 및 변경 가능, 동일한 라이선스로 배포해야 함.  
+   - 상업적 이용 불가.  
+
+3. **Dataset of 65,000+ Songs on Spotify (with images)**  
+   - License: [CC0: Public Domain](https://creativecommons.org/publicdomain/zero/1.0/deed.ko)  
+   - 저작권 제한 없음, 자유롭게 사용 가능.  
+
+4. **Spotify Tracks Attributes and Popularity**  
+   - License: 원 출처(ConquestAce/spotify-songs)의 오리지널 라이선스 적용.  
+   - 사용 전 반드시 해당 원본 저장소의 라이선스 조건 확인 필요.  
+
+---
+
+## Usage Notes  
+
+- 본 프로젝트는 연구와 실험적 활용을 우선합니다.  
+- 모델 라이선스:  
+  - **Qwen3-Embedding-0.6B (Apache 2.0)** → 상업적 활용 가능, 단 저작자 표시 및 라이선스 고지 필수.  
+  - **nllb-finetuned-en2ko (CC BY 4.0)** → 상업적 활용 가능, 단 출처 및 변경사항 고지 필수.  
+- 데이터셋 라이선스:  
+  - **Apache 2.0 / CC0** → 상업적 활용 가능.  
+  - **CC BY-NC-SA 4.0** → 비영리 목적에서만 활용 가능.  
+  - **출처 기반 라이선스(ConquestAce/spotify-songs)** → 원 저장소의 라이선스 조건 준수 필요.  
+- 상업적 적용을 고려할 경우, **비영리 전용 데이터셋(CC BY-NC-SA 4.0)** 은 반드시 제외하거나 대체 데이터를 확보해야 합니다.  
+- 데이터셋 및 모델 활용 시, 각 라이선스 조건(저작자 표시, 라이선스 사본 포함, 변경사항 고지 등)을 반드시 준수해야 합니다.  
