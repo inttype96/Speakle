@@ -2,7 +2,7 @@
 
 #### SSAFY 13기 2학기 광주 1반 sevencode (25.08.25 ~ 25.09.29)
 
-![](/README_img/메인페이지.png)
+![](/docs/README_img/메인페이지.png)
 
 ---
 
@@ -74,7 +74,7 @@ Speakle은 **빅데이터 추천 시스템**을 활용하여
 
 |                 메인 페이지                  |               사이드바               |
 |:---------------------------------------:|:--------------------------------:|
-| ![메인 페이지](/README_img/메인페이지.png) | ![사이드바](/README_img/사이드바.png) |
+| ![메인 페이지](/docs/README_img/메인페이지.png) | ![사이드바](/docs/README_img/사이드바.png) |
 
 * 메인 페이지에서는 **노래 추천** 및 **랜덤 노래 추천 바로가기** 기능을 통해 팝송 추천받을 수 있습니다.
 * 사이드바를 통해 원하는 페이지로 쉽게 이동할 수 있습니다.
@@ -82,7 +82,7 @@ Speakle은 **빅데이터 추천 시스템**을 활용하여
 
 |               회원가입               |              로그인               |
 |:--------------------------------:|:------------------------------:|
-| ![회원가입](/README_img/회원가입페이지.png) | ![로그인](/README_img/로그인페이지.png) |
+| ![회원가입](/docs/README_img/회원가입페이지.png) | ![로그인](/docs/README_img/로그인페이지.png) |
 
 * 사용자는 이메일 인증을 통해 회원가입을 진행할 수 있습니다.
 * 회원가입한 아이디와 비밀번호를 입력하여 로그인을 진행할 수 있습니다.
@@ -90,14 +90,14 @@ Speakle은 **빅데이터 추천 시스템**을 활용하여
 
 |              둘러보기               |
 |:-------------------------------:|
-| ![둘러보기](/README_img/둘러보기전체.png) |
+| ![둘러보기](/docs/README_img/둘러보기전체.png) |
 
 * 사이트의 전체적인 기능들을 확인할 수 있습니다.
 ***
 
 |             플레이리스트             |                플레이리스트 상세                |
 |:------------------------------:|:---------------------------------------:|
-| ![플레이리스트](/README_img/플레이리스트.png) | ![플레이리스트 상세](/README_img/플레이리스트 상세.png) |
+| ![플레이리스트](/docs/README_img/플레이리스트.png) | ![플레이리스트 상세](/docs/README_img/플레이리스트 상세.png) |
 
 * 사용자는 원하는 팝송을 플레이리스트에 **추가하거나 삭제**할 수 있습니다.
 * 플레이리스트를 통해 자주 듣는 노래를 **쉽게 관리하고 접근**할 수 있습니다.
@@ -105,7 +105,7 @@ Speakle은 **빅데이터 추천 시스템**을 활용하여
 
 |              리워드 대시보드               |              마이페이지              |
 |:-----------------------------------:|:-------------------------------:|
-| ![리워드대시보드페이지](/README_img/리워드대시보드페이지.png) | ![마이페이지](/README_img/마이페이지.png) |
+| ![리워드대시보드페이지](/docs/README_img/리워드대시보드페이지.png) | ![마이페이지](/docs/README_img/마이페이지.png) |
 
 * 연속 학습 일수, 포인트, 최근 학습 내역, 포인트 랭킹을 확인할 수 있습니다.
 * 닉네임 수정 및 스포티파이(Spotify) 계정 연동 관리가 가능합니다.
@@ -113,7 +113,7 @@ Speakle은 **빅데이터 추천 시스템**을 활용하여
 
 |                노래추천                |                 노래추천 입력상세                  |
 |:----------------------------------:|:------------------------------------------:|
-| ![노래추천페이지전체](/README_img/노래추천페이지전체.png) | ![노래추천페이지_상세](/README_img/노래추천페이지_상세1.png) |
+| ![노래추천페이지전체](/docs/README_img/노래추천페이지전체.png) | ![노래추천페이지_상세](/docs/README_img/노래추천페이지_상세1.png) |
 
 * 사용자는 원하는 상황과 장소를 입력하여 맞춤형 노래를 추천받을 수 있습니다.
 * 더보기 버튼을 통해 더 다양한 상황과 장소를 확인하거나 직접 입력할 수 있습니다.
@@ -121,7 +121,7 @@ Speakle은 **빅데이터 추천 시스템**을 활용하여
 
 |              추천 로딩               |              추천 페이지              |
 |:--------------------------------:|:--------------------------------:|
-| ![추천로딩페이지](/README_img/추천로딩페이지.png) | ![추천페이지_전체](/README_img/추천페이지_전체.png) |
+| ![추천로딩페이지](/docs/README_img/추천로딩페이지.png) | ![추천페이지_전체](/docs/README_img/추천페이지_전체.png) |
 
 * 노래 추천을 처리하는 동안 로딩 화면이 표시됩니다.
 * 추천 결과 페이지에서 추천된 팝송들을 확인할 수 있습니다.
@@ -129,7 +129,7 @@ Speakle은 **빅데이터 추천 시스템**을 활용하여
 
 |                 노래 상세 페이지                 |               노래 하이라이트                |
 |:-----------------------------------------:|:-------------------------------------:|
-| ![노래상세페이지_하이라이트](/README_img/노래상세페이지.png) | ![노래상세페이지_하이라이트](/README_img/노래상세페이지_하이라이트.png) |
+| ![노래상세페이지_하이라이트](/docs/README_img/노래상세페이지.png) | ![노래상세페이지_하이라이트](/docs/README_img/노래상세페이지_하이라이트.png) |
 
 * 해당 노래의 상세 정보와 가사를 확인할 수 있습니다.
 * 한국어 번역 가사가 제공되며, 노래 진행에 맞춰 해당 가사가 하이라이트됩니다.
@@ -137,7 +137,7 @@ Speakle은 **빅데이터 추천 시스템**을 활용하여
 
 |                  유용한학습_단어                  |                 유용한학습_문장                  |                  유용한학습_표현                   |                   유용한학습_관용구                   |
 |:------------------------------------------:|:-----------------------------------------:|:-------------------------------------------:|:---------------------------------------------:|
-| ![노래유용한학습_단어](/README_img/유용한학습_단어_전체.png) | ![노래유용한학습_문장](/README_img/노래유용한학습_문장.png) | ![유용한학습_표현_전체](/README_img/유용한학습_표현_전체.png) | ![유용한학습_관용구_전체](/README_img/유용한학습_관용구_전체.png) |
+| ![노래유용한학습_단어](/docs/README_img/유용한학습_단어_전체.png) | ![노래유용한학습_문장](/docs/README_img/노래유용한학습_문장.png) | ![유용한학습_표현_전체](/docs/README_img/유용한학습_표현_전체.png) | ![유용한학습_관용구_전체](/docs/README_img/유용한학습_관용구_전체.png) |
 
 * 가사에서 등장하는 중요 단어, 문장, 표현, 관용구를 따로 모아 학습할 수 있습니다.
 * 이를 통해 노래로 학습한 영어를 실제 회화로 확장할 수 있습니다.
@@ -145,7 +145,7 @@ Speakle은 **빅데이터 추천 시스템**을 활용하여
 
 |               집중학습_빈칸               |                집중학습_빈칸_정답                 |                 집중학습_빈칸_오답                 |                 집중학습_빈칸_결과                  |
 |:-----------------------------------:|:-----------------------------------------:|:------------------------------------------:|:-------------------------------------------:|
-| ![집중학습_빈칸](/README_img/집중학습_빈칸.png) | ![집중학습_빈칸_정답](/README_img/집중학습_빈칸_정답.png) | ![집중학습_빈칸_오답](/README_img/집중학습_빈칸_오답.png) | ![집중학습_빈칸_결과](/README_img/집중학습_빈칸_결과.png) |
+| ![집중학습_빈칸](/docs/README_img/집중학습_빈칸.png) | ![집중학습_빈칸_정답](/docs/README_img/집중학습_빈칸_정답.png) | ![집중학습_빈칸_오답](/docs/README_img/집중학습_빈칸_오답.png) | ![집중학습_빈칸_결과](/docs/README_img/집중학습_빈칸_결과.png) |
 
 * 가사의 일부 단어가 비워진 빈칸 문제를 풀며 학습할 수 있습니다.
 * 정답과 오답을 확인하고 학습 결과를 확인할 수 있습니다.
@@ -153,7 +153,7 @@ Speakle은 **빅데이터 추천 시스템**을 활용하여
 
 |              집중학습_스피킹               |                집중학습_스피킹_녹음                 |                집중학습_스피킹_결과                 |                집중학습_스피킹_결과_종합                 |
 |:-----------------------------------:|:------------------------------------------:|:------------------------------------------:|:---------------------------------------------:|
-| ![집중학습_스피킹](/README_img/집중학습_스피킹.png) | ![집중학습_스피킹_녹음](/README_img/집중학습_스피킹_녹음.png) | ![집중학습_스피킹_결과](/README_img/집중학습_스피킹_결과.png) | ![집중학습_스피킹_결과_종합](/README_img/집중학습_스피킹_결과_종합.png) |
+| ![집중학습_스피킹](/docs/README_img/집중학습_스피킹.png) | ![집중학습_스피킹_녹음](/docs/README_img/집중학습_스피킹_녹음.png) | ![집중학습_스피킹_결과](/docs/README_img/집중학습_스피킹_결과.png) | ![집중학습_스피킹_결과_종합](/docs/README_img/집중학습_스피킹_결과_종합.png) |
 
 * 사용자는 가사를 직접 발음하고 녹음하여 발음 정확도를 평가받을 수 있습니다.
 * 수정필요
@@ -161,7 +161,7 @@ Speakle은 **빅데이터 추천 시스템**을 활용하여
 
 |               집중학습_딕테이션               |                집중학습_딕테이션_힌트                 |               집중학습_딕테이션_결과_정답               |                  집중학습_딕테이션_결과_종합                  |
 |:-------------------------------------:|:-------------------------------------------:|:-------------------------------------------:|:-------------------------------------------------:|
-| ![집중학습_딕테이션](/README_img/집중학습_딕테이션.png) | ![집중학습_딕테이션_힌트](/README_img/집중학습_딕테이션_힌트.png) | ![집중학습_딕테이션_결과_정답](/README_img/집중학습_딕테이션_결과_정답.png) | ![집중학습_딕테이션_결과_종합](/README_img/집중학습_딕테이션_결과_종합.png) |
+| ![집중학습_딕테이션](/docs/README_img/집중학습_딕테이션.png) | ![집중학습_딕테이션_힌트](/docs/README_img/집중학습_딕테이션_힌트.png) | ![집중학습_딕테이션_결과_정답](/docs/README_img/집중학습_딕테이션_결과_정답.png) | ![집중학습_딕테이션_결과_종합](/docs/README_img/집중학습_딕테이션_결과_종합.png) |
 
 * 노래를 들으며 가사를 직접 입력하는 딕테이션 학습이 가능합니다.
 * 수정필요
@@ -203,74 +203,66 @@ Speakle은 **빅데이터 추천 시스템**을 활용하여
 
 ```
 S13P21C104/
-├── frontend/               # React Frontend Application
-│   ├──📁api               # 백엔드와 통신하는 API 모듈
-│   ├──📁assets            # 정적 자원(이미지, 아이콘 등)
-│   │   └──📁icons         # UI에 사용하는 아이콘 모음
-│   ├──📁components        # 재사용 가능한 UI 컴포넌트
-│   │   ├──📁common        # 버튼, 입력창 등 공용 컴포넌트
-│   │   ├──📁modals        # 모달 창 컴포넌트
-│   │   ├──📁navigation    # 네비게이션 바, 메뉴 등
-│   │   ├──📁signup        # 회원가입 전용 UI
-│   │   ├──📁TherapistSession  # 치료사 세션 관련 UI
-│   │   └──📁TherapistToolTap  # 치료사 툴 관련 UI
-│   ├──📁contexts          # React Context API 상태 관리
-│   ├──📁hooks             # 커스텀 훅 모음
-│   ├──📁logoimage         # 서비스 로고 이미지
-│   └──📁pages             # 페이지 단위 컴포넌트
-│       ├──📁Auth          # 로그인/회원가입 등 인증 페이지
-│       ├──📁signup        # 회원가입 관련 페이지
-│       ├──📁Therapist     # 치료사 전용 페이지
-│       │    └──📁MyPage   # 치료사 마이페이지
-│       └──📁User          # 일반 사용자 페이지
-│           ├──📁Booking   # 예약 관련 페이지
-│           └──📁MyPage    # 사용자 마이페이지
+├── frontend/
+├──📁src
+│   ├──📁assets        # 정적 자원 (이미지, 아이콘, 폰트 등)
+│   ├──📁components    # 재사용 가능한 UI 컴포넌트
+│   ├──📁contexts      # React Context API (전역 상태 관리)
+│   ├──📁hooks         # 커스텀 훅 (로직 재사용)
+│   ├──📁lib           # 외부 라이브러리 래퍼, 유틸 모듈
+│   ├──📁pages         # 라우트 단위 페이지 컴포넌트
+│   ├──📁services      # API 호출 및 비즈니스 로직
+│   ├──📁store         # 전역 상태 관리 (Redux, Zustand 등)
+│   ├──📁types         # 전역 TypeScript 타입 정의
+│   ├──📁utils         # 공통 함수 모음
+│   │
+│   ├──📄App.css       # 전역 스타일 (기본 CSS)
+│   ├──📄App.tsx       # 루트 컴포넌트
+│   ├──📄index.css     # 초기화 및 전역 스타일
+│   ├──📄main.tsx      # 애플리케이션 엔트리 포인트
+│   ├──📄router.tsx    # 라우팅 설정
+│   └──📄vite-env.d.ts # Vite 환경 타입 정의
 │
-├── backend/                     # Spring Boot Backend Application
-│   ├──📄settings.gradle               # Gradle 루트 설정(Groovy DSL)
-│   ├──📄build.gradle                  # 프로젝트 빌드 스크립트(Groovy DSL)
-│   └──📁src
-│       └──📁main
-│           ├──📁java
-│           │   └──📁com
-│           │       └──📁example
-│           │           └──📁app
-│           │               ├──📄Application.java   # @SpringBootApplication 진입점
-│           │               │
-│           │               ├──📁config            # @Configuration, WebMvcConfigurer, Jackson, CORS 등 공용 설정
-│           │               ├──📁util              # 문자열, 날짜, 암호화 등 범용 유틸
-│           │               ├──📁exception         # 공용 예외 처리, @ControllerAdvice
-│           │               ├──📁jwt               # JWT 생성/검증, 필터, SecurityConfig 등
-│           │               │
-│           │               └──📁something         # 특정 도메인(비즈니스 기능 단위)
-│           │                   ├──📁controller    # REST API 엔드포인트
-│           │                   ├──📁service       # 비즈니스 로직(@Service, @Transactional)
-│           │                   ├──📁repository    # 데이터 접근 계층(JPA/QueryDSL)
-│           │                   ├──📁entity        # JPA 엔티티
-│           │                   ├──📁dto
-│           │                   │   ├──📁request   # 요청 DTO(검증 포함)
-│           │                   │   └──📁response  # 응답 DTO(엔티티 직접 노출 금지)
-│           │                   └──📁exception     # 도메인 전용 예외
-│           │
-│           └──📁resources
-│               └──📄application.properties        # 스프링 설정(ENV 값 주입 가능)
+├── backend/
+├──📄settings.gradle               # Gradle 루트 설정(Groovy DSL)
+├──📄build.gradle                  # 프로젝트 빌드 스크립트(Groovy DSL)
+└──📁src
+│   └──📁main
+│       ├──📁java/com/sevencode
+│       │   └──📁speakle
+│       │       ├──📄Application.java   # @SpringBootApplication 진입점
+│       │       ├──📁config            # @Configuration, WebMvcConfigurer, Jackson, CORS 등 공용 설정
+│       │       ├──📁common            # 프로젝트 공통 코드
+│       │       ├──📁exception         # 공용 예외 처리, @ControllerAdvice
+│       │       ├──📁jwt               # JWT 생성/검증, 필터, SecurityConfig 등
+│       │       └──📁something         # 특정 도메인(비즈니스 기능 단위)
+│       │                   ├──📁controller    # REST API 엔드포인트
+│       │                   ├──📁service       # 비즈니스 로직(@Service, @Transactional)
+│       │                   ├──📁repository    # 데이터 접근 계층(JPA/QueryDSL)
+│       │                   ├──📁entity        # JPA 엔티티 
+│       │                   ├──📁dto
+│       │                   │   ├──📁request   # 요청 DTO(검증 포함)
+│       │                   │   └──📁response  # 응답 DTO(엔티티 직접 노출 금지)
+│       │                   └──📁exception     # 도메인 전용 예외
+│       └──📁resources
+│           └──📄application.properties        # 스프링 설정(ENV 값 주입 가능)
 │
-├── data-service/                # FastAPI AI/ML Service
-│   ├── app/
-│   │   ├── api/               # API 엔드포인트
-│   │   ├── core/              # 핵심 설정
-│   │   ├── models/            # ML 모델
-│   │   ├── services/          # 비즈니스 로직
-│   │   └── utils/             # 유틸리티
-│   ├── data/                  # 데이터 파일
-│   ├── requirements.txt
-│   └── Dockerfile
+├── 📁data-service/                # FastAPI AI/ML Service
+│   ├── 📁app/
+│   │   ├── 📁api/               # API 엔드포인트
+│   │   ├── 📁core/              # 핵심 설정
+│   │   ├── 📁models/            # ML 모델
+│   │   ├── 📁services/          # 비즈니스 로직
+│   │   └── 📁utils/             # 유틸리티
+│   ├── 📁data/                  # 데이터 파일
+│   ├── 📄requirements.txt
+│   └── 📄Dockerfile
 │
-├── infrastructure/              # 인프라 설정
-├── docs/                       # 문서
-├── exec/                       # 실행 관련 파일
-├── docker-compose.yml          # 개발환경 Docker Compose
-├── docker-compose-fastapi.yml  # FastAPI 전용 Docker Compose
+├── 📁infrastructure/              # 인프라 설정
+├── 📁docs/                       # 문서
+├── 📁exec/                       # 실행 관련 파일
+├── 📄docker-compose.yml          # 개발환경 Docker Compose
+├── 📄docker-compose-fastapi.yml  # FastAPI 전용 Docker Compose
 └── README.md
 ```
 
@@ -287,16 +279,16 @@ S13P21C104/
   - `fix/*`: 버그 수정 브랜치
   - `refactor/*`: 리팩토링 브랜치
   - `docs/*`: 문서 브랜치
-    ![branch](/README_img/speakle_branch_simple.png)
+    ![branch](/docs/README_img/speakle_branch_simple.png)
 
 ### 이슈 관리
 - **Jira**: 스프린트 및 이슈 추적
-  ![Jira](/README_img/speakle_jira.png)
+  ![Jira](/docs/README_img/speakle_jira.png)
 
 ### 커뮤니케이션
 - **Notion**: 프로젝트 문서화, 회의록, 기술 스택 정리
 - **Mattermost**: 실시간 커뮤니케이션
-  ![Notion](/README_img/speakle_notion.png)
+  ![Notion](/docs/README_img/speakle_notion.png)
 
 ### 코드 리뷰
 - **GitLab Merge Request**: 코드 리뷰 및 승인 프로세스
@@ -311,11 +303,11 @@ S13P21C104/
 - **Swagger UI**: `/swagger-ui.html` (Backend 서버 실행 시)
 
 ### 🗄️ ERD <a id="erd"></a>
-![ERD](/README_img/speakle_erd.png)
+![ERD](/docs/README_img/speakle_erd.png)
 
 ### 🏗️ 아키텍처 <a id="architecture"></a>
 
-![architecture](/README_img/speakle_architecture.png)
+![architecture](/docs/README_img/speakle_architecture.png)
 
 ---
 
