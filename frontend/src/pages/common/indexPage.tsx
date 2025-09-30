@@ -35,7 +35,7 @@ export default function IndexPage() {
       )
       return
     }
-    
+
     // 로그인된 경우 팝송 추천 페이지로 이동
     navigate("/explore")
   }
@@ -59,7 +59,7 @@ export default function IndexPage() {
       )
       return
     }
-    
+
     // 로그인된 경우 랜덤 노래 API 호출
     getRandomSong()
   }
@@ -74,6 +74,7 @@ export default function IndexPage() {
         rel="stylesheet"
       />
 
+      <div className="mb-16"></div>
       <Navbar />
       <SplashCursor />
 

@@ -71,7 +71,7 @@ export default function Footer() {
                         <li>하기환</li>
                     </ul>
                     <p className="text-xs text-white/50 mt-4 font-['Pretendard']">
-                        © 2024 Speakle. All rights reserved.
+                        © 2025 Speakle. All rights reserved.
                     </p>
                 </div>
             </div>
