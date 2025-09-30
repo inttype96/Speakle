@@ -233,7 +233,7 @@ export default function PlaylistDetailPage() {
   };
 
   const handleTrackView = (trackId: string) => {
-    navigate(`/songs/${trackId}`);
+    navigate(`/songs/${trackId}?playlistId=${playlistId}`);
   };
 
   const isOwner = playlist && userId && playlist.owner.id === userId.toString();
