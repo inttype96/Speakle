@@ -315,13 +315,24 @@ export default function SongDetailPage() {
 
   const qsRaw = sp.toString(); // 현재 쿼리를 그대로 다음 페이지로 넘길 때 사용
 
-  // 검색으로 온 경우, 랜덤 추천으로 온 경우, 추천으로 온 경우 구분
+  // 검색으로 온 경우, 랜덤 추천으로 온 경우, 추천으로 온 경우, 플레이리스트에서 온 경우 구분
   const searchQuery = sp.get("q");
   const source = sp.get("source");
+  const playlistId = sp.get("playlistId");
   const isFromSearch = Boolean(searchQuery);
   const isFromRandom = source === "random";
-  const backUrl = isFromSearch ? `/search${qsRaw ? `?${qsRaw}` : ""}` : `/recommendations${qsRaw ? `?${qsRaw}` : ""}`;
-  const backText = isFromSearch ? "검색 결과로" : "추천 목록으로";
+  const isFromPlaylist = Boolean(playlistId);
+
+  let backUrl = `/recommendations${qsRaw ? `?${qsRaw}` : ""}`;
+  let backText = "추천 목록으로";
+
+  if (isFromSearch) {
+    backUrl = `/search${qsRaw ? `?${qsRaw}` : ""}`;
+    backText = "검색 결과로";
+  } else if (isFromPlaylist) {
+    backUrl = `/playlists/${playlistId}`;
+    backText = "플레이리스트로";
+  }
 
   // 랜덤 추천인 경우 뒤로가기 버튼을 숨김
   const showBackButton = !isFromRandom;
