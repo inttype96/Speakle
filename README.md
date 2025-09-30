@@ -9,18 +9,20 @@
 ## 📑 목차
 
 - [프로젝트 개요](#overview)
-    - [팀원 소개](#team)
-    - [기획 배경](#background)
+  - [팀원 소개](#team)
+  - [기획 배경](#background)
 - [서비스 소개](#service)
-    - [시연 영상](#demo)
-    - [서비스 화면 및 기능](#screens)
+  - [시연 영상](#demo)
+  - [서비스 화면 및 기능](#screens)
 - [개발 환경](#env)
 - [프로젝트 구조](#structure)
 - [협업 환경](#collab)
 - [프로젝트 산출물](#deliverables)
-    - [API 명세서](#api)
-    - [ERD](#erd)
-    - [아키텍처](#architecture)
+  - [API 명세서](#api)
+  - [ERD](#erd)
+  - [아키텍처](#architecture)
+- [개발 회고](#retrospective)
+- [License & Data Attribution](#license)
 
 ---
 
@@ -28,13 +30,10 @@
 
 ### 1️⃣ 팀원 소개 <a id="team"></a>
 
-|                     임덕규                      |                     최승훈                      |                     하기환                      |                  sevencode                   |
-|:--------------------------------------------:|:--------------------------------------------:|:--------------------------------------------:|:--------------------------------------------:|
-| ![](frontend/src/assets/images/headset2.png) | ![](frontend/src/assets/images/headset2.png) | ![](frontend/src/assets/images/headset2.png) | ![](frontend/src/assets/images/headset2.png) |
-|               Leader, FrontEnd               |               FrontEnd, DevOps               |              FrontEnd               |                     C104                     |
-|                     강성민                      |                     김소연                      |                     김아윤                      |                     정수형                      |
-| ![](frontend/src/assets/images/headset2.png) | ![](frontend/src/assets/images/headset2.png) | ![](frontend/src/assets/images/headset2.png) | ![](frontend/src/assets/images/headset2.png) |
-|                   BackEnd                    |               BackEnd, BigData               |                   BackEnd                   |                   BackEnd                   |
+| 강성민 | 김소연 | 김아윤 | 임덕규 | 정수형 | 최승훈 | 하기환 |
+| ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| <a href="https://github.com/min7672"><img src="https://avatars.githubusercontent.com/u/59133075?v=4" alt="min7672" width="80" height="80"></a> | <a href="https://github.com/soyuuuuuni"><img src="https://avatars.githubusercontent.com/u/129823469?v=4" alt="soyuuuuuni" width="80" height="80"></a> | <a href="https://github.com/ahyoon99"><img src="https://avatars.githubusercontent.com/u/67852906?v=4" alt="ahyoon99" width="80" height="80"></a> | <a href="https://github.com/Deokguu"><img src="https://avatars.githubusercontent.com/u/190074008?v=4" alt="Deokguu" width="80" height="80"></a> | <a href="https://github.com/Int-Type"><img src="https://avatars.githubusercontent.com/u/190232662?v=4" alt="Int-Type" width="80" height="80"></a> | <a href="https://github.com/2perday"><img src="https://avatars.githubusercontent.com/u/185481659?v=4" alt="2perday" width="80" height="80"></a> | <a href="https://github.com/rlghks3593"><img src="https://avatars.githubusercontent.com/u/227347332?v=4" alt="rlghks3593" width="80" height="80"></a> |
+
 
 ### 2️⃣ 기획 배경 <a id="background"></a>
 
@@ -311,7 +310,13 @@ S13P21C104/
 
 ---
 
-## License & Data Attribution
+### 개발 회고 <a id="retrospective"></a>
+
+- [팀 회고 보러가기](./docs/retrospective/team.md)
+
+---
+
+### License & Data Attribution <a id="license"></a>
 
 ### Model Information  
 
