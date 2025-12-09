@@ -65,3 +65,4 @@ $RECYCLE.BIN/
 .claude/
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode
+*.sql
